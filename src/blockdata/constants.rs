@@ -103,6 +103,7 @@ pub fn genesis_block(network: Network) -> Block {
                     version: 1,
                     prev_blockhash: Default::default(),
                     merkle_root: txdata[0].txid(),
+                    im_merkle_root: txdata[0].ntxid(),
                     time: 1231006505
                 },
                 txdata: txdata
@@ -115,6 +116,7 @@ pub fn genesis_block(network: Network) -> Block {
                     version: 1,
                     prev_blockhash: Default::default(),
                     merkle_root: txdata[0].txid(),
+                    im_merkle_root: txdata[0].ntxid(),
                     time: 1296688602
                 },
                 txdata: txdata
@@ -127,6 +129,7 @@ pub fn genesis_block(network: Network) -> Block {
                     version: 1,
                     prev_blockhash: Default::default(),
                     merkle_root: txdata[0].txid(),
+                    im_merkle_root: txdata[0].ntxid(),
                     time: 1296688602
                 },
                 txdata: txdata
@@ -178,7 +181,7 @@ mod test {
                    "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string());
         assert_eq!(gen.header.time, 1231006505);
         assert_eq!(format!("{:x}", gen.header.bitcoin_hash()),
-                   "1110d8340980a8bb80ab76ada1cfcfb7284cf64839755d22ac7a880b2ead3055".to_string());
+                   "dc874a17458b716cba6475cc544d2c076de8013423fea31339f97cbff0a482c5".to_string());
     }
 
     #[test]
@@ -190,7 +193,7 @@ mod test {
                   "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string());
         assert_eq!(gen.header.time, 1296688602);
         assert_eq!(format!("{:x}", gen.header.bitcoin_hash()),
-                   "f6d39d1c39f9b368d1b09c2eed6219c54b2be5bdbff9071b70c81926415d2c31".to_string());
+                   "55048953473761fc3238039605faadf988aa5ecd2d756792ee022355009313e5".to_string());
     }
 }
 
