@@ -24,7 +24,8 @@ use std::default::Default;
 use blockdata::opcodes;
 use blockdata::script;
 use blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn};
-use blockdata::block::{Block, BlockHeader};
+use blockdata::block::{Block, BlockHeader, Signature};
+use blockdata::script::Script;
 use network::constants::Network;
 use util::misc::hex_bytes;
 use util::uint::Uint256;
@@ -104,7 +105,8 @@ pub fn genesis_block(network: Network) -> Block {
                     prev_blockhash: Default::default(),
                     merkle_root: txdata[0].txid(),
                     im_merkle_root: txdata[0].ntxid(),
-                    time: 1231006505
+                    time: 1231006505,
+                    proof: Signature { signature: Script::new() },
                 },
                 txdata: txdata
             }
@@ -117,7 +119,8 @@ pub fn genesis_block(network: Network) -> Block {
                     prev_blockhash: Default::default(),
                     merkle_root: txdata[0].txid(),
                     im_merkle_root: txdata[0].ntxid(),
-                    time: 1296688602
+                    time: 1296688602,
+                    proof: Signature { signature: Script::new() },
                 },
                 txdata: txdata
             }
@@ -130,7 +133,8 @@ pub fn genesis_block(network: Network) -> Block {
                     prev_blockhash: Default::default(),
                     merkle_root: txdata[0].txid(),
                     im_merkle_root: txdata[0].ntxid(),
-                    time: 1296688602
+                    time: 1296688602,
+                    proof: Signature { signature: Script::new() },
                 },
                 txdata: txdata
             }
@@ -181,7 +185,7 @@ mod test {
                    "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string());
         assert_eq!(gen.header.time, 1231006505);
         assert_eq!(format!("{:x}", gen.header.bitcoin_hash()),
-                   "dc874a17458b716cba6475cc544d2c076de8013423fea31339f97cbff0a482c5".to_string());
+                   "3c8890361aca183ecb0059ae78e4e57dc514a689588aa7cb97fdc3a6601d08a4".to_string());
     }
 
     #[test]
@@ -193,7 +197,7 @@ mod test {
                   "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string());
         assert_eq!(gen.header.time, 1296688602);
         assert_eq!(format!("{:x}", gen.header.bitcoin_hash()),
-                   "55048953473761fc3238039605faadf988aa5ecd2d756792ee022355009313e5".to_string());
+                   "2f90e0d9843be35112f9830d6e86bf2ef4dd92836979ac4aae1a6f41e0797588".to_string());
     }
 }
 
