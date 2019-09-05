@@ -27,6 +27,10 @@ pub trait MerkleRoot {
     /// Construct a merkle tree from a collection, with elements ordered as
     /// they were in the original collection, and return the merkle root.
     fn merkle_root(&self) -> sha256d::Hash;
+
+    /// Construct an immutable merkle tree from a collection, with elements ordered as
+    /// they were in the original collection, and return the immutable merkle root.
+    fn immutable_merkle_root(&self) -> sha256d::Hash;
 }
 
 /// Calculates the merkle root of a list of txids hashes directly
