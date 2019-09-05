@@ -53,7 +53,9 @@ user_enum! {
         /// Bitcoin's testnet
         Testnet <-> "testnet",
         /// Bitcoin's regtest
-        Regtest <-> "regtest"
+        Regtest <-> "regtest",
+        /// Paradium
+        Paradium <-> "paradium"
     }
 }
 
@@ -74,6 +76,7 @@ impl Network {
             0x00F0FF01 => Some(Network::Bitcoin),
             0x74839A75 => Some(Network::Testnet),
             0x74979A73 => Some(Network::Regtest),
+            0x64F0FF01 => Some(Network::Paradium),
             _ => None
         }
     }
@@ -95,6 +98,7 @@ impl Network {
             Network::Bitcoin => 0x00F0FF01,
             Network::Testnet => 0x74839A75,
             Network::Regtest => 0x74979A73,
+            Network::Paradium => 0x64F0FF01,
         }
     }
 }
@@ -118,6 +122,10 @@ mod tests {
             serialize(&Network::Regtest.magic()),
             &[0x73, 0x9a, 0x97, 0x74]
         );
+        assert_eq!(
+            serialize(&Network::Paradium.magic()),
+            &[0x01, 0xff, 0xf0, 0x64]
+        );
 
         assert_eq!(
             deserialize(&[0x01, 0xff, 0xf0, 0x00]).ok(),
@@ -131,6 +139,10 @@ mod tests {
             deserialize(&[0x73, 0x9a, 0x97, 0x74]).ok(),
             Some(Network::Regtest.magic())
         );
+        assert_eq!(
+            deserialize(&[0x01, 0xff, 0xf0, 0x64]).ok(),
+            Some(Network::Paradium.magic())
+        );
     }
 
   #[test]
@@ -138,10 +150,12 @@ mod tests {
       assert_eq!(Network::Bitcoin.to_string(), "bitcoin");
       assert_eq!(Network::Testnet.to_string(), "testnet");
       assert_eq!(Network::Regtest.to_string(), "regtest");
+      assert_eq!(Network::Paradium.to_string(), "paradium");
 
       assert_eq!("bitcoin".parse::<Network>().unwrap(), Network::Bitcoin);
       assert_eq!("testnet".parse::<Network>().unwrap(), Network::Testnet);
       assert_eq!("regtest".parse::<Network>().unwrap(), Network::Regtest);
+      assert_eq!("paradium".parse::<Network>().unwrap(), Network::Paradium);
       assert!("fakenet".parse::<Network>().is_err());
   }
 }
