@@ -73,7 +73,7 @@ impl Network {
         match magic {
             0x00F0FF01 => Some(Network::Bitcoin),
             0x74839A75 => Some(Network::Testnet),
-            0xDAB5BFFA => Some(Network::Regtest),
+            0x74979A73 => Some(Network::Regtest),
             _ => None
         }
     }
@@ -94,7 +94,7 @@ impl Network {
         match *self {
             Network::Bitcoin => 0x00F0FF01,
             Network::Testnet => 0x74839A75,
-            Network::Regtest => 0xDAB5BFFA,
+            Network::Regtest => 0x74979A73,
         }
     }
 }
@@ -116,7 +116,7 @@ mod tests {
         );
         assert_eq!(
             serialize(&Network::Regtest.magic()),
-            &[0xfa, 0xbf, 0xb5, 0xda]
+            &[0x73, 0x9a, 0x97, 0x74]
         );
 
         assert_eq!(
@@ -128,7 +128,7 @@ mod tests {
             Some(Network::Testnet.magic())
         );
         assert_eq!(
-            deserialize(&[0xfa, 0xbf, 0xb5, 0xda]).ok(),
+            deserialize(&[0x73, 0x9a, 0x97, 0x74]).ok(),
             Some(Network::Regtest.magic())
         );
     }
