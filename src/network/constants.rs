@@ -34,7 +34,7 @@
 //! let network = Network::Bitcoin;
 //! let bytes = serialize(&network.magic());
 //!
-//! assert_eq!(&bytes[..], &[0xF9, 0xBE, 0xB4, 0xD9]);
+//! assert_eq!(&bytes[..], &[0x01, 0xFF, 0xF0, 0x00]);
 //! ```
 
 /// Version of the protocol as appearing in network message headers
@@ -65,15 +65,15 @@ impl Network {
     /// ```rust
     /// use bitcoin::network::constants::Network;
     ///
-    /// assert_eq!(Some(Network::Bitcoin), Network::from_magic(0xD9B4BEF9));
+    /// assert_eq!(Some(Network::Bitcoin), Network::from_magic(0x00F0FF01));
     /// assert_eq!(None, Network::from_magic(0xFFFFFFFF));
     /// ```
     pub fn from_magic(magic: u32) -> Option<Network> {
         // Note: any new entries here must be added to `magic` below
         match magic {
-            0xD9B4BEF9 => Some(Network::Bitcoin),
-            0x0709110B => Some(Network::Testnet),
-            0xDAB5BFFA => Some(Network::Regtest),
+            0x00F0FF01 => Some(Network::Bitcoin),
+            0x74839A75 => Some(Network::Testnet),
+            0x74979A73 => Some(Network::Regtest),
             _ => None
         }
     }
@@ -87,14 +87,14 @@ impl Network {
     /// use bitcoin::network::constants::Network;
     ///
     /// let network = Network::Bitcoin;
-    /// assert_eq!(network.magic(), 0xD9B4BEF9);
+    /// assert_eq!(network.magic(), 0x00F0FF01);
     /// ```
     pub fn magic(&self) -> u32 {
         // Note: any new entries here must be added to `from_magic` above
         match *self {
-            Network::Bitcoin => 0xD9B4BEF9,
-            Network::Testnet => 0x0709110B,
-            Network::Regtest => 0xDAB5BFFA,
+            Network::Bitcoin => 0x00F0FF01,
+            Network::Testnet => 0x74839A75,
+            Network::Regtest => 0x74979A73,
         }
     }
 }
@@ -108,27 +108,27 @@ mod tests {
     fn serialize_test() {
         assert_eq!(
             serialize(&Network::Bitcoin.magic()),
-            &[0xf9, 0xbe, 0xb4, 0xd9]
+            &[0x01, 0xff, 0xf0, 0x00]
         );
         assert_eq!(
             serialize(&Network::Testnet.magic()),
-            &[0x0b, 0x11, 0x09, 0x07]
+            &[0x75, 0x9a, 0x83, 0x74]
         );
         assert_eq!(
             serialize(&Network::Regtest.magic()),
-            &[0xfa, 0xbf, 0xb5, 0xda]
+            &[0x73, 0x9a, 0x97, 0x74]
         );
 
         assert_eq!(
-            deserialize(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(),
+            deserialize(&[0x01, 0xff, 0xf0, 0x00]).ok(),
             Some(Network::Bitcoin.magic())
         );
         assert_eq!(
-            deserialize(&[0x0b, 0x11, 0x09, 0x07]).ok(),
+            deserialize(&[0x75, 0x9a, 0x83, 0x74]).ok(),
             Some(Network::Testnet.magic())
         );
         assert_eq!(
-            deserialize(&[0xfa, 0xbf, 0xb5, 0xda]).ok(),
+            deserialize(&[0x73, 0x9a, 0x97, 0x74]).ok(),
             Some(Network::Regtest.magic())
         );
     }
