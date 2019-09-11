@@ -24,11 +24,8 @@ use std::io;
 
 use bitcoin_hashes::{sha256d, Hash};
 
-use util;
 use util::hash::{BitcoinHash, MerkleRoot, bitcoin_merkle_root};
-use util::uint::Uint256;
 use consensus::{encode, Decodable, Encodable};
-use network::constants::Network;
 use blockdata::transaction::Transaction;
 use blockdata::script::Script;
 use bitcoin_hashes::HashEngine;
