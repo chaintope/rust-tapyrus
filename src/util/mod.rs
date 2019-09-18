@@ -64,10 +64,6 @@ pub enum Error {
     Encode(encode::Error),
     /// Network error
     Network(network::Error),
-    /// The header hash is not below the target
-    BlockBadProofOfWork,
-    /// The `target` field of a block header did not match the expected difficulty
-    BlockBadTarget,
 }
 
 impl fmt::Display for Error {
@@ -75,7 +71,6 @@ impl fmt::Display for Error {
         match *self {
             Error::Encode(ref e) => fmt::Display::fmt(e, f),
             Error::Network(ref e) => fmt::Display::fmt(e, f),
-            Error::BlockBadProofOfWork | Error::BlockBadTarget => f.write_str(error::Error::description(self)),
         }
     }
 }
@@ -85,7 +80,6 @@ impl error::Error for Error {
         match *self {
             Error::Encode(ref e) => Some(e),
             Error::Network(ref e) => Some(e),
-            Error::BlockBadProofOfWork | Error::BlockBadTarget => None
         }
     }
 
@@ -93,8 +87,6 @@ impl error::Error for Error {
         match *self {
             Error::Encode(ref e) => e.description(),
             Error::Network(ref e) => e.description(),
-            Error::BlockBadProofOfWork => "block target correct but not attained",
-            Error::BlockBadTarget => "block target incorrect",
         }
     }
 }

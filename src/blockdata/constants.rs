@@ -28,28 +28,15 @@ use blockdata::block::{Block, BlockHeader, Signature};
 use blockdata::script::Script;
 use network::constants::Network;
 use util::misc::hex_bytes;
-use util::uint::Uint256;
 
 /// The maximum allowable sequence number
 pub const MAX_SEQUENCE: u32 = 0xFFFFFFFF;
 /// How many satoshis are in "one bitcoin"
 pub const COIN_VALUE: u64 = 100_000_000;
-/// How many seconds between blocks we expect on average
-pub const TARGET_BLOCK_SPACING: u32 = 600;
-/// How many blocks between diffchanges
-pub const DIFFCHANGE_INTERVAL: u32 = 2016;
-/// How much time on average should occur between diffchanges
-pub const DIFFCHANGE_TIMESPAN: u32 = 14 * 24 * 3600;
 /// The maximum allowed weight for a block, see BIP 141 (network rule)
 pub const MAX_BLOCK_WEIGHT: u32 = 4_000_000;
 /// The minimum transaction weight for a valid serialized transaction
 pub const MIN_TRANSACTION_WEIGHT: u32 = 4 * 60;
-
-
-/// In Bitcoind this is insanely described as ~((u256)0 >> 32)
-pub fn max_target(_: Network) -> Uint256 {
-    Uint256::from_u64(0xFFFF).unwrap() << 208
-}
 
 /// The maximum value allowed in an output (useful for sanity checking,
 /// since keeping everything below this value should prevent overflows

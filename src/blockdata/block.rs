@@ -24,14 +24,9 @@ use std::io;
 
 use bitcoin_hashes::{sha256d, Hash};
 
-use util;
-use util::Error::{BlockBadTarget, BlockBadProofOfWork};
 use util::hash::{BitcoinHash, MerkleRoot, bitcoin_merkle_root};
-use util::uint::Uint256;
 use consensus::{encode, Decodable, Encodable};
-use network::constants::Network;
 use blockdata::transaction::Transaction;
-use blockdata::constants::max_target;
 use blockdata::script::Script;
 use bitcoin_hashes::HashEngine;
 
@@ -152,49 +147,6 @@ impl MerkleRoot for Block {
         let merkle_root = bitcoin_merkle_root(txids);
         println!("{:?}", merkle_root);
         root
-    }
-}
-
-impl BlockHeader {
-    /// Computes the target [0, T] that a blockhash must land in to be valid
-    pub fn target(&self) -> Uint256 {
-        Default::default()
-    }
-
-    /// Computes the target value in float format from Uint256 format.
-    pub fn compact_target_from_u256(_value: &Uint256) -> u32 {
-        1
-    }
-
-    /// Compute the popular "difficulty" measure for mining
-    pub fn difficulty(&self, network: Network) -> u64 {
-        (max_target(network) / self.target()).low_u64()
-    }
-
-    /// Checks that the proof-of-work for the block is valid.
-    pub fn validate_pow(&self, required_target: &Uint256) -> Result<(), util::Error> {
-        use byteorder::{ByteOrder, LittleEndian};
-
-        let target = &self.target();
-        if target != required_target {
-            return Err(BlockBadTarget);
-        }
-        let data: [u8; 32] = self.bitcoin_hash().into_inner();
-        let mut ret = [0u64; 4];
-        LittleEndian::read_u64_into(&data, &mut ret);
-        let hash = &Uint256(ret);
-        if hash <= target { Ok(()) } else { Err(BlockBadProofOfWork) }
-    }
-
-    /// Returns the total work of the block
-    pub fn work(&self) -> Uint256 {
-        // 2**256 / (target + 1) == ~target / (target+1) + 1    (eqn shamelessly stolen from bitcoind)
-        let mut ret = !self.target();
-        let mut ret1 = self.target();
-        ret1.increment();
-        ret = ret / ret1;
-        ret.increment();
-        ret
     }
 }
 

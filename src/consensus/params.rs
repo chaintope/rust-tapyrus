@@ -18,7 +18,6 @@
 //!
 
 use network::constants::Network;
-use util::uint::Uint256;
 
 #[derive(Debug, Clone)]
 /// Parameters that influence chain consensus.
