@@ -292,6 +292,21 @@ impl Transaction {
         sha256d::Hash::from_engine(enc)
     }
 
+    /// Computes an "immutable TXID".  The double SHA256 taken from a transaction 
+    /// after stripping it of all input scripts including their length prefixes.
+    pub fn maltxid(&self) -> sha256d::Hash {
+        let mut enc = sha256d::Hash::engine();
+        self.version.consensus_encode(&mut enc).unwrap();
+        VarInt(self.input.len() as u64).consensus_encode(&mut enc).unwrap();
+        for input in &self.input {
+            input.previous_output.consensus_encode(&mut enc).unwrap();
+            input.sequence.consensus_encode(&mut enc).unwrap();
+        }
+        self.output.consensus_encode(&mut enc).unwrap();
+        self.lock_time.consensus_encode(&mut enc).unwrap();
+        sha256d::Hash::from_engine(enc)
+    }
+
     /// Computes a signature hash for a given input index with a given sighash flag.
     /// To actually produce a scriptSig, this hash needs to be run through an
     /// ECDSA signer, the SigHashType appended to the resulting sig, and a
