@@ -796,6 +796,20 @@ mod tests {
     }
 
     #[test]
+    fn test_maltxid() {
+        // Paradium genesis block
+        let hex_tx = hex_bytes(
+            "0100000001000000000000000000000000000000000000000000000000000000\
+             000000000000000000240102210398c4a0689c455467589b5265da3b0cc16b63\
+             57a5c5f6c63f5dbed3ff079f3c50ffffffff0100f2052a010000001976a914cb\
+             111825061110d38b3d5b849dd24323d1f5559d88ac00000000"
+        ).unwrap();
+        let tx: Transaction = deserialize(&hex_tx).unwrap();
+        assert_eq!(format!("{:x}", tx.txid()), "efaf069367948e9e4c99ca04cf885f41cd8dce6b9dddd310c9034f5e65396323");
+        assert_eq!(format!("{:x}", tx.ntxid()), "c12d06b287c4d95968071733c9e0ab33d93e2c354bc77a56dc6119913732a5dc");
+        assert_eq!(format!("{:x}", tx.maltxid()), "18ab15aaa859c9030f8c449fa074a90eb04b02fc2aca5de0ebbe851e6886efd0");
+    }
+    #[test]
     #[cfg(feature = "serde")]
     fn test_txn_encode_decode() {
         let hex_tx = hex_bytes("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000").unwrap();
