@@ -139,7 +139,7 @@ impl MerkleRoot for Block {
     }
 
     fn immutable_merkle_root(&self) -> sha256d::Hash {
-        bitcoin_merkle_root(self.txdata.iter().map(|obj| obj.maltxid()).collect())
+        bitcoin_merkle_root(self.txdata.iter().map(|obj| obj.malfix_txid()).collect())
     }
 }
 
