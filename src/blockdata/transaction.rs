@@ -292,6 +292,21 @@ impl Transaction {
         sha256d::Hash::from_engine(enc)
     }
 
+    /// Computes an "immutable TXID".  The double SHA256 taken from a transaction 
+    /// after stripping it of all input scripts including their length prefixes.
+    pub fn malfix_txid(&self) -> sha256d::Hash {
+        let mut enc = sha256d::Hash::engine();
+        self.version.consensus_encode(&mut enc).unwrap();
+        VarInt(self.input.len() as u64).consensus_encode(&mut enc).unwrap();
+        for input in &self.input {
+            input.previous_output.consensus_encode(&mut enc).unwrap();
+            input.sequence.consensus_encode(&mut enc).unwrap();
+        }
+        self.output.consensus_encode(&mut enc).unwrap();
+        self.lock_time.consensus_encode(&mut enc).unwrap();
+        sha256d::Hash::from_engine(enc)
+    }
+
     /// Computes a signature hash for a given input index with a given sighash flag.
     /// To actually produce a scriptSig, this hash needs to be run through an
     /// ECDSA signer, the SigHashType appended to the resulting sig, and a
@@ -780,6 +795,20 @@ mod tests {
         assert_eq!(format!("{:x}", tx.txid()), "971ed48a62c143bbd9c87f4bafa2ef213cfa106c6e140f111931d0be307468dd");
     }
 
+    #[test]
+    fn test_malfix_txid() {
+        // Paradium genesis block
+        let hex_tx = hex_bytes(
+            "0100000001000000000000000000000000000000000000000000000000000000\
+             000000000000000000240102210398c4a0689c455467589b5265da3b0cc16b63\
+             57a5c5f6c63f5dbed3ff079f3c50ffffffff0100f2052a010000001976a914cb\
+             111825061110d38b3d5b849dd24323d1f5559d88ac00000000"
+        ).unwrap();
+        let tx: Transaction = deserialize(&hex_tx).unwrap();
+        assert_eq!(format!("{:x}", tx.txid()), "efaf069367948e9e4c99ca04cf885f41cd8dce6b9dddd310c9034f5e65396323");
+        assert_eq!(format!("{:x}", tx.ntxid()), "c12d06b287c4d95968071733c9e0ab33d93e2c354bc77a56dc6119913732a5dc");
+        assert_eq!(format!("{:x}", tx.malfix_txid()), "18ab15aaa859c9030f8c449fa074a90eb04b02fc2aca5de0ebbe851e6886efd0");
+    }
     #[test]
     #[cfg(feature = "serde")]
     fn test_txn_encode_decode() {
