@@ -51,6 +51,11 @@ impl Params {
                 rule_change_activation_threshold: 108, // 75%
                 miner_confirmation_window: 144,
             },
+            Network::Paradium => Params {
+                network: Network::Paradium,
+                rule_change_activation_threshold: 108, // 75%
+                miner_confirmation_window: 144,
+            }
         }
     }
 }

@@ -126,6 +126,20 @@ pub fn genesis_block(network: Network) -> Block {
                 txdata: txdata
             }
         }
+        Network::Paradium => {
+            let txdata = vec![bitcoin_genesis_tx()];
+            Block {
+                header: BlockHeader {
+                    version: 1,
+                    prev_blockhash: Default::default(),
+                    merkle_root: txdata[0].txid(),
+                    im_merkle_root: txdata[0].ntxid(),
+                    time: 1562925929,
+                    proof: Signature { signature: Script::new() },
+                },
+                txdata: txdata
+            }
+        }
     }
 }
 
@@ -185,6 +199,18 @@ mod test {
         assert_eq!(gen.header.time, 1296688602);
         assert_eq!(format!("{:x}", gen.header.bitcoin_hash()),
                    "2f90e0d9843be35112f9830d6e86bf2ef4dd92836979ac4aae1a6f41e0797588".to_string());
+    }
+
+    #[test]
+    fn paradium_genesis_full_block() {
+        let gen = genesis_block(Network::Paradium);
+        assert_eq!(gen.header.version, 1);
+        assert_eq!(gen.header.prev_blockhash, Default::default());
+        assert_eq!(format!("{:x}", gen.header.merkle_root),
+                  "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string());
+        assert_eq!(gen.header.time, 1562925929);
+        assert_eq!(format!("{:x}", gen.header.bitcoin_hash()),
+                   "78be4db611a1e7394c14b98fdf9a6f0db847efbfe10335bc681bd3d3a105d34e".to_string());
     }
 }
 
