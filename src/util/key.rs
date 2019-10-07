@@ -10,6 +10,11 @@
 // along with this software.
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
+// Changes for rust-tapyrus is licensed as below.
+// Copyright (c) 2019 Chaintope Inc.
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+//
 
 //! Bitcoin Keys
 //!
