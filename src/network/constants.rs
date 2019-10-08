@@ -33,8 +33,8 @@
 //! # Example: encoding a network's magic bytes
 //!
 //! ```rust
-//! use bitcoin::network::constants::Network;
-//! use bitcoin::consensus::encode::serialize;
+//! use tapyrus::network::constants::Network;
+//! use tapyrus::consensus::encode::serialize;
 //!
 //! let network = Network::Bitcoin;
 //! let bytes = serialize(&network.magic());
@@ -47,7 +47,7 @@ pub const PROTOCOL_VERSION: u32 = 70001;
 /// Bitfield of services provided by this node
 pub const SERVICES: u64 = 0;
 /// User agent as it appears in the version message
-pub const USER_AGENT: &'static str = "bitcoin-rust v0.1";
+pub const USER_AGENT: &'static str = "tapyrus-rust v0.1";
 
 user_enum! {
     /// The cryptocurrency to act on
@@ -70,7 +70,7 @@ impl Network {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::network::constants::Network;
+    /// use tapyrus::network::constants::Network;
     ///
     /// assert_eq!(Some(Network::Bitcoin), Network::from_magic(0x00F0FF01));
     /// assert_eq!(None, Network::from_magic(0xFFFFFFFF));
@@ -92,7 +92,7 @@ impl Network {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::network::constants::Network;
+    /// use tapyrus::network::constants::Network;
     ///
     /// let network = Network::Bitcoin;
     /// assert_eq!(network.magic(), 0x00F0FF01);

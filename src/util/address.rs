@@ -24,11 +24,11 @@
 //!
 //! ```rust
 //! extern crate secp256k1;
-//! extern crate bitcoin;
+//! extern crate tapyrus;
 //!
-//! use bitcoin::network::constants::Network;
-//! use bitcoin::util::address::Address;
-//! use bitcoin::util::key;
+//! use tapyrus::network::constants::Network;
+//! use tapyrus::util::address::Address;
+//! use tapyrus::util::key;
 //! use secp256k1::Secp256k1;
 //! use secp256k1::rand::thread_rng;
 //!
