@@ -23,7 +23,7 @@
 //! software.
 //!
 
-#![crate_name = "bitcoin"]
+#![crate_name = "tapyrus"]
 #![crate_type = "dylib"]
 #![crate_type = "rlib"]
 

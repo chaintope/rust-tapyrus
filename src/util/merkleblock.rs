@@ -32,10 +32,10 @@
 //!
 //! ```rust
 //! extern crate bitcoin_hashes;
-//! extern crate bitcoin;
+//! extern crate tapyrus;
 //! use bitcoin_hashes::sha256d;
 //! use bitcoin_hashes::hex::FromHex;
-//! use bitcoin::{Block, MerkleBlock};
+//! use tapyrus::{Block, MerkleBlock};
 //!
 //! # fn main() {
 //! // Get the proof from a bitcoind by running in the terminal:
@@ -46,7 +46,7 @@
 //!     4667ed377d3b500c1622d911c3a5b0ab10ca0e2ac89c9460cb33a5914c000200000002252bf9d75c4f481ebb\
 //!     6278d708257d1f12beb6dd30301d26c623f789b2ba6fc0e2d32adb5f8ca820731dff234a84e78ec30bce4ec6\
 //!     9dbd562d0b2b8266bf4e5a0105").unwrap();
-//! let mb: MerkleBlock = bitcoin::consensus::deserialize(&mb_bytes).unwrap();
+//! let mb: MerkleBlock = tapyrus::consensus::deserialize(&mb_bytes).unwrap();
 //!
 //! // Authenticate and extract matched transaction ids
 //! let mut matches: Vec<sha256d::Hash> = vec![];
@@ -141,10 +141,10 @@ impl PartialMerkleTree {
     ///
     /// ```rust
     /// extern crate bitcoin_hashes;
-    /// extern crate bitcoin;
+    /// extern crate tapyrus;
     /// use bitcoin_hashes::sha256d;
     /// use bitcoin_hashes::hex::FromHex;
-    /// use bitcoin::util::merkleblock::PartialMerkleTree;
+    /// use tapyrus::util::merkleblock::PartialMerkleTree;
     ///
     /// # fn main() {
     /// // Block 80000
@@ -416,10 +416,10 @@ impl MerkleBlock {
     ///
     /// ```rust
     /// extern crate bitcoin_hashes;
-    /// extern crate bitcoin;
+    /// extern crate tapyrus;
     /// use bitcoin_hashes::sha256d;
     /// use bitcoin_hashes::hex::FromHex;
-    /// use bitcoin::{Block, MerkleBlock};
+    /// use tapyrus::{Block, MerkleBlock};
     ///
     /// # fn main() {
     /// // Block 80000
@@ -433,7 +433,7 @@ impl MerkleBlock {
     ///     00004948304502206e21798a42fae0e854281abd38bacd1aeed3ee3738d9e1446618c4571d1090db0221\
     ///     00e2ac980643b0b82c0e88ffdfec6b64e3e6ba35e7ba5fdd7d5d6cc8d25c6b241501ffffffff0100f205\
     ///     2a010000001976a914404371705fa9bd789a2fcd52d2c580b65d35549d88ac00000000").unwrap();
-    /// let block: Block = bitcoin::consensus::deserialize(&block_bytes).unwrap();
+    /// let block: Block = tapyrus::consensus::deserialize(&block_bytes).unwrap();
     ///
     /// // Create a merkle block containing a single transaction
     /// let txid = sha256d::Hash::from_hex(
