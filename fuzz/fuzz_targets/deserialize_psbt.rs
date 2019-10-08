@@ -1,7 +1,7 @@
-extern crate bitcoin;
+extern crate tapyrus;
 
 fn do_test(data: &[u8]) {
-    let _: Result<bitcoin::util::psbt::PartiallySignedTransaction, _> = bitcoin::consensus::encode::deserialize(data);
+    let _: Result<tapyrus::util::psbt::PartiallySignedTransaction, _> = tapyrus::consensus::encode::deserialize(data);
 }
 
 #[cfg(feature = "afl")]

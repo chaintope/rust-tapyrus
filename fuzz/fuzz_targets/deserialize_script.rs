@@ -1,7 +1,7 @@
-extern crate bitcoin;
+extern crate tapyrus;
 
-use bitcoin::blockdata::script;
-use bitcoin::consensus::encode;
+use tapyrus::blockdata::script;
+use tapyrus::consensus::encode;
 
 fn do_test(data: &[u8]) {
     let s: Result<script::Script, _> = encode::deserialize(data);

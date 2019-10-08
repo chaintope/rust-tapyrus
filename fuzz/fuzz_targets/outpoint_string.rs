@@ -1,8 +1,8 @@
 
-extern crate bitcoin;
+extern crate tapyrus;
 
-use bitcoin::blockdata::transaction::OutPoint;
-use bitcoin::consensus::encode;
+use tapyrus::blockdata::transaction::OutPoint;
+use tapyrus::consensus::encode;
 
 use std::str::FromStr;
 
