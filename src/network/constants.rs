@@ -43,7 +43,7 @@
 //! ```
 
 /// Version of the protocol as appearing in network message headers
-pub const PROTOCOL_VERSION: u32 = 70001;
+pub const PROTOCOL_VERSION: u32 = 10000;
 /// Bitfield of services provided by this node
 pub const SERVICES: u64 = 0;
 /// User agent as it appears in the version message
