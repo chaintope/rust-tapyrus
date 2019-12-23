@@ -51,7 +51,13 @@ pub struct CFHeaders {
     /// The filter hashes for each block in the requested range
     pub filter_hashes: Vec<sha256d::Hash>,
 }
-impl_consensus_encoding!(CFHeaders, filter_type, stop_hash, previous_filter, filter_hashes);
+impl_consensus_encoding!(
+    CFHeaders,
+    filter_type,
+    stop_hash,
+    previous_filter,
+    filter_hashes
+);
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 /// getcfcheckpt message

@@ -822,7 +822,8 @@ impl ops::Sub for SignedAmount {
     type Output = SignedAmount;
 
     fn sub(self, rhs: SignedAmount) -> Self::Output {
-        self.checked_sub(rhs).expect("SignedAmount subtraction error")
+        self.checked_sub(rhs)
+            .expect("SignedAmount subtraction error")
     }
 }
 
@@ -836,7 +837,8 @@ impl ops::Rem<i64> for SignedAmount {
     type Output = SignedAmount;
 
     fn rem(self, modulus: i64) -> Self {
-        self.checked_rem(modulus).expect("SignedAmount remainder error")
+        self.checked_rem(modulus)
+            .expect("SignedAmount remainder error")
     }
 }
 
@@ -850,7 +852,8 @@ impl ops::Mul<i64> for SignedAmount {
     type Output = SignedAmount;
 
     fn mul(self, rhs: i64) -> Self::Output {
-        self.checked_mul(rhs).expect("SignedAmount multiplication error")
+        self.checked_mul(rhs)
+            .expect("SignedAmount multiplication error")
     }
 }
 
@@ -1114,17 +1117,38 @@ mod tests {
 
         assert_eq!(f(-100.0, D::MilliSatoshi), Err(ParseAmountError::Negative));
         assert_eq!(f(11.22, D::Satoshi), Err(ParseAmountError::TooPrecise));
-        assert_eq!(sf(-100.0, D::MilliSatoshi), Err(ParseAmountError::TooPrecise));
-        assert_eq!(sf(-100.0, D::MilliSatoshi), Err(ParseAmountError::TooPrecise));
-        assert_eq!(f(42.123456781, D::Bitcoin), Err(ParseAmountError::TooPrecise));
-        assert_eq!(sf(-184467440738.0, D::Bitcoin), Err(ParseAmountError::TooBig));
-        assert_eq!(f(18446744073709551617.0, D::Satoshi), Err(ParseAmountError::TooBig));
         assert_eq!(
-            f(SignedAmount::max_value().to_float_in(D::Satoshi) + 1.0, D::Satoshi),
+            sf(-100.0, D::MilliSatoshi),
+            Err(ParseAmountError::TooPrecise)
+        );
+        assert_eq!(
+            sf(-100.0, D::MilliSatoshi),
+            Err(ParseAmountError::TooPrecise)
+        );
+        assert_eq!(
+            f(42.123456781, D::Bitcoin),
+            Err(ParseAmountError::TooPrecise)
+        );
+        assert_eq!(
+            sf(-184467440738.0, D::Bitcoin),
             Err(ParseAmountError::TooBig)
         );
         assert_eq!(
-            f(Amount::max_value().to_float_in(D::Satoshi) + 1.0, D::Satoshi),
+            f(18446744073709551617.0, D::Satoshi),
+            Err(ParseAmountError::TooBig)
+        );
+        assert_eq!(
+            f(
+                SignedAmount::max_value().to_float_in(D::Satoshi) + 1.0,
+                D::Satoshi
+            ),
+            Err(ParseAmountError::TooBig)
+        );
+        assert_eq!(
+            f(
+                Amount::max_value().to_float_in(D::Satoshi) + 1.0,
+                D::Satoshi
+            ),
             Err(ParseAmountError::TooBig)
         );
 
@@ -1172,15 +1196,27 @@ mod tests {
         assert_eq!(Amount::ONE_BTC.to_string_in(D::Bitcoin), "1.00000000");
         assert_eq!(Amount::ONE_BTC.to_string_in(D::Satoshi), "100000000");
         assert_eq!(Amount::ONE_SAT.to_string_in(D::Bitcoin), "0.00000001");
-        assert_eq!(SignedAmount::from_sat(-42).to_string_in(D::Bitcoin), "-0.00000042");
+        assert_eq!(
+            SignedAmount::from_sat(-42).to_string_in(D::Bitcoin),
+            "-0.00000042"
+        );
 
-        assert_eq!(Amount::ONE_BTC.to_string_with_denomination(D::Bitcoin), "1.00000000 BTC");
-        assert_eq!(Amount::ONE_SAT.to_string_with_denomination(D::MilliSatoshi), "1000 msat");
+        assert_eq!(
+            Amount::ONE_BTC.to_string_with_denomination(D::Bitcoin),
+            "1.00000000 BTC"
+        );
+        assert_eq!(
+            Amount::ONE_SAT.to_string_with_denomination(D::MilliSatoshi),
+            "1000 msat"
+        );
         assert_eq!(
             SignedAmount::ONE_BTC.to_string_with_denomination(D::Satoshi),
             "100000000 satoshi"
         );
-        assert_eq!(Amount::ONE_SAT.to_string_with_denomination(D::Bitcoin), "0.00000001 BTC");
+        assert_eq!(
+            Amount::ONE_SAT.to_string_with_denomination(D::Bitcoin),
+            "0.00000001 BTC"
+        );
         assert_eq!(
             SignedAmount::from_sat(-42).to_string_with_denomination(D::Bitcoin),
             "-0.00000042 BTC"
@@ -1249,10 +1285,7 @@ mod tests {
                 samt: SignedAmount::from_sat(-123456789),
             },
             &[
-                serde_test::Token::Struct {
-                    name: "T",
-                    len: 2,
-                },
+                serde_test::Token::Struct { name: "T", len: 2 },
                 serde_test::Token::Str("amt"),
                 serde_test::Token::U64(123456789),
                 serde_test::Token::Str("samt"),
@@ -1292,9 +1325,15 @@ mod tests {
         // errors
         let t: Result<T, serde_json::Error> =
             serde_json::from_str("{\"amt\": 1000000.000000001, \"samt\": 1}");
-        assert!(t.unwrap_err().to_string().contains(&ParseAmountError::TooPrecise.to_string()));
+        assert!(t
+            .unwrap_err()
+            .to_string()
+            .contains(&ParseAmountError::TooPrecise.to_string()));
         let t: Result<T, serde_json::Error> = serde_json::from_str("{\"amt\": -1, \"samt\": 1}");
-        assert!(t.unwrap_err().to_string().contains(&ParseAmountError::Negative.to_string()));
+        assert!(t
+            .unwrap_err()
+            .to_string()
+            .contains(&ParseAmountError::Negative.to_string()));
     }
 
     #[cfg(feature = "serde")]

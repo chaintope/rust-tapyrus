@@ -45,7 +45,7 @@ pub struct VersionMessage {
     /// Whether the receiving peer should relay messages to the sender; used
     /// if the sender is bandwidth-limited and would like to support bloom
     /// filtering. Defaults to true.
-    pub relay: bool
+    pub relay: bool,
 }
 
 impl VersionMessage {
@@ -74,9 +74,18 @@ impl VersionMessage {
     }
 }
 
-impl_consensus_encoding!(VersionMessage, version, services, timestamp,
-                         receiver, sender, nonce,
-                         user_agent, start_height, relay);
+impl_consensus_encoding!(
+    VersionMessage,
+    version,
+    services,
+    timestamp,
+    receiver,
+    sender,
+    nonce,
+    user_agent,
+    start_height,
+    relay
+);
 
 #[cfg(test)]
 mod tests {

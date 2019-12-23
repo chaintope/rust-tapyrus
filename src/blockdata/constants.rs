@@ -26,11 +26,11 @@
 
 use std::default::Default;
 
+use blockdata::block::{Block, BlockHeader, Signature};
 use blockdata::opcodes;
 use blockdata::script;
-use blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn};
-use blockdata::block::{Block, BlockHeader, Signature};
 use blockdata::script::Script;
+use blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
 use network::constants::Network;
 use util::misc::hex_bytes;
 
@@ -61,10 +61,11 @@ fn bitcoin_genesis_tx() -> Transaction {
     };
 
     // Inputs
-    let in_script = script::Builder::new().push_scriptint(486604799)
-                                          .push_scriptint(4)
-                                          .push_slice(b"The Times 03/Jan/2009 Chancellor on brink of second bailout for banks")
-                                          .into_script();
+    let in_script = script::Builder::new()
+        .push_scriptint(486604799)
+        .push_scriptint(4)
+        .push_slice(b"The Times 03/Jan/2009 Chancellor on brink of second bailout for banks")
+        .into_script();
     ret.input.push(TxIn {
         previous_output: OutPoint::null(),
         script_sig: in_script,
@@ -79,7 +80,7 @@ fn bitcoin_genesis_tx() -> Transaction {
         .into_script();
     ret.output.push(TxOut {
         value: 50 * COIN_VALUE,
-        script_pubkey: out_script
+        script_pubkey: out_script,
     });
 
     // end
@@ -98,9 +99,11 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root: txdata[0].txid(),
                     im_merkle_root: txdata[0].ntxid(),
                     time: 1231006505,
-                    proof: Signature { signature: Script::new() },
+                    proof: Signature {
+                        signature: Script::new(),
+                    },
                 },
-                txdata: txdata
+                txdata: txdata,
             }
         }
         Network::Testnet => {
@@ -112,9 +115,11 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root: txdata[0].txid(),
                     im_merkle_root: txdata[0].ntxid(),
                     time: 1296688602,
-                    proof: Signature { signature: Script::new() },
+                    proof: Signature {
+                        signature: Script::new(),
+                    },
                 },
-                txdata: txdata
+                txdata: txdata,
             }
         }
         Network::Regtest => {
@@ -126,9 +131,11 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root: txdata[0].txid(),
                     im_merkle_root: txdata[0].ntxid(),
                     time: 1296688602,
-                    proof: Signature { signature: Script::new() },
+                    proof: Signature {
+                        signature: Script::new(),
+                    },
                 },
-                txdata: txdata
+                txdata: txdata,
             }
         }
         Network::Paradium => {
@@ -140,9 +147,11 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root: txdata[0].txid(),
                     im_merkle_root: txdata[0].ntxid(),
                     time: 1562925929,
-                    proof: Signature { signature: Script::new() },
+                    proof: Signature {
+                        signature: Script::new(),
+                    },
                 },
-                txdata: txdata
+                txdata: txdata,
             }
         }
     }
@@ -150,13 +159,13 @@ pub fn genesis_block(network: Network) -> Block {
 
 #[cfg(test)]
 mod test {
-    use std::default::Default;
     use hex::decode as hex_decode;
+    use std::default::Default;
 
-    use network::constants::Network;
+    use blockdata::constants::{bitcoin_genesis_tx, genesis_block};
+    use blockdata::constants::{COIN_VALUE, MAX_SEQUENCE};
     use consensus::encode::serialize;
-    use blockdata::constants::{genesis_block, bitcoin_genesis_tx};
-    use blockdata::constants::{MAX_SEQUENCE, COIN_VALUE};
+    use network::constants::Network;
     use util::hash::BitcoinHash;
 
     #[test]
@@ -177,8 +186,10 @@ mod test {
         assert_eq!(gen.output[0].value, 50 * COIN_VALUE);
         assert_eq!(gen.lock_time, 0);
 
-        assert_eq!(format!("{:x}", gen.bitcoin_hash()),
-                   "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string());
+        assert_eq!(
+            format!("{:x}", gen.bitcoin_hash()),
+            "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string()
+        );
     }
 
     #[test]
@@ -187,11 +198,15 @@ mod test {
 
         assert_eq!(gen.header.version, 1);
         assert_eq!(gen.header.prev_blockhash, Default::default());
-        assert_eq!(format!("{:x}", gen.header.merkle_root),
-                   "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string());
+        assert_eq!(
+            format!("{:x}", gen.header.merkle_root),
+            "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string()
+        );
         assert_eq!(gen.header.time, 1231006505);
-        assert_eq!(format!("{:x}", gen.header.bitcoin_hash()),
-                   "3c8890361aca183ecb0059ae78e4e57dc514a689588aa7cb97fdc3a6601d08a4".to_string());
+        assert_eq!(
+            format!("{:x}", gen.header.bitcoin_hash()),
+            "3c8890361aca183ecb0059ae78e4e57dc514a689588aa7cb97fdc3a6601d08a4".to_string()
+        );
     }
 
     #[test]
@@ -199,11 +214,15 @@ mod test {
         let gen = genesis_block(Network::Testnet);
         assert_eq!(gen.header.version, 1);
         assert_eq!(gen.header.prev_blockhash, Default::default());
-        assert_eq!(format!("{:x}", gen.header.merkle_root),
-                  "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string());
+        assert_eq!(
+            format!("{:x}", gen.header.merkle_root),
+            "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string()
+        );
         assert_eq!(gen.header.time, 1296688602);
-        assert_eq!(format!("{:x}", gen.header.bitcoin_hash()),
-                   "2f90e0d9843be35112f9830d6e86bf2ef4dd92836979ac4aae1a6f41e0797588".to_string());
+        assert_eq!(
+            format!("{:x}", gen.header.bitcoin_hash()),
+            "2f90e0d9843be35112f9830d6e86bf2ef4dd92836979ac4aae1a6f41e0797588".to_string()
+        );
     }
 
     #[test]
@@ -211,11 +230,14 @@ mod test {
         let gen = genesis_block(Network::Paradium);
         assert_eq!(gen.header.version, 1);
         assert_eq!(gen.header.prev_blockhash, Default::default());
-        assert_eq!(format!("{:x}", gen.header.merkle_root),
-                  "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string());
+        assert_eq!(
+            format!("{:x}", gen.header.merkle_root),
+            "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string()
+        );
         assert_eq!(gen.header.time, 1562925929);
-        assert_eq!(format!("{:x}", gen.header.bitcoin_hash()),
-                   "78be4db611a1e7394c14b98fdf9a6f0db847efbfe10335bc681bd3d3a105d34e".to_string());
+        assert_eq!(
+            format!("{:x}", gen.header.bitcoin_hash()),
+            "78be4db611a1e7394c14b98fdf9a6f0db847efbfe10335bc681bd3d3a105d34e".to_string()
+        );
     }
 }
-

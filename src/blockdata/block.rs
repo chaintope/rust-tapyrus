@@ -29,12 +29,11 @@ use std::io;
 
 use bitcoin_hashes::{sha256d, Hash};
 
-use util::hash::{BitcoinHash, MerkleRoot, bitcoin_merkle_root};
-use consensus::{encode, Decodable, Encodable};
-use blockdata::transaction::Transaction;
-use blockdata::script::Script;
 use bitcoin_hashes::HashEngine;
-
+use blockdata::script::Script;
+use blockdata::transaction::Transaction;
+use consensus::{encode, Decodable, Encodable};
+use util::hash::{bitcoin_merkle_root, BitcoinHash, MerkleRoot};
 
 /// A block header, which contains all the block's information except
 /// the actual transactions
@@ -71,10 +70,7 @@ impl Decodable for Signature {
 
 impl Encodable for Signature {
     #[inline]
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, encode::Error> {
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
         self.signature.consensus_encode(&mut s)
     }
 }
@@ -86,35 +82,47 @@ pub struct Block {
     /// The block header
     pub header: BlockHeader,
     /// List of transactions contained in the block
-    pub txdata: Vec<Transaction>
+    pub txdata: Vec<Transaction>,
 }
 
 impl Block {
     /// check if merkle root of header matches merkle root of the transaction list
-    pub fn check_merkle_root (&self) -> bool {
+    pub fn check_merkle_root(&self) -> bool {
         self.header.merkle_root == self.merkle_root()
     }
 
     /// check if witness commitment in coinbase is matching the transaction list
     pub fn check_witness_commitment(&self) -> bool {
-
         // witness commitment is optional if there are no transactions using SegWit in the block
-        if self.txdata.iter().all(|t| t.input.iter().all(|i| i.witness.is_empty())) {
+        if self
+            .txdata
+            .iter()
+            .all(|t| t.input.iter().all(|i| i.witness.is_empty()))
+        {
             return true;
         }
         if self.txdata.len() > 0 {
             let coinbase = &self.txdata[0];
             if coinbase.is_coin_base() {
                 // commitment is in the last output that starts with below magic
-                if let Some(pos) = coinbase.output.iter()
-                    .rposition(|o| {
-                        o.script_pubkey.len () >= 38 &&
-                        o.script_pubkey[0..6] == [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed] }) {
-                    let commitment = sha256d::Hash::from_slice(&coinbase.output[pos].script_pubkey.as_bytes()[6..38]).unwrap();
+                if let Some(pos) = coinbase.output.iter().rposition(|o| {
+                    o.script_pubkey.len() >= 38
+                        && o.script_pubkey[0..6] == [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed]
+                }) {
+                    let commitment = sha256d::Hash::from_slice(
+                        &coinbase.output[pos].script_pubkey.as_bytes()[6..38],
+                    )
+                    .unwrap();
                     // witness reserved value is in coinbase input witness
-                    if coinbase.input[0].witness.len() == 1 && coinbase.input[0].witness[0].len() == 32 {
+                    if coinbase.input[0].witness.len() == 1
+                        && coinbase.input[0].witness[0].len() == 32
+                    {
                         let witness_root = self.witness_root();
-                        return commitment == Self::compute_witness_commitment(&witness_root, coinbase.input[0].witness[0].as_slice())
+                        return commitment
+                            == Self::compute_witness_commitment(
+                                &witness_root,
+                                coinbase.input[0].witness[0].as_slice(),
+                            );
                     }
                 }
             }
@@ -123,7 +131,10 @@ impl Block {
     }
 
     /// compute witness commitment for the transaction list
-    pub fn compute_witness_commitment (witness_root: &sha256d::Hash, witness_reserved_value: &[u8]) -> sha256d::Hash {
+    pub fn compute_witness_commitment(
+        witness_root: &sha256d::Hash,
+        witness_reserved_value: &[u8],
+    ) -> sha256d::Hash {
         let mut encoder = sha256d::Hash::engine();
         witness_root.consensus_encode(&mut encoder).unwrap();
         encoder.input(witness_reserved_value);
@@ -132,8 +143,8 @@ impl Block {
 
     /// Merkle root of transactions hashed for witness
     pub fn witness_root(&self) -> sha256d::Hash {
-        let mut txhashes = vec!(sha256d::Hash::default());
-        txhashes.extend(self.txdata.iter().skip(1).map(|t|t.bitcoin_hash()));
+        let mut txhashes = vec![sha256d::Hash::default()];
+        txhashes.extend(self.txdata.iter().skip(1).map(|t| t.bitcoin_hash()));
         bitcoin_merkle_root(txhashes)
     }
 }
@@ -161,7 +172,15 @@ impl BitcoinHash for Block {
     }
 }
 
-impl_consensus_encoding!(BlockHeader, version, prev_blockhash, merkle_root, im_merkle_root, time, proof);
+impl_consensus_encoding!(
+    BlockHeader,
+    version,
+    prev_blockhash,
+    merkle_root,
+    im_merkle_root,
+    time,
+    proof
+);
 impl_consensus_encoding!(Block, header, txdata);
 
 #[cfg(test)]
@@ -177,8 +196,10 @@ mod tests {
         let some_block = hex_decode("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c364243a74762685f916378ce87c5384ad39b594aca206426d9d244ef51d644d2d74d6e49000201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac00000000").unwrap();
         let cutoff_block = hex_decode("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c364243a74762685f916378ce87c5384ad39b594aca206426d9d244ef51d644d2d74d6e49000201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac").unwrap();
 
-        let prevhash = hex_decode("4ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000").unwrap();
-        let merkle = hex_decode("bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c").unwrap();
+        let prevhash =
+            hex_decode("4ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000").unwrap();
+        let merkle =
+            hex_decode("bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c").unwrap();
 
         let decode: Result<Block, _> = deserialize(&some_block);
         let bad_decode: Result<Block, _> = deserialize(&cutoff_block);
@@ -189,7 +210,10 @@ mod tests {
         assert_eq!(real_decode.header.version, 1);
         assert_eq!(serialize(&real_decode.header.prev_blockhash), prevhash);
         assert_eq!(real_decode.header.merkle_root, real_decode.merkle_root());
-        assert_eq!(real_decode.header.im_merkle_root, real_decode.immutable_merkle_root());
+        assert_eq!(
+            real_decode.header.im_merkle_root,
+            real_decode.immutable_merkle_root()
+        );
         assert_eq!(serialize(&real_decode.header.merkle_root), merkle);
         assert_eq!(real_decode.header.time, 1231965655);
         // [test] TODO: check the transaction data
@@ -207,16 +231,21 @@ mod tests {
 
         let decode: Result<Block, _> = deserialize(&segwit_block);
 
-        let prevhash = hex_decode("2aa2f2ca794ccbd40c16e2f3333f6b8b683f9e7179b2c4d74906000000000000").unwrap();
-        let merkle = hex_decode("10bc26e70a2f672ad420a6153dd0c28b40a6002c55531bfc99bf8994a8e8f67e").unwrap();
+        let prevhash =
+            hex_decode("2aa2f2ca794ccbd40c16e2f3333f6b8b683f9e7179b2c4d74906000000000000").unwrap();
+        let merkle =
+            hex_decode("10bc26e70a2f672ad420a6153dd0c28b40a6002c55531bfc99bf8994a8e8f67e").unwrap();
 
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
-        assert_eq!(real_decode.header.version, 0x20000000);  // VERSIONBITS but no bits set
+        assert_eq!(real_decode.header.version, 0x20000000); // VERSIONBITS but no bits set
         assert_eq!(serialize(&real_decode.header.prev_blockhash), prevhash);
         assert_eq!(serialize(&real_decode.header.merkle_root), merkle);
         assert_eq!(real_decode.header.merkle_root, real_decode.merkle_root());
-        assert_eq!(real_decode.header.im_merkle_root, real_decode.immutable_merkle_root());
+        assert_eq!(
+            real_decode.header.im_merkle_root,
+            real_decode.immutable_merkle_root()
+        );
         assert_eq!(real_decode.header.time, 1472004949);
         // [test] TODO: check the transaction data
 
@@ -225,4 +254,3 @@ mod tests {
         assert_eq!(serialize(&real_decode), segwit_block);
     }
 }
-
