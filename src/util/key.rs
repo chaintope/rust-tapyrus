@@ -25,7 +25,7 @@ use std::fmt::{self, Write};
 use std::str::FromStr;
 use std::{io, ops};
 
-use consensus::encode;
+use consensus::{encode, Decodable, Encodable};
 use network::constants::Network;
 use secp256k1::{self, Secp256k1};
 use util::base58;
@@ -273,6 +273,21 @@ impl ::serde::Serialize for PublicKey {
     }
 }
 
+impl Decodable for PublicKey {
+    #[inline]
+    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
+        let s: Vec<u8> = Decodable::consensus_decode(d)?;
+        PublicKey::from_slice(&s[..])
+    }
+}
+
+impl Encodable for PublicKey {
+    #[inline]
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
+        self.to_bytes().consensus_encode(&mut s)
+    }
+}
+
 #[cfg(feature = "serde")]
 impl<'de> ::serde::Deserialize<'de> for PublicKey {
     fn deserialize<D: ::serde::Deserializer<'de>>(d: D) -> Result<PublicKey, D::Error> {
@@ -433,5 +448,30 @@ mod tests {
         assert_tokens(&pk.readable(), &[Token::BorrowedStr(PK_STR)]);
         assert_tokens(&pk_u.compact(), &[Token::BorrowedBytes(&PK_BYTES_U[..])]);
         assert_tokens(&pk_u.readable(), &[Token::BorrowedStr(PK_STR_U)]);
+    }
+
+    #[test]
+    fn test_encode() {
+        use consensus::encode::{Decodable, Encodable};
+
+        let pk = PublicKey::from_str(
+            "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af",
+        )
+        .unwrap();
+        let mut s = Vec::new();
+        // let mut s = String::new();
+        pk.consensus_encode(&mut s);
+        let encoded = s
+            .iter()
+            .map(|x| format!("{:02x}", x))
+            .collect::<Vec<String>>()
+            .join("");
+        assert_eq!(
+            "21032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af",
+            encoded
+        );
+
+        let decoded = PublicKey::consensus_decode(&s[..]).unwrap();
+        assert_eq!(decoded, pk);
     }
 }
