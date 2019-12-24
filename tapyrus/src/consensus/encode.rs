@@ -41,6 +41,8 @@ use crate::taproot::TapLeafHash;
 pub enum Error {
     /// And I/O error.
     Io(io::Error),
+    /// key error
+    Key(crate::crypto::key::Error),
     /// Tried to allocate an oversized vector.
     OversizedVectorAllocation {
         /// The capacity requested.
@@ -69,6 +71,7 @@ impl fmt::Display for Error {
 
         match *self {
             Io(ref e) => write_err!(f, "IO error"; e),
+            Error::Key(ref e) => write!(f, "Key error: {}", e),
             OversizedVectorAllocation { requested: ref r, max: ref m } =>
                 write!(f, "allocation of oversized vector: requested {}, maximum {}", r, m),
             InvalidChecksum { expected: ref e, actual: ref a } =>
@@ -88,6 +91,7 @@ impl std::error::Error for Error {
 
         match self {
             Io(e) => Some(e),
+            Error::Key(ref e) => Some(e),
             OversizedVectorAllocation { .. }
             | InvalidChecksum { .. }
             | NonMinimalVarInt

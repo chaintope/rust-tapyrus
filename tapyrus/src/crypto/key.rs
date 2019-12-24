@@ -21,6 +21,7 @@ use crate::network::Network;
 use crate::prelude::*;
 use crate::taproot::{TapNodeHash, TapTweakHash};
 use crate::{base58, io};
+use crate::consensus::{encode, Decodable, Encodable};
 
 /// A Bitcoin ECDSA public key
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -428,6 +429,22 @@ impl<'de> serde::Deserialize<'de> for PrivateKey {
         d.deserialize_str(WifVisitor)
     }
 }
+
+impl Decodable for PublicKey {
+    #[inline]
+    fn consensus_decode<D: io::Read + ?Sized>(d: &mut D) -> Result<Self, encode::Error> {
+        let s: Vec<u8> = Decodable::consensus_decode(d)?;
+        PublicKey::from_slice(&s[..]).map_err(encode::Error::Key)
+    }
+}
+
+impl Encodable for PublicKey {
+    #[inline]
+    fn consensus_encode<S: io::Write + ?Sized>(&self, mut s: &mut S) -> Result<usize, io::Error> {
+        self.to_bytes().consensus_encode(&mut s)
+    }
+}
+
 
 #[cfg(feature = "serde")]
 #[allow(clippy::collapsible_else_if)] // Aids readability.
@@ -1118,5 +1135,30 @@ mod tests {
         expected.extend(&secp256k1::constants::GENERATOR_X);
         expected.extend(&secp256k1::constants::GENERATOR_Y);
         assert_eq!(&expected[..], &g.inner.serialize_uncompressed()[..]);
+    }
+
+    #[test]
+    fn test_encode() {
+        use crate::consensus::encode::{Decodable, Encodable};
+
+        let pk = PublicKey::from_str(
+            "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af",
+        )
+        .unwrap();
+        let mut s = Vec::new();
+        // let mut s = String::new();
+        pk.consensus_encode(&mut s);
+        let encoded = s
+            .iter()
+            .map(|x| format!("{:02x}", x))
+            .collect::<Vec<String>>()
+            .join("");
+        assert_eq!(
+            "21032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af",
+            encoded
+        );
+
+        let decoded = PublicKey::consensus_decode(&mut &s[..]).unwrap();
+        assert_eq!(decoded, pk);
     }
 }
