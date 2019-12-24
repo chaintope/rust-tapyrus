@@ -82,7 +82,7 @@ impl Network {
             0x74839A75 => Some(Network::Testnet),
             0x74979A73 => Some(Network::Regtest),
             0x64F0FF01 => Some(Network::Paradium),
-            _ => None
+            _ => None,
         }
     }
 
@@ -150,18 +150,17 @@ mod tests {
         );
     }
 
-  #[test]
-  fn string_test() {
-      assert_eq!(Network::Bitcoin.to_string(), "bitcoin");
-      assert_eq!(Network::Testnet.to_string(), "testnet");
-      assert_eq!(Network::Regtest.to_string(), "regtest");
-      assert_eq!(Network::Paradium.to_string(), "paradium");
+    #[test]
+    fn string_test() {
+        assert_eq!(Network::Bitcoin.to_string(), "bitcoin");
+        assert_eq!(Network::Testnet.to_string(), "testnet");
+        assert_eq!(Network::Regtest.to_string(), "regtest");
+        assert_eq!(Network::Paradium.to_string(), "paradium");
 
-      assert_eq!("bitcoin".parse::<Network>().unwrap(), Network::Bitcoin);
-      assert_eq!("testnet".parse::<Network>().unwrap(), Network::Testnet);
-      assert_eq!("regtest".parse::<Network>().unwrap(), Network::Regtest);
-      assert_eq!("paradium".parse::<Network>().unwrap(), Network::Paradium);
-      assert!("fakenet".parse::<Network>().is_err());
-  }
+        assert_eq!("bitcoin".parse::<Network>().unwrap(), Network::Bitcoin);
+        assert_eq!("testnet".parse::<Network>().unwrap(), Network::Testnet);
+        assert_eq!("regtest".parse::<Network>().unwrap(), Network::Regtest);
+        assert_eq!("paradium".parse::<Network>().unwrap(), Network::Paradium);
+        assert!("fakenet".parse::<Network>().is_err());
+    }
 }
-

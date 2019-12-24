@@ -62,23 +62,33 @@ macro_rules! impl_array_newtype {
 
             #[inline]
             /// Returns the length of the object as an array
-            pub fn len(&self) -> usize { $len }
+            pub fn len(&self) -> usize {
+                $len
+            }
 
             #[inline]
             /// Returns whether the object, as an array, is empty. Always false.
-            pub fn is_empty(&self) -> bool { false }
+            pub fn is_empty(&self) -> bool {
+                false
+            }
 
             #[inline]
             /// Returns the underlying bytes.
-            pub fn as_bytes(&self) -> &[$ty; $len] { &self.0 }
+            pub fn as_bytes(&self) -> &[$ty; $len] {
+                &self.0
+            }
 
             #[inline]
             /// Returns the underlying bytes.
-            pub fn to_bytes(&self) -> [$ty; $len] { self.0.clone() }
+            pub fn to_bytes(&self) -> [$ty; $len] {
+                self.0.clone()
+            }
 
             #[inline]
             /// Returns the underlying bytes.
-            pub fn into_bytes(self) -> [$ty; $len] { self.0 }
+            pub fn into_bytes(self) -> [$ty; $len] {
+                self.0
+            }
         }
 
         impl<'a> From<&'a [$ty]> for $thing {
@@ -126,8 +136,12 @@ macro_rules! impl_array_newtype {
                 // be ordered anyway except to put them in BTrees or whatever, and
                 // they don't care how we order as long as we're consistent).
                 for i in 0..$len {
-                    if self[$len - 1 - i] < other[$len - 1 - i] { return ::std::cmp::Ordering::Less; }
-                    if self[$len - 1 - i] > other[$len - 1 - i] { return ::std::cmp::Ordering::Greater; }
+                    if self[$len - 1 - i] < other[$len - 1 - i] {
+                        return ::std::cmp::Ordering::Less;
+                    }
+                    if self[$len - 1 - i] > other[$len - 1 - i] {
+                        return ::std::cmp::Ordering::Greater;
+                    }
                 }
                 ::std::cmp::Ordering::Equal
             }
@@ -146,20 +160,22 @@ macro_rules! impl_array_newtype {
         impl ::std::hash::Hash for $thing {
             #[inline]
             fn hash<H>(&self, state: &mut H)
-                where H: ::std::hash::Hasher
+            where
+                H: ::std::hash::Hasher,
             {
                 (&self[..]).hash(state);
             }
 
             fn hash_slice<H>(data: &[$thing], state: &mut H)
-                where H: ::std::hash::Hasher
+            where
+                H: ::std::hash::Hasher,
             {
                 for d in data.iter() {
                     (&d[..]).hash(state);
                 }
             }
         }
-    }
+    };
 }
 
 macro_rules! impl_array_newtype_encodable {
@@ -189,7 +205,9 @@ macro_rules! impl_array_newtype_encodable {
                         for item in ret.iter_mut() {
                             *item = match seq.next_element()? {
                                 Some(c) => c,
-                                None => return Err($crate::serde::de::Error::custom("end of stream"))
+                                None => {
+                                    return Err($crate::serde::de::Error::custom("end of stream"))
+                                }
                             };
                         }
                         Ok($thing(ret))
@@ -210,7 +228,7 @@ macro_rules! impl_array_newtype_encodable {
                 (&dat[..]).serialize(serializer)
             }
         }
-    }
+    };
 }
 
 macro_rules! impl_array_newtype_show {
@@ -220,7 +238,7 @@ macro_rules! impl_array_newtype_show {
                 write!(f, concat!(stringify!($thing), "({:?})"), &self[..])
             }
         }
-    }
+    };
 }
 
 macro_rules! impl_index_newtype {
@@ -260,8 +278,7 @@ macro_rules! impl_index_newtype {
                 &self.0[..]
             }
         }
-
-    }
+    };
 }
 
 macro_rules! display_from_debug {
@@ -271,7 +288,7 @@ macro_rules! display_from_debug {
                 ::std::fmt::Debug::fmt(self, f)
             }
         }
-    }
+    };
 }
 
 #[cfg(test)]
