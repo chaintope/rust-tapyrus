@@ -25,6 +25,7 @@
 //!
 
 use std::default::Default;
+use std::str::FromStr;
 
 use blockdata::block::{Block, BlockHeader, Signature};
 use blockdata::opcodes;
@@ -32,6 +33,7 @@ use blockdata::script;
 use blockdata::script::Script;
 use blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
 use network::constants::Network;
+use util::key::PublicKey;
 use util::misc::hex_bytes;
 
 /// The maximum allowable sequence number
@@ -89,6 +91,9 @@ fn bitcoin_genesis_tx() -> Transaction {
 
 /// Constructs and returns the genesis block
 pub fn genesis_block(network: Network) -> Block {
+    let public_key =
+        PublicKey::from_str("032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af")
+            .unwrap();
     match network {
         Network::Bitcoin => {
             let txdata = vec![bitcoin_genesis_tx()];
@@ -99,6 +104,7 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root: txdata[0].txid(),
                     im_merkle_root: txdata[0].ntxid(),
                     time: 1231006505,
+                    aggregated_public_key: Some(public_key),
                     proof: Signature {
                         signature: Script::new(),
                     },
@@ -115,6 +121,7 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root: txdata[0].txid(),
                     im_merkle_root: txdata[0].ntxid(),
                     time: 1296688602,
+                    aggregated_public_key: Some(public_key),
                     proof: Signature {
                         signature: Script::new(),
                     },
@@ -131,6 +138,7 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root: txdata[0].txid(),
                     im_merkle_root: txdata[0].ntxid(),
                     time: 1296688602,
+                    aggregated_public_key: Some(public_key),
                     proof: Signature {
                         signature: Script::new(),
                     },
@@ -147,6 +155,7 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root: txdata[0].txid(),
                     im_merkle_root: txdata[0].ntxid(),
                     time: 1562925929,
+                    aggregated_public_key: Some(public_key),
                     proof: Signature {
                         signature: Script::new(),
                     },
@@ -205,7 +214,7 @@ mod test {
         assert_eq!(gen.header.time, 1231006505);
         assert_eq!(
             format!("{:x}", gen.header.bitcoin_hash()),
-            "3c8890361aca183ecb0059ae78e4e57dc514a689588aa7cb97fdc3a6601d08a4".to_string()
+            "1c184bf287b15f641f8b063aab2af4123519d227e8681463b91d675192f6279c".to_string()
         );
     }
 
@@ -221,7 +230,7 @@ mod test {
         assert_eq!(gen.header.time, 1296688602);
         assert_eq!(
             format!("{:x}", gen.header.bitcoin_hash()),
-            "2f90e0d9843be35112f9830d6e86bf2ef4dd92836979ac4aae1a6f41e0797588".to_string()
+            "13530b95110ac11ae2d22d82acc5ad00a3510bb340c9667309cb811c2883cdc5".to_string()
         );
     }
 
@@ -237,7 +246,7 @@ mod test {
         assert_eq!(gen.header.time, 1562925929);
         assert_eq!(
             format!("{:x}", gen.header.bitcoin_hash()),
-            "78be4db611a1e7394c14b98fdf9a6f0db847efbfe10335bc681bd3d3a105d34e".to_string()
+            "27136d27aba81a18449dfdeca2d0c2a973dfc0cdf0a2527b4860ed1f816145d4".to_string()
         );
     }
 }
