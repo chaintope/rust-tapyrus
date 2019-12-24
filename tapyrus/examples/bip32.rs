@@ -28,7 +28,7 @@ fn main() {
     println!("Seed: {}", seed_hex);
 
     // default network as mainnet
-    let network = tapyrus::Network::Bitcoin;
+    let network = tapyrus::Network::Prod;
     println!("Network: {:?}", network);
 
     let seed = Vec::from_hex(seed_hex).unwrap();

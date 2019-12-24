@@ -9,16 +9,15 @@
 //! # Example: encoding a network's magic bytes
 //!
 //! ```rust
-//! use tapyrus::Network;
+//! use tapyrus::network::NetworkId;
 //! use tapyrus::consensus::encode::serialize;
 //!
-//! let network = Network::Bitcoin;
+//! let network = NetworkId::from(1);
 //! let bytes = serialize(&network.magic());
 //!
 //! assert_eq!(&bytes[..], &[0x01, 0xFF, 0xF0, 0x00]);
 //! ```
 
-use core::convert::TryFrom;
 use core::fmt;
 use core::fmt::Display;
 use core::str::FromStr;
@@ -28,8 +27,30 @@ use internals::write_err;
 use serde::{Deserialize, Serialize};
 
 use crate::constants::ChainHash;
-use crate::p2p::Magic;
 use crate::prelude::{String, ToOwned};
+
+/// Network ID is identifier of the Tapyrus network
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct NetworkId(u32);
+
+impl NetworkId {
+    /// Return the network magic bytes, which should be encoded little-endian
+    /// at the start of every message
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use tapyrus::network::NetworkId;
+    ///
+    /// let network = NetworkId::from(1);
+    /// assert_eq!(network.magic(), 0x00F0FF01);
+    /// ```
+    pub fn magic(&self) -> u32 { (33550335 + self.0).swap_bytes() }
+}
+
+impl From<u32> for NetworkId {
+    fn from(n: u32) -> Self { NetworkId(n) }
+}
 
 /// The cryptocurrency network to act on.
 #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Debug)]
@@ -38,47 +59,15 @@ use crate::prelude::{String, ToOwned};
 #[cfg_attr(feature = "serde", serde(rename_all = "lowercase"))]
 #[non_exhaustive]
 pub enum Network {
-    /// Mainnet Bitcoin.
-    Bitcoin,
-    /// Bitcoin's testnet network.
-    Testnet,
-    /// Bitcoin's signet network.
-    Signet,
-    /// Bitcoin's regtest network.
-    Regtest,
-    /// Paradium network
-    Paradium,
+    /// For production
+    /// #[strum(serialize = "prod")]
+    Prod,
+    /// For development
+    /// #[strum(serialize = "dev")]
+    Dev,
 }
 
 impl Network {
-    /// Creates a `Network` from the magic bytes.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use tapyrus::p2p::Magic;
-    /// use tapyrus::Network;
-    /// use std::convert::TryFrom;
-    ///
-    /// assert_eq!(Ok(Network::Bitcoin), Network::try_from(Magic::from_bytes([0x01, 0xFF, 0xF0, 0x00])));
-    /// assert_eq!(None, Network::from_magic(Magic::from_bytes([0xFF, 0xFF, 0xFF, 0xFF])));
-    /// ```
-    pub fn from_magic(magic: Magic) -> Option<Network> { Network::try_from(magic).ok() }
-
-    /// Return the network magic bytes, which should be encoded little-endian
-    /// at the start of every message
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use tapyrus::p2p::Magic;
-    /// use tapyrus::Network;
-    ///
-    /// let network = Network::Bitcoin;
-    /// assert_eq!(network.magic(), Magic::from_bytes([0x01, 0xFF, 0xF0, 0x00]));
-    /// ```
-    pub fn magic(self) -> Magic { Magic::from(self) }
-
     /// Converts a `Network` to its equivalent `bitcoind -chain` argument name.
     ///
     /// ```bash
@@ -90,11 +79,8 @@ impl Network {
     /// ```
     pub fn to_core_arg(self) -> &'static str {
         match self {
-            Network::Bitcoin => "main",
-            Network::Testnet => "test",
-            Network::Signet => "signet",
-            Network::Regtest => "regtest",
-            Network::Paradium => "paradium",
+            Network::Prod => "prod",
+            Network::Dev => "dev",
         }
     }
 
@@ -111,42 +97,11 @@ impl Network {
         use Network::*;
 
         let network = match core_arg {
-            "main" => Bitcoin,
-            "test" => Testnet,
-            "signet" => Signet,
-            "regtest" => Regtest,
-            "paradium" => Paradium,
+            "prod" => Prod,
+            "dev" => Dev,
             _ => return Err(ParseNetworkError(core_arg.to_owned())),
         };
         Ok(network)
-    }
-
-    /// Return the network's chain hash (genesis block hash).
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use tapyrus::Network;
-    /// use tapyrus::blockdata::constants::ChainHash;
-    ///
-    /// let network = Network::Bitcoin;
-    /// assert_eq!(network.chain_hash(), ChainHash::BITCOIN);
-    /// ```
-    pub fn chain_hash(self) -> ChainHash { ChainHash::using_genesis_block(self) }
-
-    /// Creates a `Network` from the chain hash (genesis block hash).
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use tapyrus::Network;
-    /// use tapyrus::blockdata::constants::ChainHash;
-    /// use std::convert::TryFrom;
-    ///
-    /// assert_eq!(Ok(Network::Bitcoin), Network::try_from(ChainHash::BITCOIN));
-    /// ```
-    pub fn from_chain_hash(chain_hash: ChainHash) -> Option<Network> {
-        Network::try_from(chain_hash).ok()
     }
 }
 
@@ -199,7 +154,7 @@ pub mod as_core_arg {
 /// An error in parsing network string.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
-pub struct ParseNetworkError(String);
+pub struct ParseNetworkError(pub String);
 
 impl fmt::Display for ParseNetworkError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
@@ -220,11 +175,8 @@ impl FromStr for Network {
         use Network::*;
 
         let network = match s {
-            "bitcoin" => Bitcoin,
-            "testnet" => Testnet,
-            "signet" => Signet,
-            "regtest" => Regtest,
-            "paradium" => Paradium,
+            "prod" => Prod,
+            "dev" => Dev,
             _ => return Err(ParseNetworkError(s.to_owned())),
         };
         Ok(network)
@@ -236,11 +188,8 @@ impl fmt::Display for Network {
         use Network::*;
 
         let s = match *self {
-            Bitcoin => "bitcoin",
-            Testnet => "testnet",
-            Signet => "signet",
-            Regtest => "regtest",
-            Paradium => "paradium",
+            Prod => "prod",
+            Dev => "dev",
         };
         write!(f, "{}", s)
     }
@@ -262,56 +211,46 @@ impl std::error::Error for UnknownChainHashError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
-impl TryFrom<ChainHash> for Network {
-    type Error = UnknownChainHashError;
-
-    fn try_from(chain_hash: ChainHash) -> Result<Self, Self::Error> {
-        match chain_hash {
-            // Note: any new network entries must be matched against here.
-            ChainHash::BITCOIN => Ok(Network::Bitcoin),
-            ChainHash::TESTNET => Ok(Network::Testnet),
-            ChainHash::SIGNET => Ok(Network::Signet),
-            ChainHash::REGTEST => Ok(Network::Regtest),
-            ChainHash::PARADIUM => Ok(Network::Paradium),
-            _ => Err(UnknownChainHashError(chain_hash)),
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use super::Network;
+    use super::{Network, NetworkId};
     use crate::consensus::encode::{deserialize, serialize};
     use crate::p2p::ServiceFlags;
 
     #[test]
     fn serialize_test() {
-        assert_eq!(serialize(&Network::Bitcoin.magic()), &[0x01, 0xff, 0xf0, 0x00]);
-        assert_eq!(serialize(&Network::Testnet.magic()), &[0x75, 0x9a, 0x83, 0x74]);
-        assert_eq!(serialize(&Network::Signet.magic()), &[0x0a, 0x03, 0xcf, 0x40]);
-        assert_eq!(serialize(&Network::Regtest.magic()), &[0x73, 0x9a, 0x97, 0x74]);
-        assert_eq!(serialize(&Network::Paradium.magic()), &[0x01, 0xff, 0xf0, 0x64]);
+        // Production
+        assert_eq!(serialize(&NetworkId::from(1).magic()), &[0x01, 0xff, 0xf0, 0x00]);
+        // Public Testnet
+        assert_eq!(serialize(&NetworkId::from(1939510133).magic()), &[0x75, 0x9a, 0x83, 0x74]);
+        // Regtest
+        assert_eq!(serialize(&NetworkId::from(1905960821).magic()), &[0x73, 0x9a, 0x97, 0x74]);
+        // Paradium
+        assert_eq!(serialize(&NetworkId::from(101).magic()), &[0x01, 0xff, 0xf0, 0x64]);
 
-        assert_eq!(deserialize(&[0x01, 0xff, 0xf0, 0x00]).ok(), Some(Network::Bitcoin.magic()));
-        assert_eq!(deserialize(&[0x75, 0x9a, 0x83, 0x74]).ok(), Some(Network::Testnet.magic()));
-        assert_eq!(deserialize(&[0x0a, 0x03, 0xcf, 0x40]).ok(), Some(Network::Signet.magic()));
-        assert_eq!(deserialize(&[0x73, 0x9a, 0x97, 0x74]).ok(), Some(Network::Regtest.magic()));
-        assert_eq!(deserialize(&[0x01, 0xff, 0xf0, 0x64]).ok(), Some(Network::Paradium.magic()));
+        // Production
+        assert_eq!(deserialize(&[0x01, 0xff, 0xf0, 0x00]).ok(), Some(NetworkId::from(1).magic()));
+        // Public Testnet
+        assert_eq!(
+            deserialize(&[0x75, 0x9a, 0x83, 0x74]).ok(),
+            Some(NetworkId::from(1939510133).magic())
+        );
+        // Regtest
+        assert_eq!(
+            deserialize(&[0x73, 0x9a, 0x97, 0x74]).ok(),
+            Some(NetworkId::from(1905960821).magic())
+        );
+        // Paradium
+        assert_eq!(deserialize(&[0x01, 0xff, 0xf0, 0x64]).ok(), Some(NetworkId::from(101).magic()));
     }
 
     #[test]
     fn string_test() {
-        assert_eq!(Network::Bitcoin.to_string(), "bitcoin");
-        assert_eq!(Network::Testnet.to_string(), "testnet");
-        assert_eq!(Network::Regtest.to_string(), "regtest");
-        assert_eq!(Network::Signet.to_string(), "signet");
-        assert_eq!(Network::Paradium.to_string(), "paradium");
+        assert_eq!(Network::Prod.to_string(), "prod");
+        assert_eq!(Network::Dev.to_string(), "dev");
 
-        assert_eq!("bitcoin".parse::<Network>().unwrap(), Network::Bitcoin);
-        assert_eq!("testnet".parse::<Network>().unwrap(), Network::Testnet);
-        assert_eq!("regtest".parse::<Network>().unwrap(), Network::Regtest);
-        assert_eq!("signet".parse::<Network>().unwrap(), Network::Signet);
-        assert_eq!("paradium".parse::<Network>().unwrap(), Network::Paradium);
+        assert_eq!("prod".parse::<Network>().unwrap(), Network::Prod);
+        assert_eq!("dev".parse::<Network>().unwrap(), Network::Dev);
         assert!("fakenet".parse::<Network>().is_err());
     }
 
@@ -359,13 +298,7 @@ mod tests {
     #[cfg(feature = "serde")]
     fn serde_roundtrip() {
         use Network::*;
-        let tests = vec![
-            (Bitcoin, "bitcoin"),
-            (Testnet, "testnet"),
-            (Signet, "signet"),
-            (Regtest, "regtest"),
-            (Paradium, "paradium"),
-        ];
+        let tests = vec![(Prod, "prod"), (Dev, "dev")];
 
         for tc in tests {
             let network = tc.0;
@@ -381,13 +314,7 @@ mod tests {
 
     #[test]
     fn from_to_core_arg() {
-        let expected_pairs = [
-            (Network::Bitcoin, "main"),
-            (Network::Testnet, "test"),
-            (Network::Regtest, "regtest"),
-            (Network::Signet, "signet"),
-            (Network::Paradium, "paradium"),
-        ];
+        let expected_pairs = [(Network::Prod, "prod"), (Network::Dev, "dev")];
 
         for (net, core_arg) in &expected_pairs {
             assert_eq!(Network::from_core_arg(core_arg), Ok(*net));
@@ -406,11 +333,11 @@ mod tests {
         }
 
         serde_test::assert_tokens(
-            &T { network: Network::Bitcoin },
+            &T { network: Network::Prod },
             &[
                 serde_test::Token::Struct { name: "T", len: 1 },
                 serde_test::Token::Str("network"),
-                serde_test::Token::Str("main"),
+                serde_test::Token::Str("prod"),
                 serde_test::Token::StructEnd,
             ],
         );

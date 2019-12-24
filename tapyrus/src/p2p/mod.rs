@@ -30,8 +30,9 @@ use hex::FromHex;
 use internals::{debug_from_display, write_err};
 
 use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::network::NetworkId;
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned};
-use crate::{io, Network};
+use crate::io;
 
 /// Version of the protocol as appearing in network message headers.
 ///
@@ -204,16 +205,10 @@ impl Decodable for ServiceFlags {
 pub struct Magic([u8; 4]);
 
 impl Magic {
-    /// Bitcoin mainnet network magic bytes.
-    pub const BITCOIN: Self = Self([0x01, 0xFF, 0xF0, 0x00]);
-    /// Bitcoin testnet network magic bytes.
-    pub const TESTNET: Self = Self([0x75, 0x9A, 0x83, 0x74]);
-    /// Bitcoin signet network magic bytes.
-    pub const SIGNET: Self = Self([0x0A, 0x03, 0xCF, 0x40]);
-    /// Bitcoin regtest network magic bytes.
-    pub const REGTEST: Self = Self([0x73, 0x9A, 0x97, 0x74]);
-    /// Paradium network magic bytes.
-    pub const PARADIUM: Self = Self([0x01, 0xff, 0xf0, 0x64]);
+    /// Tapyrus prod network magic bytes.
+    pub const PROD: Self = Self([0xF9, 0xBE, 0xB4, 0xD9]);
+    /// Tapyrus dev network magic bytes.
+    pub const DEV: Self = Self([0x0B, 0x11, 0x09, 0x07]);
 
     /// Create network magic from bytes.
     pub fn from_bytes(bytes: [u8; 4]) -> Magic { Magic(bytes) }
@@ -233,32 +228,18 @@ impl FromStr for Magic {
     }
 }
 
-impl From<Network> for Magic {
-    fn from(network: Network) -> Magic {
-        match network {
-            // Note: new network entries must explicitly be matched in `try_from` below.
-            Network::Bitcoin => Magic::BITCOIN,
-            Network::Testnet => Magic::TESTNET,
-            Network::Signet => Magic::SIGNET,
-            Network::Regtest => Magic::REGTEST,
-            Network::Paradium => Magic::PARADIUM,
-        }
+impl From<NetworkId> for Magic {
+    fn from(network_id: NetworkId) -> Magic {
+        Magic::from_bytes(network_id.magic().to_be_bytes())
     }
 }
 
-impl TryFrom<Magic> for Network {
+impl TryFrom<Magic> for NetworkId {
     type Error = UnknownMagicError;
 
     fn try_from(magic: Magic) -> Result<Self, Self::Error> {
-        match magic {
-            // Note: any new network entries must be matched against here.
-            Magic::BITCOIN => Ok(Network::Bitcoin),
-            Magic::TESTNET => Ok(Network::Testnet),
-            Magic::SIGNET => Ok(Network::Signet),
-            Magic::REGTEST => Ok(Network::Regtest),
-            Magic::PARADIUM => Ok(Network::Paradium),
-            _ => Err(UnknownMagicError(magic)),
-        }
+        let n = u32::from_be_bytes(magic.to_bytes()) - 33550335;
+        Ok(NetworkId::from(n))
     }
 }
 
@@ -412,15 +393,15 @@ mod tests {
     #[test]
     fn magic_from_str() {
         let known_network_magic_strs = [
-            ("01fff000", Network::Bitcoin),
-            ("759a8374", Network::Testnet),
-            ("739a9774", Network::Regtest),
-            ("0a03cf40", Network::Signet),
-            ("01fff064", Network::Paradium),
+            ("01fff000", NetworkId::from(1)), 
+            ("01fff064", NetworkId::from(101)),
+            ("759a8374", NetworkId::from(1939510133)),
+            ("739a9774", NetworkId::from(1905960821))
         ];
-        for (magic_str, network) in &known_network_magic_strs {
+
+        for (magic_str, network_id) in &known_network_magic_strs {
             let magic: Magic = Magic::from_str(magic_str).unwrap();
-            assert_eq!(Network::try_from(magic).unwrap(), *network);
+            assert_eq!(NetworkId::try_from(magic).unwrap(), *network_id);
             assert_eq!(&magic.to_string(), magic_str);
         }
     }

@@ -18,7 +18,7 @@ use tapyrus::{
     Transaction, TxIn, TxOut, Witness,
 };
 
-const NETWORK: Network = Network::Testnet;
+const NETWORK: Network = Network::Dev;
 
 #[track_caller]
 fn hex_psbt(s: &str) -> Psbt {

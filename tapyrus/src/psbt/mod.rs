@@ -1011,7 +1011,7 @@ mod tests {
     use crate::blockdata::script::ScriptBuf;
     use crate::blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
     use crate::blockdata::witness::Witness;
-    use crate::network::Network::Bitcoin;
+    use crate::network::Network::Prod;
     use crate::psbt::map::{Input, Output};
     use crate::psbt::raw;
     use crate::psbt::serialize::{Deserialize, Serialize};
@@ -1148,7 +1148,7 @@ mod tests {
 
         let mut hd_keypaths: BTreeMap<secp256k1::PublicKey, KeySource> = Default::default();
 
-        let mut sk: Xpriv = Xpriv::new_master(Bitcoin, &seed).unwrap();
+        let mut sk: Xpriv = Xpriv::new_master(Prod, &seed).unwrap();
 
         let fprint = sk.fingerprint(secp);
 
@@ -1923,7 +1923,7 @@ mod tests {
         let secp = Secp256k1::new();
 
         let sk = SecretKey::new(&mut thread_rng());
-        let priv_key = PrivateKey::new(sk, crate::Network::Regtest);
+        let priv_key = PrivateKey::new(sk, crate::Network::Dev);
         let pk = PublicKey::from_private_key(&secp, &priv_key);
 
         (priv_key, pk, secp)

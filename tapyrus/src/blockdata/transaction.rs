@@ -70,19 +70,6 @@ impl OutPoint {
     pub fn null() -> OutPoint { OutPoint { txid: Hash::all_zeros(), vout: u32::MAX } }
 
     /// Checks if an `OutPoint` is "null".
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use tapyrus::constants::genesis_block;
-    /// use tapyrus::Network;
-    ///
-    /// let block = genesis_block(Network::Bitcoin);
-    /// let tx = &block.txdata[0];
-    ///
-    /// // Coinbase transactions don't have any previous output.
-    /// assert!(tx.input[0].previous_output.is_null());
-    /// ```
     #[inline]
     pub fn is_null(&self) -> bool { *self == OutPoint::null() }
 }
