@@ -94,7 +94,7 @@ impl Decodable for PublicKeyOpt {
 impl Encodable for PublicKeyOpt {
     #[inline]
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
-        match self {
+        match *self {
             Some(pk) => pk.consensus_encode(&mut s),
             None => {
                 let v = Vec::<u8>::new();
