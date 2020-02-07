@@ -27,13 +27,12 @@
 
 use std::io;
 
-use bitcoin_hashes::HashEngine;
-use bitcoin_hashes::{sha256d, Hash};
-
-use blockdata::script::Script;
-use blockdata::transaction::Transaction;
+use hashes::{Hash, HashEngine};
+use hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
 use consensus::{encode, Decodable, Encodable};
-use util::hash::{bitcoin_merkle_root, BitcoinHash, MerkleRoot};
+use blockdata::transaction::Transaction;
+use blockdata::script::Script;
+use util::hash::{bitcoin_merkle_root, BitcoinHash};
 use util::key::PublicKey;
 
 /// A block header, which contains all the block's information except
@@ -43,11 +42,11 @@ pub struct BlockHeader {
     /// The protocol version. Should always be 1.
     pub version: u32,
     /// Reference to the previous block in the chain
-    pub prev_blockhash: sha256d::Hash,
+    pub prev_blockhash: BlockHash,
     /// The root hash of the merkle tree of transactions in the block
-    pub merkle_root: sha256d::Hash,
+    pub merkle_root: TxMerkleNode,
     /// MerkleRoot based on fixing malleability transaction hash
-    pub im_merkle_root: sha256d::Hash,
+    pub im_merkle_root: TxMerkleNode,
     /// The timestamp of the block, as claimed by the miner
     pub time: u32,
     ///Aggregate public key of tapyrus-signer used to verify block proof. This field is optional and may be present in all blocks.
@@ -111,47 +110,36 @@ pub struct Block {
     /// The block header
     pub header: BlockHeader,
     /// List of transactions contained in the block
-    pub txdata: Vec<Transaction>,
+    pub txdata: Vec<Transaction>
 }
 
 impl Block {
     /// check if merkle root of header matches merkle root of the transaction list
-    pub fn check_merkle_root(&self) -> bool {
-        self.header.merkle_root == self.merkle_root()
+    pub fn check_merkle_root (&self) -> bool {
+        self.header.merkle_root == self.merkle_root() &&
+            self.header.im_merkle_root == self.immutable_merkle_root()
     }
 
     /// check if witness commitment in coinbase is matching the transaction list
     pub fn check_witness_commitment(&self) -> bool {
+
         // witness commitment is optional if there are no transactions using SegWit in the block
-        if self
-            .txdata
-            .iter()
-            .all(|t| t.input.iter().all(|i| i.witness.is_empty()))
-        {
+        if self.txdata.iter().all(|t| t.input.iter().all(|i| i.witness.is_empty())) {
             return true;
         }
         if self.txdata.len() > 0 {
             let coinbase = &self.txdata[0];
             if coinbase.is_coin_base() {
                 // commitment is in the last output that starts with below magic
-                if let Some(pos) = coinbase.output.iter().rposition(|o| {
-                    o.script_pubkey.len() >= 38
-                        && o.script_pubkey[0..6] == [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed]
-                }) {
-                    let commitment = sha256d::Hash::from_slice(
-                        &coinbase.output[pos].script_pubkey.as_bytes()[6..38],
-                    )
-                    .unwrap();
+                if let Some(pos) = coinbase.output.iter()
+                    .rposition(|o| {
+                        o.script_pubkey.len () >= 38 &&
+                        o.script_pubkey[0..6] == [0x6a, 0x24, 0xaa, 0x21, 0xa9, 0xed] }) {
+                    let commitment = WitnessCommitment::from_slice(&coinbase.output[pos].script_pubkey.as_bytes()[6..38]).unwrap();
                     // witness reserved value is in coinbase input witness
-                    if coinbase.input[0].witness.len() == 1
-                        && coinbase.input[0].witness[0].len() == 32
-                    {
+                    if coinbase.input[0].witness.len() == 1 && coinbase.input[0].witness[0].len() == 32 {
                         let witness_root = self.witness_root();
-                        return commitment
-                            == Self::compute_witness_commitment(
-                                &witness_root,
-                                coinbase.input[0].witness[0].as_slice(),
-                            );
+                        return commitment == Self::compute_witness_commitment(&witness_root, coinbase.input[0].witness[0].as_slice())
                     }
                 }
             }
@@ -159,44 +147,49 @@ impl Block {
         false
     }
 
+    /// Calculate the transaction merkle root.
+    pub fn merkle_root(&self) -> TxMerkleNode {
+        let hashes = self.txdata.iter().map(|obj| obj.txid().as_hash());
+        bitcoin_merkle_root(hashes).into()
+    }
+
+    /// Calculate the immutable transaction merkle root.
+    fn immutable_merkle_root(&self) -> TxMerkleNode {
+        let hashes = self.txdata.iter().map(|obj| obj.malfix_txid().as_hash());
+        bitcoin_merkle_root(hashes).into()
+    }
+
     /// compute witness commitment for the transaction list
-    pub fn compute_witness_commitment(
-        witness_root: &sha256d::Hash,
-        witness_reserved_value: &[u8],
-    ) -> sha256d::Hash {
-        let mut encoder = sha256d::Hash::engine();
+    pub fn compute_witness_commitment (witness_root: &WitnessMerkleNode, witness_reserved_value: &[u8]) -> WitnessCommitment {
+        let mut encoder = WitnessCommitment::engine();
         witness_root.consensus_encode(&mut encoder).unwrap();
         encoder.input(witness_reserved_value);
-        sha256d::Hash::from_engine(encoder)
+        WitnessCommitment::from_engine(encoder)
     }
 
     /// Merkle root of transactions hashed for witness
-    pub fn witness_root(&self) -> sha256d::Hash {
-        let mut txhashes = vec![sha256d::Hash::default()];
-        txhashes.extend(self.txdata.iter().skip(1).map(|t| t.bitcoin_hash()));
-        bitcoin_merkle_root(txhashes)
+    pub fn witness_root(&self) -> WitnessMerkleNode {
+        let hashes = self.txdata.iter().enumerate().map(|(i, t)|
+            if i == 0 {
+                // Replace the first hash with zeroes.
+                Wtxid::default().as_hash()
+            } else {
+                t.wtxid().as_hash()
+            }
+        );
+        bitcoin_merkle_root(hashes).into()
     }
 }
 
-impl MerkleRoot for Block {
-    fn merkle_root(&self) -> sha256d::Hash {
-        bitcoin_merkle_root(self.txdata.iter().map(|obj| obj.txid()).collect())
-    }
-
-    fn immutable_merkle_root(&self) -> sha256d::Hash {
-        bitcoin_merkle_root(self.txdata.iter().map(|obj| obj.malfix_txid()).collect())
-    }
-}
-
-impl BitcoinHash for BlockHeader {
-    fn bitcoin_hash(&self) -> sha256d::Hash {
+impl BitcoinHash<BlockHash> for BlockHeader {
+    fn bitcoin_hash(&self) -> BlockHash {
         use consensus::encode::serialize;
-        sha256d::Hash::hash(&serialize(self))
+        BlockHash::hash(&serialize(self))
     }
 }
 
-impl BitcoinHash for Block {
-    fn bitcoin_hash(&self) -> sha256d::Hash {
+impl BitcoinHash<BlockHash> for Block {
+    fn bitcoin_hash(&self) -> BlockHash {
         self.header.bitcoin_hash()
     }
 }
@@ -212,6 +205,16 @@ impl_consensus_encoding!(
     proof
 );
 impl_consensus_encoding!(Block, header, txdata);
+serde_struct_impl!(
+    BlockHeader,
+    version,
+    prev_blockhash,
+    merkle_root,
+    im_merkle_root,
+    time,
+    aggregated_public_key,
+    proof);
+serde_struct_impl!(Block, header, txdata);
 
 #[cfg(test)]
 mod tests {
@@ -220,7 +223,6 @@ mod tests {
 
     use blockdata::block::Block;
     use consensus::encode::{deserialize, serialize};
-    use util::hash::MerkleRoot;
     use util::key::PublicKey;
 
     #[test]

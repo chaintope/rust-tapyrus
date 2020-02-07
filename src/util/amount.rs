@@ -129,6 +129,11 @@ impl error::Error for ParseAmountError {
     }
 }
 
+
+fn is_too_precise(s: &str, precision: usize) -> bool {
+    s.contains(".") || precision >= s.len() || s.chars().rev().take(precision).any(|d| d != '0')
+}
+
 /// Parse decimal string in the given denomination into a satoshi value and a
 /// bool indicator for a negative amount.
 fn parse_signed_to_satoshi(
@@ -142,8 +147,8 @@ fn parse_signed_to_satoshi(
         return Err(ParseAmountError::InputTooLarge);
     }
 
-    let negative = s.chars().next().unwrap() == '-';
-    if negative {
+    let is_negative = s.chars().next().unwrap() == '-';
+    if is_negative {
         if s.len() == 1 {
             return Err(ParseAmountError::InvalidFormat);
         }
@@ -158,9 +163,9 @@ fn parse_signed_to_satoshi(
             // If precision diff is negative, this means we are parsing
             // into a less precise amount. That is not allowed unless
             // there are no decimals and the last digits are zeroes as
-            // many as the diffence in precision.
+            // many as the difference in precision.
             let last_n = precision_diff.abs() as usize;
-            if s.contains(".") || s.chars().rev().take(last_n).any(|d| d != '0') {
+            if is_too_precise(s, last_n) {
                 return Err(ParseAmountError::TooPrecise);
             }
             s = &s[0..s.len() - last_n];
@@ -208,7 +213,7 @@ fn parse_signed_to_satoshi(
         };
     }
 
-    Ok((negative, value))
+    Ok((is_negative, value))
 }
 
 /// Format the given satoshi amount in the given denomination.
@@ -252,7 +257,7 @@ fn fmt_satoshi_in(
 /// Amount
 ///
 /// The [Amount] type can be used to express Bitcoin amounts that supports
-/// arithmetic and convertion to various denominations.
+/// arithmetic and conversion to various denominations.
 ///
 ///
 /// Warning!
@@ -387,7 +392,7 @@ impl Amount {
         buf
     }
 
-    // Some arithmethic that doesn't fit in `std::ops` traits.
+    // Some arithmetic that doesn't fit in `std::ops` traits.
 
     /// Checked addition.
     /// Returns [None] if overflow occurred.
@@ -552,7 +557,7 @@ impl FromStr for Amount {
 /// SignedAmount
 ///
 /// The [SignedAmount] type can be used to express Bitcoin amounts that supports
-/// arithmetic and convertion to various denominations.
+/// arithmetic and conversion to various denominations.
 ///
 ///
 /// Warning!
@@ -684,7 +689,7 @@ impl SignedAmount {
         buf
     }
 
-    // Some arithmethic that doesn't fit in `std::ops` traits.
+    // Some arithmetic that doesn't fit in `std::ops` traits.
 
     /// Get the absolute value of this [SignedAmount].
     pub fn abs(self) -> SignedAmount {
@@ -954,7 +959,7 @@ pub mod serde {
         //! Serialize and deserialize [Amount] as real numbers denominated in satoshi.
         //! Use with `#[serde(with = "amount::serde::as_sat")]`.
 
-        use serde::{Deserialize, Deserializer, Serialize, Serializer};
+        use serde::{Deserializer, Serializer};
         use util::amount::serde::SerdeAmount;
 
         pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
@@ -969,7 +974,7 @@ pub mod serde {
             //! Serialize and deserialize [Optoin<Amount>] as real numbers denominated in satoshi.
             //! Use with `#[serde(default, with = "amount::serde::as_sat::opt")]`.
 
-            use serde::{Deserialize, Deserializer, Serializer};
+            use serde::{Deserializer, Serializer};
             use util::amount::serde::SerdeAmount;
 
             pub fn serialize<A: SerdeAmount, S: Serializer>(
@@ -994,7 +999,7 @@ pub mod serde {
         //! Serialize and deserialize [Amount] as JSON numbers denominated in BTC.
         //! Use with `#[serde(with = "amount::serde::as_btc")]`.
 
-        use serde::{Deserialize, Deserializer, Serialize, Serializer};
+        use serde::{Deserializer, Serializer};
         use util::amount::serde::SerdeAmount;
 
         pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
@@ -1009,7 +1014,7 @@ pub mod serde {
             //! Serialize and deserialize [Option<Amount>] as JSON numbers denominated in BTC.
             //! Use with `#[serde(default, with = "amount::serde::as_btc::opt")]`.
 
-            use serde::{Deserialize, Deserializer, Serializer};
+            use serde::{Deserializer, Serializer};
             use util::amount::serde::SerdeAmount;
 
             pub fn serialize<A: SerdeAmount, S: Serializer>(
@@ -1244,6 +1249,15 @@ mod tests {
         assert_eq!(sp("-200000000000 BTC"), Err(E::TooBig));
         assert_eq!(p("18446744073709551616 sat"), Err(E::TooBig));
 
+        assert_eq!(sp("0 msat"), Err(E::TooPrecise));
+        assert_eq!(sp("-0 msat"), Err(E::TooPrecise));
+        assert_eq!(sp("000 msat"), Err(E::TooPrecise));
+        assert_eq!(sp("-000 msat"), Err(E::TooPrecise));
+        assert_eq!(p("0 msat"), Err(E::TooPrecise));
+        assert_eq!(p("-0 msat"), Err(E::TooPrecise));
+        assert_eq!(p("000 msat"), Err(E::TooPrecise));
+        assert_eq!(p("-000 msat"), Err(E::TooPrecise));
+
         assert_eq!(p(".5 bits"), Ok(Amount::from_sat(50)));
         assert_eq!(sp("-.5 bits"), Ok(SignedAmount::from_sat(-50)));
         assert_eq!(p("0.00253583 BTC"), Ok(Amount::from_sat(253583)));
@@ -1269,7 +1283,6 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn serde_as_sat() {
-        use serde::{Deserialize, Serialize};
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         struct T {
@@ -1298,7 +1311,6 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn serde_as_btc() {
-        use serde::{Deserialize, Serialize};
         use serde_json;
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -1339,7 +1351,6 @@ mod tests {
     #[cfg(feature = "serde")]
     #[test]
     fn serde_as_btc_opt() {
-        use serde::{Deserialize, Serialize};
         use serde_json;
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
