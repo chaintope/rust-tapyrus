@@ -1,4 +1,4 @@
-extern crate bitcoin;
+extern crate tapyrus;
 
 fn do_test(data: &[u8]) {
     let psbt: Result<bitcoin::util::psbt::PartiallySignedTransaction, _> = bitcoin::consensus::encode::deserialize(data);

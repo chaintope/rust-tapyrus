@@ -1,4 +1,4 @@
-extern crate bitcoin;
+extern crate tapyrus;
 
 use bitcoin::util::address::Address;
 use bitcoin::network::constants::Network;

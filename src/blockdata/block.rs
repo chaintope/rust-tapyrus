@@ -77,6 +77,8 @@ impl Encodable for Signature {
     }
 }
 
+serde_struct_impl!(Signature, signature);
+
 /// Optional aggregated public key
 pub type PublicKeyOpt = Option<PublicKey>;
 
