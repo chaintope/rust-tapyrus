@@ -44,6 +44,6 @@ if [ -n "$AS_DEPENDENCY" ]
 then
     cargo new dep_test
     cd dep_test
-    echo 'bitcoin = { path = "..", features = ["use-serde"] }' >> Cargo.toml
+    echo 'tapyrus = { path = "..", features = ["use-serde"] }' >> Cargo.toml
     cargo test --verbose
 fi
