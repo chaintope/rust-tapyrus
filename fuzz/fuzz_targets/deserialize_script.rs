@@ -1,9 +1,9 @@
 extern crate tapyrus;
 
-use bitcoin::util::address::Address;
-use bitcoin::network::constants::Network;
-use bitcoin::blockdata::script;
-use bitcoin::consensus::encode;
+use tapyrus::util::address::Address;
+use tapyrus::network::constants::Network;
+use tapyrus::blockdata::script;
+use tapyrus::consensus::encode;
 
 fn do_test(data: &[u8]) {
     let s: Result<script::Script, _> = encode::deserialize(data);
