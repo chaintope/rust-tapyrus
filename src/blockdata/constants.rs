@@ -29,10 +29,9 @@ use std::str::FromStr;
 
 use hashes::hex::FromHex;
 use hashes::sha256d;
-use blockdata::block::{Block, BlockHeader, Signature};
+use blockdata::block::{Block, BlockHeader};
 use blockdata::opcodes;
 use blockdata::script;
-use blockdata::script::Script;
 use blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
 use network::constants::Network;
 use util::key::PublicKey;
@@ -110,9 +109,7 @@ pub fn genesis_block(network: Network) -> Block {
                     im_merkle_root,
                     time: 1231006505,
                     aggregated_public_key: Some(public_key),
-                    proof: Signature {
-                        signature: Script::new(),
-                    },
+                    proof: None,
                 },
                 txdata: txdata
             }
@@ -126,9 +123,7 @@ pub fn genesis_block(network: Network) -> Block {
                     im_merkle_root,
                     time: 1296688602,
                     aggregated_public_key: Some(public_key),
-                    proof: Signature {
-                        signature: Script::new(),
-                    },
+                    proof: None,
                 },
                 txdata: txdata
             }
@@ -142,9 +137,7 @@ pub fn genesis_block(network: Network) -> Block {
                     im_merkle_root,
                     time: 1296688602,
                     aggregated_public_key: Some(public_key),
-                    proof: Signature {
-                        signature: Script::new(),
-                    },
+                    proof: None,
                 },
                 txdata: txdata,
             }
@@ -158,9 +151,7 @@ pub fn genesis_block(network: Network) -> Block {
                     im_merkle_root,
                     time: 1562925929,
                     aggregated_public_key: Some(public_key),
-                    proof: Signature {
-                        signature: Script::new(),
-                    },
+                    proof: None,
                 },
                 txdata: txdata,
             }

@@ -34,6 +34,7 @@ pub mod merkleblock;
 pub mod misc;
 pub mod psbt;
 pub mod uint;
+pub mod signature;
 
 pub(crate) mod endian;
 
