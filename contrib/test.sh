@@ -1,6 +1,6 @@
 #!/bin/sh -ex
 
-FEATURES="bitcoinconsensus use-serde"
+FEATURES="bitcoinconsensus use-serde rand"
 
 if [ "$DO_COV" = true ]
 then
@@ -37,4 +37,13 @@ fi
 if [ "$DO_BENCH" = true ]
 then
     cargo bench --features unstable
+fi
+
+# Use as dependency if told to
+if [ -n "$AS_DEPENDENCY" ]
+then
+    cargo new dep_test
+    cd dep_test
+    echo 'tapyrus = { path = "..", features = ["use-serde"] }' >> Cargo.toml
+    cargo test --verbose
 fi

@@ -1,7 +1,16 @@
 extern crate tapyrus;
 
 fn do_test(data: &[u8]) {
-    let _: Result<tapyrus::util::psbt::PartiallySignedTransaction, _> = tapyrus::consensus::encode::deserialize(data);
+    let psbt: Result<tapyrus::util::psbt::PartiallySignedTransaction, _> = tapyrus::consensus::encode::deserialize(data);
+    match psbt {
+        Err(_) => {},
+        Ok(psbt) => {
+            let ser = tapyrus::consensus::encode::serialize(&psbt);
+            let deser: tapyrus::util::psbt::PartiallySignedTransaction  = tapyrus::consensus::encode::deserialize(&ser).unwrap();
+            // Since the fuzz data could order psbt fields differently, we compare to our deser/ser instead of data
+            assert_eq!(ser, tapyrus::consensus::encode::serialize(&deser));
+        }
+    }
 }
 
 #[cfg(feature = "afl")]

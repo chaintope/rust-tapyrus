@@ -35,6 +35,8 @@ pub mod misc;
 pub mod psbt;
 pub mod uint;
 
+pub(crate) mod endian;
+
 use std::{error, fmt};
 
 use consensus::encode;
