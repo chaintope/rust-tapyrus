@@ -29,6 +29,7 @@ use consensus::{encode, Decodable, Encodable};
 use network::constants::Network;
 use secp256k1::{self, Secp256k1};
 use util::base58;
+use util::signature::Signature;
 
 /// A key-related error.
 #[derive(Debug)]
@@ -221,6 +222,45 @@ impl PrivateKey {
             key: secp256k1::SecretKey::from_slice(&data[1..33])?,
         })
     }
+
+    pub fn sign_schnorr(&self, message: &[u8; 32]) -> Result<Signature, Error> {
+        let ctx = secp256k1::Secp256k1::signing_only();
+
+        let pk = secp256k1::PublicKey::from_secret_key(&ctx, &self.key);
+
+        // Generate k
+        let k = secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng());
+
+        // TODO: Check private key and k is not zero
+        // this is no need because all secret key instance checked.
+
+        // Compute R = k * G
+        let r = secp256k1::PublicKey::from_secret_key(&ctx, &k);
+
+        // TODO: Negate k if value of jacobi(R.y) is not 1
+
+        // Compute e = sha256(R.x, pk, message)
+        let e = Signature::compute_e(&r.serialize()[1..33], &pk, message)?;
+
+        // Compute s = k + ep
+        let sigma = {
+            let mut result = e.clone();
+            result.mul_assign(&self.key[..])?;
+            result.add_assign(&k[..])?;
+            result
+        };
+
+        let mut r_x = [0u8; 32];
+        r_x.clone_from_slice(&r.serialize()[1..33]);
+
+        Ok(Signature { r_x, sigma: to_bytes(&sigma) })
+    }
+}
+
+fn to_bytes(sk: &secp256k1::SecretKey) -> [u8; 32] {
+    let mut r = [0u8; 32];
+    r.clone_from_slice(&sk[..]);
+    r
 }
 
 impl fmt::Display for PrivateKey {
@@ -384,6 +424,7 @@ mod tests {
     use network::constants::Network::Testnet;
     use network::constants::Network::Bitcoin;
     use util::address::Address;
+    use hashes::Hash;
 
     #[test]
     fn test_key_derivation() {
@@ -490,5 +531,23 @@ mod tests {
 
         let decoded = PublicKey::consensus_decode(&s[..]).unwrap();
         assert_eq!(decoded, pk);
+    }
+
+    #[test]
+    fn test_sign_schnorr() {
+        for n in 0..16 {
+            let msg = {
+                let m = format!("Very secret message {}: 11", n);
+                let hash = hashes::sha256::Hash::hash(m.as_bytes());
+                hash.into_inner()
+            };
+
+            let key = PrivateKey::from_wif("5HxWvvfubhXpYYpS3tJkw6fq9jE9j18THftkZjHHfmFiWtmAbrj").unwrap();
+
+            let sign = key.sign_schnorr(&msg).unwrap();
+
+            let ctx = secp256k1::Secp256k1::signing_only();
+            assert!(sign.verify(&msg[..], &key.public_key(&ctx)).is_ok());
+        }
     }
 }

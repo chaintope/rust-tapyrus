@@ -29,9 +29,9 @@ pub const SECP256K1_SCALAR_SIZE: usize = 32;
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub struct Signature {
     /// R.x
-    r_x: [u8; SECP256K1_SCALAR_SIZE],
+    pub r_x: [u8; SECP256K1_SCALAR_SIZE],
     /// sigma
-    sigma: [u8; SECP256K1_SCALAR_SIZE],
+    pub sigma: [u8; SECP256K1_SCALAR_SIZE],
 }
 
 impl Signature {
@@ -45,7 +45,7 @@ impl Signature {
         let s = secp256k1::SecretKey::from_slice(&self.sigma[..])?;
 
         // Compute e
-        let mut e = self.compute_e(message, pk)?;
+        let mut e = Signature::compute_e(&self.r_x[..], &pk.key, message)?;
 
         // Compute R = sG - eP
         let r = {
@@ -77,10 +77,10 @@ impl Signature {
         Ok(())
     }
 
-    fn compute_e(&self, message: &[u8], pk: &PublicKey) -> Result<SecretKey, Error> {
+    pub fn compute_e(r_x: &[u8], pk: &secp256k1::PublicKey, message: &[u8]) -> Result<SecretKey, secp256k1::Error> {
         let mut engine = sha256::Hash::engine();
-        engine.input(&self.r_x[..]);
-        engine.input(&pk.key.serialize()[..]);
+        engine.input(r_x);
+        engine.input(&pk.serialize()[..]);
         engine.input(message);
         let hash = sha256::Hash::from_engine(engine);
 
