@@ -35,6 +35,7 @@ pub mod misc;
 pub mod psbt;
 pub mod uint;
 pub mod signature;
+pub mod prime;
 
 pub(crate) mod endian;
 

@@ -30,6 +30,7 @@ use network::constants::Network;
 use secp256k1::{self, Secp256k1};
 use util::base58;
 use util::signature::Signature;
+use util::prime::jacobi;
 
 /// A key-related error.
 #[derive(Debug)]
@@ -223,13 +224,14 @@ impl PrivateKey {
         })
     }
 
+    /// Generate schnorr signature
     pub fn sign_schnorr(&self, message: &[u8; 32]) -> Result<Signature, Error> {
         let ctx = secp256k1::Secp256k1::signing_only();
 
         let pk = secp256k1::PublicKey::from_secret_key(&ctx, &self.key);
 
         // Generate k
-        let k = secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng());
+        let mut k = secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng());
 
         // TODO: Check private key and k is not zero
         // this is no need because all secret key instance checked.
@@ -237,7 +239,10 @@ impl PrivateKey {
         // Compute R = k * G
         let r = secp256k1::PublicKey::from_secret_key(&ctx, &k);
 
-        // TODO: Negate k if value of jacobi(R.y) is not 1
+        // Negate k if value of jacobi(R.y) is not 1
+        if jacobi(&r.serialize_uncompressed()[33..]) != 1 {
+            k.negate_assign();
+        }
 
         // Compute e = sha256(R.x, pk, message)
         let e = Signature::compute_e(&r.serialize()[1..33], &pk, message)?;

@@ -13,7 +13,9 @@ use std::fmt;
 use util::key::PublicKey;
 use secp256k1::SecretKey;
 use hashes::{sha256, HashEngine, Hash};
+use util::prime::jacobi;
 
+/// Generator for secp256k1 elliptic curve
 pub const GENERATOR: [u8; 33] = [
     0x02,
     0x79, 0xBE, 0x66, 0x7E, 0xF9, 0xDC, 0xBB, 0xAC,
@@ -72,11 +74,15 @@ impl Signature {
             return Err(Error::InvalidSignature);
         }
 
-        // TODO: Check that jacobi(R.y) is 1
+        // Check that jacobi(R.y) is 1
+        if jacobi(&r.serialize_uncompressed()[33..]) != 1 {
+            return Err(Error::InvalidSignature);
+        }
 
         Ok(())
     }
 
+    /// Compute e
     pub fn compute_e(r_x: &[u8], pk: &secp256k1::PublicKey, message: &[u8]) -> Result<SecretKey, secp256k1::Error> {
         let mut engine = sha256::Hash::engine();
         engine.input(r_x);
@@ -157,9 +163,9 @@ mod tests {
         let sig_data =
             hex_decode("6ba8aee2e8cee077cb4a799c770e417fb750586ee5dd9f61db65f5158a596e77aaa87e4fec16c70b102bbe99a6c4fe77be424a44a2f5cfdc5fe04d5b4bca799c").unwrap();
 
-        let sigma =
-            hex_decode("6ba8aee2e8cee077cb4a799c770e417fb750586ee5dd9f61db65f5158a596e77").unwrap();
         let r_x =
+            hex_decode("6ba8aee2e8cee077cb4a799c770e417fb750586ee5dd9f61db65f5158a596e77").unwrap();
+        let sigma =
             hex_decode("aaa87e4fec16c70b102bbe99a6c4fe77be424a44a2f5cfdc5fe04d5b4bca799c").unwrap();
 
         let decode: Result<Signature, _> = deserialize(&sig_data);
