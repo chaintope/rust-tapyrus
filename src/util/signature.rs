@@ -51,9 +51,6 @@ impl Signature {
         // Generate k
         let mut k = Self::generate_k(sk, message);
 
-        // TODO: Check private key and k is not zero
-        // this is no need because all secret key instance checked.
-
         // Compute R = k * G
         let r = secp256k1::PublicKey::from_secret_key(&ctx, &k);
 
