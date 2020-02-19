@@ -9,11 +9,15 @@
 
 use std::error;
 use std::fmt;
+use std::borrow::Borrow;
 
-use util::key::PublicKey;
 use secp256k1::SecretKey;
 use hashes::{sha256, HashEngine, Hash};
+
+use util::key::{PublicKey, PrivateKey};
 use util::prime::jacobi;
+use util::rfc7969::nonce_rfc6979;
+
 
 /// Generator for secp256k1 elliptic curve
 pub const GENERATOR: [u8; 33] = [
@@ -37,6 +41,44 @@ pub struct Signature {
 }
 
 impl Signature {
+    /// signing to message
+    pub fn sign(privkey: &PrivateKey, message: &[u8; 32]) -> Result<Self, Error> {
+        let ctx = secp256k1::Secp256k1::signing_only();
+        let sk = privkey.key.borrow();
+
+        let pk = secp256k1::PublicKey::from_secret_key(&ctx, sk);
+
+        // Generate k
+        let mut k = Self::generate_k(sk, message);
+
+        // TODO: Check private key and k is not zero
+        // this is no need because all secret key instance checked.
+
+        // Compute R = k * G
+        let r = secp256k1::PublicKey::from_secret_key(&ctx, &k);
+
+        // Negate k if value of jacobi(R.y) is not 1
+        if jacobi(&r.serialize_uncompressed()[33..]) != 1 {
+            k.negate_assign();
+        }
+
+        // Compute e = sha256(R.x, pk, message)
+        let e = Self::compute_e(&r.serialize()[1..33], &pk, message)?;
+
+        // Compute s = k + ep
+        let sigma = {
+            let mut result = e.clone();
+            result.mul_assign(&sk[..])?;
+            result.add_assign(&k[..])?;
+            result
+        };
+
+        let mut r_x = [0u8; 32];
+        r_x.clone_from_slice(&r.serialize()[1..33]);
+
+        Ok(Signature { r_x, sigma: to_bytes(&sigma) })
+    }
+
     /// Verify signature
     pub fn verify(&self, message: &[u8], pk: &PublicKey) -> Result<(), Error> {
         let ctx = secp256k1::Secp256k1::verification_only();
@@ -47,7 +89,7 @@ impl Signature {
         let s = secp256k1::SecretKey::from_slice(&self.sigma[..])?;
 
         // Compute e
-        let mut e = Signature::compute_e(&self.r_x[..], &pk.key, message)?;
+        let mut e = Self::compute_e(&self.r_x[..], &pk.key, message)?;
 
         // Compute R = sG - eP
         let r = {
@@ -83,7 +125,7 @@ impl Signature {
     }
 
     /// Compute e
-    pub fn compute_e(r_x: &[u8], pk: &secp256k1::PublicKey, message: &[u8]) -> Result<SecretKey, secp256k1::Error> {
+    fn compute_e(r_x: &[u8], pk: &secp256k1::PublicKey, message: &[u8]) -> Result<SecretKey, secp256k1::Error> {
         let mut engine = sha256::Hash::engine();
         engine.input(r_x);
         engine.input(&pk.serialize()[..]);
@@ -92,6 +134,36 @@ impl Signature {
 
         Ok(SecretKey::from_slice(&hash[..])?)
     }
+
+    fn generate_k(sk: &SecretKey, message: &[u8; 32]) -> SecretKey {
+        // "SCHNORR + SHA256"
+        const ALGO16: [u8; 16] = [
+            83, 67, 72, 78, 79, 82, 82, 32, 43, 32, 83, 72, 65, 50, 53, 54
+        ];
+
+        let mut count: u32 = 0;
+
+        loop {
+            let nonce = nonce_rfc6979(
+                message,
+                sk,
+                &ALGO16,
+                None,
+                count
+            );
+            count += 1;
+
+            if let Ok(k) = SecretKey::from_slice(&nonce[..]) {
+                return k;
+            }
+        }
+    }
+}
+
+fn to_bytes(sk: &secp256k1::SecretKey) -> [u8; 32] {
+    let mut r = [0u8; 32];
+    r.clone_from_slice(&sk[..]);
+    r
 }
 
 impl Default for Signature {
@@ -153,10 +225,29 @@ impl error::Error for Error {
 mod tests {
     use hex::decode as hex_decode;
 
+    use hashes::core::str::FromStr;
+    use hashes::Hash;
     use consensus::encode::{deserialize, serialize};
     use util::signature::Signature;
-    use util::key::PublicKey;
-    use hashes::core::str::FromStr;
+    use util::key::{PrivateKey, PublicKey};
+
+    #[test]
+    fn test_sign_schnorr() {
+        for n in 0..16 {
+            let msg = {
+                let m = format!("Very secret message {}: 11", n);
+                let hash = hashes::sha256::Hash::hash(m.as_bytes());
+                hash.into_inner()
+            };
+
+            let key = PrivateKey::from_wif("5HxWvvfubhXpYYpS3tJkw6fq9jE9j18THftkZjHHfmFiWtmAbrj").unwrap();
+
+            let sign = Signature::sign(&key, &msg).unwrap();
+
+            let ctx = secp256k1::Secp256k1::signing_only();
+            assert!(sign.verify(&msg[..], &key.public_key(&ctx)).is_ok());
+        }
+    }
 
     #[test]
     fn signature_test() {
