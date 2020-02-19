@@ -87,8 +87,6 @@ impl Signature {
     fn verify_inner(&self, message: &[u8], pk: &secp256k1::PublicKey) -> Result<(), Error> {
         let ctx = secp256k1::Secp256k1::verification_only();
 
-        // TODO: check pk is not infinity.
-
         // Extract s
         let s = secp256k1::SecretKey::from_slice(&self.sigma[..])?;
 
@@ -112,8 +110,6 @@ impl Signature {
 
             sg.combine(&minus_ep)?
         };
-
-        // TODO: check R is not infinity.
 
         // Check that R.x is what we expect
         if &r.serialize()[1..33] != self.r_x {
