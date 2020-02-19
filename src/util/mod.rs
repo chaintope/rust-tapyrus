@@ -36,6 +36,7 @@ pub mod psbt;
 pub mod uint;
 pub mod signature;
 pub mod prime;
+pub mod rfc7969;
 
 pub(crate) mod endian;
 

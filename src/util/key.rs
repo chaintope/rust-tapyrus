@@ -27,10 +27,11 @@ use std::str::FromStr;
 
 use consensus::{encode, Decodable, Encodable};
 use network::constants::Network;
-use secp256k1::{self, Secp256k1};
+use secp256k1::{self, Secp256k1, SecretKey};
 use util::base58;
 use util::signature::Signature;
 use util::prime::jacobi;
+use util::rfc7969::nonce_rfc6979;
 
 /// A key-related error.
 #[derive(Debug)]
@@ -39,6 +40,8 @@ pub enum Error {
     Base58(base58::Error),
     /// secp256k1-related error
     Secp256k1(secp256k1::Error),
+    /// Generation for sign nonce related error
+    NonceGeneration
 }
 
 
@@ -47,6 +50,7 @@ impl fmt::Display for Error {
         match *self {
             Error::Base58(ref e) => write!(f, "base58 error: {}", e),
             Error::Secp256k1(ref e) => write!(f, "secp256k1 error: {}", e),
+            Error::NonceGeneration => write!(f, "nonce generation error"),
         }
     }
 }
@@ -56,6 +60,7 @@ impl error::Error for Error {
         match *self {
             Error::Base58(ref e) => Some(e),
             Error::Secp256k1(ref e) => Some(e),
+            Error::NonceGeneration => None,
         }
     }
 
@@ -231,7 +236,7 @@ impl PrivateKey {
         let pk = secp256k1::PublicKey::from_secret_key(&ctx, &self.key);
 
         // Generate k
-        let mut k = secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng());
+        let mut k = self.generate_k(message)?;
 
         // TODO: Check private key and k is not zero
         // this is no need because all secret key instance checked.
@@ -259,6 +264,30 @@ impl PrivateKey {
         r_x.clone_from_slice(&r.serialize()[1..33]);
 
         Ok(Signature { r_x, sigma: to_bytes(&sigma) })
+    }
+
+    fn generate_k(&self, message: &[u8; 32]) -> Result<SecretKey, Error> {
+        // "SCHNORR + SHA256"
+        const ALGO16: [u8; 16] = [
+            83, 67, 72, 78, 79, 82, 82, 32, 43, 32, 83, 72, 65, 50, 53, 54
+        ];
+
+        let mut count: u32 = 0;
+
+        loop {
+            let nonce = nonce_rfc6979(
+                message,
+                &self.key,
+                &ALGO16,
+                None,
+                count
+            );
+            count += 1;
+
+            if let Ok(k) = SecretKey::from_slice(&nonce[..]) {
+                return Ok(k);
+            }
+        }
     }
 }
 
