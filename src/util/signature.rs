@@ -75,11 +75,11 @@ impl Signature {
     }
 
     /// Verify signature
-    pub fn verify(&self, message: &[u8], pk: &PublicKey) -> Result<(), Error> {
+    pub fn verify(&self, message: &[u8; 32], pk: &PublicKey) -> Result<(), Error> {
         self.verify_inner(message, pk.key.borrow())
     }
 
-    fn verify_inner(&self, message: &[u8], pk: &secp256k1::PublicKey) -> Result<(), Error> {
+    fn verify_inner(&self, message: &[u8; 32], pk: &secp256k1::PublicKey) -> Result<(), Error> {
         let ctx = secp256k1::Secp256k1::verification_only();
 
         // Extract s
@@ -120,7 +120,7 @@ impl Signature {
     }
 
     /// Compute e
-    fn compute_e(r_x: &[u8], pk: &secp256k1::PublicKey, message: &[u8]) -> Result<SecretKey, secp256k1::Error> {
+    fn compute_e(r_x: &[u8], pk: &secp256k1::PublicKey, message: &[u8; 32]) -> Result<SecretKey, secp256k1::Error> {
         let mut engine = sha256::Hash::engine();
         engine.input(r_x);
         engine.input(&pk.serialize()[..]);
@@ -235,7 +235,7 @@ mod tests {
             let sign = Signature::sign(&key, &msg).unwrap();
 
             let ctx = secp256k1::Secp256k1::signing_only();
-            assert!(sign.verify(&msg[..], &key.public_key(&ctx)).is_ok());
+            assert!(sign.verify(&msg, &key.public_key(&ctx)).is_ok());
         }
     }
 
