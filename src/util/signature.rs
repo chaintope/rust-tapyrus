@@ -18,20 +18,10 @@ use util::key::{PublicKey, PrivateKey};
 use util::prime::jacobi;
 use util::rfc7969::nonce_rfc6979;
 
-
-/// Generator for secp256k1 elliptic curve
-pub const GENERATOR: [u8; 33] = [
-    0x02,
-    0x79, 0xBE, 0x66, 0x7E, 0xF9, 0xDC, 0xBB, 0xAC,
-    0x55, 0xA0, 0x62, 0x95, 0xCE, 0x87, 0x0B, 0x07,
-    0x02, 0x9B, 0xFC, 0xDB, 0x2D, 0xCE, 0x28, 0xD9,
-    0x59, 0xF2, 0x81, 0x5B, 0x16, 0xF8, 0x17, 0x98
-];
-
 /// The size of scalar value on secp256k1 curve
 pub const SECP256K1_SCALAR_SIZE: usize = 32;
 
-// "SCHNORR + SHA256"
+/// "SCHNORR + SHA256"
 pub const ALGO16: [u8; 16] = [
     83, 67, 72, 78, 79, 82, 82, 32, 43, 32, 83, 72, 65, 50, 53, 54
 ];
@@ -84,11 +74,11 @@ impl Signature {
         Ok(Signature { r_x, sigma: to_bytes(&sigma) })
     }
 
+    /// Verify signature
     pub fn verify(&self, message: &[u8], pk: &PublicKey) -> Result<(), Error> {
         self.verify_inner(message, pk.key.borrow())
     }
 
-    /// Verify signature
     fn verify_inner(&self, message: &[u8], pk: &secp256k1::PublicKey) -> Result<(), Error> {
         let ctx = secp256k1::Secp256k1::verification_only();
 
@@ -108,7 +98,7 @@ impl Signature {
             };
 
             let sg = {
-                let mut result = secp256k1::PublicKey::from_slice(&GENERATOR[..]).unwrap();
+                let mut result = PublicKey::generator().key;
                 result.mul_assign(&ctx, &s[..])?;
                 result
             };
