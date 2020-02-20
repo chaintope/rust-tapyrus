@@ -18,7 +18,7 @@ This repository is forked from [rust-bitcoin](https://github.com/rust-bitcoin/ru
 For JSONRPC interaction with Tapyrus Core, it is recommended to use
 
 ## Minimum Supported Rust Version (MSRV)
-This library should always compile with any combination of features on **Rust 1.22**.
+This library should always compile with any combination of features on **Rust 1.37.0**.
 
 ## Installing Rust
 Rust can be installed using your package manager of choice or
@@ -26,7 +26,7 @@ Rust can be installed using your package manager of choice or
 it typically doesn't involve trust in the CA system. But you should be aware
 that the version of Rust shipped by your distribution might be out of date.
 Generally this isn't a problem for `rust-tapyrus` since we support much older
-versions (>=1.22) than the current stable one.
+versions (>=1.37.0) than the current stable one.
 
 ## Building
 The library can be built and tested using [`cargo`](https://github.com/rust-lang/cargo/):
