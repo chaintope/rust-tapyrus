@@ -72,6 +72,8 @@ compile_error!("rust-bitcoin cannot be used on 16-bit architectures");
 #[cfg(test)]
 #[macro_use]
 mod test_macros;
+#[cfg(test)]
+mod test_helpers;
 #[macro_use]
 mod internal_macros;
 #[macro_use]

@@ -31,6 +31,11 @@ pub const GENERATOR: [u8; 33] = [
 /// The size of scalar value on secp256k1 curve
 pub const SECP256K1_SCALAR_SIZE: usize = 32;
 
+// "SCHNORR + SHA256"
+pub const ALGO16: [u8; 16] = [
+    83, 67, 72, 78, 79, 82, 82, 32, 43, 32, 83, 72, 65, 50, 53, 54
+];
+
 /// Schnorr signature struct
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub struct Signature {
@@ -136,11 +141,6 @@ impl Signature {
     }
 
     fn generate_k(sk: &SecretKey, message: &[u8; 32]) -> SecretKey {
-        // "SCHNORR + SHA256"
-        const ALGO16: [u8; 16] = [
-            83, 67, 72, 78, 79, 82, 82, 32, 43, 32, 83, 72, 65, 50, 53, 54
-        ];
-
         let mut count: u32 = 0;
 
         loop {
@@ -225,12 +225,11 @@ impl error::Error for Error {
 mod tests {
     use hex::decode as hex_decode;
 
-    use hashes::core::str::FromStr;
     use hashes::Hash;
     use consensus::encode::{deserialize, serialize};
     use util::signature::Signature;
-    use util::key::{PrivateKey, PublicKey};
-    use secp256k1::SecretKey;
+    use util::key::PrivateKey;
+    use test_helpers::*;
 
     #[test]
     fn test_p2p_sign_and_verify() {
@@ -248,33 +247,6 @@ mod tests {
             let ctx = secp256k1::Secp256k1::signing_only();
             assert!(sign.verify(&msg[..], &key.public_key(&ctx)).is_ok());
         }
-    }
-
-    fn decode_sk(sk_hex: &str) -> SecretKey {
-        let sk = hex::decode(sk_hex).unwrap();
-        SecretKey::from_slice(&sk[..]).unwrap()
-    }
-
-    fn decode_message(message_hex: &str) -> [u8; 32] {
-        let vec = hex::decode(message_hex).unwrap();
-        let mut r = [0u8; 32];
-        r.clone_from_slice(&vec[..]);
-        r
-    }
-
-    fn decode_pk(pk_hex: &str) -> secp256k1::PublicKey {
-        let pk = hex::decode(pk_hex).unwrap();
-        secp256k1::PublicKey::from_slice(&pk[..]).unwrap()
-    }
-
-    fn pk_from(sk: &SecretKey) -> secp256k1::PublicKey {
-        let secp = secp256k1::Secp256k1::signing_only();
-        secp256k1::PublicKey::from_secret_key(&secp, sk)
-    }
-
-    fn decode_signature(sig_hex: &str) -> Signature {
-        let sig = hex::decode(sig_hex).unwrap();
-        deserialize(&sig[..]).unwrap()
     }
 
     /// these test vectors from here https://github.com/chaintope/tapyrus-schnorr-signature-test-vectors
