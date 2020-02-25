@@ -121,6 +121,20 @@ impl PublicKey {
     pub fn from_private_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, sk: &PrivateKey) -> PublicKey {
         sk.public_key(secp)
     }
+
+    /// Returns generator point of secp256k1 as PublicKey
+    pub fn generator() -> PublicKey {
+        let mut data: Vec<u8> = Vec::with_capacity(33);
+
+        if secp256k1::constants::GENERATOR_Y.last().unwrap() & 1 == 1 {
+            data.extend(&[3]);
+        } else {
+            data.extend(&[2]);
+        }
+        data.extend(&secp256k1::constants::GENERATOR_X[..]);
+
+        PublicKey::from_slice(&data[..]).unwrap()
+    }
 }
 
 impl fmt::Display for PublicKey {
@@ -490,5 +504,16 @@ mod tests {
 
         let decoded = PublicKey::consensus_decode(&s[..]).unwrap();
         assert_eq!(decoded, pk);
+    }
+
+    #[test]
+    fn test_generator() {
+        let g = PublicKey::generator();
+
+        let mut expected: Vec<u8> = Vec::with_capacity(65);
+        expected.extend(&[4]);
+        expected.extend(&secp256k1::constants::GENERATOR_X);
+        expected.extend(&secp256k1::constants::GENERATOR_Y);
+        assert_eq!(&expected[..], &g.key.serialize_uncompressed()[..]);
     }
 }

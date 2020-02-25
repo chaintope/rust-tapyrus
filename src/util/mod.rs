@@ -34,6 +34,9 @@ pub mod merkleblock;
 pub mod misc;
 pub mod psbt;
 pub mod uint;
+pub mod signature;
+pub mod prime;
+pub mod rfc7969;
 
 pub(crate) mod endian;
 
@@ -71,6 +74,8 @@ pub enum Error {
     Encode(encode::Error),
     /// Network error
     Network(network::Error),
+    /// Signature error
+    Signature(signature::Error),
 }
 
 impl fmt::Display for Error {
@@ -78,6 +83,7 @@ impl fmt::Display for Error {
         match *self {
             Error::Encode(ref e) => fmt::Display::fmt(e, f),
             Error::Network(ref e) => fmt::Display::fmt(e, f),
+            Error::Signature(ref e) => fmt::Display::fmt(e, f),
         }
     }
 }
@@ -87,6 +93,7 @@ impl error::Error for Error {
         match *self {
             Error::Encode(ref e) => Some(e),
             Error::Network(ref e) => Some(e),
+            Error::Signature(ref e) => Some(e),
         }
     }
 
@@ -94,6 +101,7 @@ impl error::Error for Error {
         match *self {
             Error::Encode(ref e) => e.description(),
             Error::Network(ref e) => e.description(),
+            Error::Signature(ref e) => e.description(),
         }
     }
 }

@@ -40,6 +40,7 @@ use hash_types::{BlockHash, FilterHash, TxMerkleNode};
 use util::endian;
 use util::psbt;
 use util::key;
+use util::signature::Signature;
 
 use blockdata::transaction::{TxOut, Transaction, TxIn};
 use network::message_blockdata::Inventory;
@@ -753,12 +754,51 @@ impl Decodable for sha256d::Hash {
     }
 }
 
+// option
+macro_rules! impl_option {
+    ($type: ty) => {
+        impl Encodable for Option<$type> {
+            #[inline]
+            fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, Error> {
+                let mut len = 0;
+                match self {
+                    Some(c) => {
+                        len += VarInt(serialize(c).len() as u64).consensus_encode(&mut s)?;
+                        len += c.consensus_encode(&mut s)?;
+                    }
+                    None => {
+                        len += VarInt(0).consensus_encode(&mut s)?;
+                    }
+                }
+                Ok(len)
+            }
+        }
+
+        impl Decodable for Option<$type> {
+            #[inline]
+            fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
+                let len = VarInt::consensus_decode(&mut d)?.0;
+                if len == 0 {
+                    return Ok(None);
+                }
+                let ret = Decodable::consensus_decode(&mut d)?;
+                if len != serialize(&ret).len() as u64 {
+                    return Err(Error::ParseFailed("Invalid length"));
+                }
+                Ok(Some(ret))
+            }
+        }
+    };
+}
+impl_option!(Signature);
+
 // Tests
 #[cfg(test)]
 mod tests {
     use super::{CheckedData, VarInt};
 
     use super::{deserialize, serialize, Error};
+    use util::signature::Signature;
 
     #[test]
     fn serialize_int_test() {
@@ -939,6 +979,22 @@ mod tests {
     fn deserialize_checkeddata_test() {
         let cd: Result<CheckedData, _> = deserialize(&[5u8, 0, 0, 0, 162, 107, 175, 90, 1, 2, 3, 4, 5]);
         assert_eq!(cd.ok(), Some(CheckedData(vec![1u8, 2, 3, 4, 5])));
+    }
+
+    #[test]
+    fn serialize_option_test() {
+        let none: Option<Signature> = None;
+        assert_eq!(vec![0], serialize(&none));
+
+        let some: Option<Signature> = Some(Default::default());
+        let expected = vec![
+            64,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0,
+        ];
+        assert_eq!(expected, serialize(&some));
     }
 }
 

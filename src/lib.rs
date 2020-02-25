@@ -64,12 +64,16 @@ pub extern crate bech32;
 #[cfg(all(test, feature = "unstable"))] extern crate test;
 #[cfg(feature="bitcoinconsensus")] extern crate bitcoinconsensus;
 
+extern crate rug;
+
 #[cfg(target_pointer_width = "16")]
 compile_error!("rust-bitcoin cannot be used on 16-bit architectures");
 
 #[cfg(test)]
 #[macro_use]
 mod test_macros;
+#[cfg(test)]
+mod test_helpers;
 #[macro_use]
 mod internal_macros;
 #[macro_use]
@@ -101,3 +105,4 @@ pub use util::hash::BitcoinHash;
 pub use util::key::PrivateKey;
 pub use util::key::PublicKey;
 pub use util::merkleblock::MerkleBlock;
+pub use util::signature::Signature;

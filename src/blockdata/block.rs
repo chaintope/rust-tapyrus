@@ -31,9 +31,9 @@ use hashes::{Hash, HashEngine};
 use hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
 use consensus::{encode, Decodable, Encodable};
 use blockdata::transaction::Transaction;
-use blockdata::script::Script;
 use util::hash::{bitcoin_merkle_root, BitcoinHash};
 use util::key::PublicKey;
+use util::signature::Signature;
 
 /// A block header, which contains all the block's information except
 /// the actual transactions
@@ -52,32 +52,8 @@ pub struct BlockHeader {
     ///Aggregate public key of tapyrus-signer used to verify block proof. This field is optional and may be present in all blocks.
     pub aggregated_public_key: PublicKeyOpt,
     /// Collection holds a signature for block hash which is consisted of block header without Proof.
-    pub proof: Signature,
+    pub proof: Option<Signature>,
 }
-
-/// A signature, which holds a Schnorr signature as blockdata::script::Script.
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub struct Signature {
-    /// Schnorr Signature for block header hash. Formatted as DER encoding.
-    pub signature: Script,
-}
-
-impl Decodable for Signature {
-    #[inline]
-    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
-        let script: Script = Decodable::consensus_decode(d)?;
-        Ok(Signature { signature: script })
-    }
-}
-
-impl Encodable for Signature {
-    #[inline]
-    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
-        self.signature.consensus_encode(&mut s)
-    }
-}
-
-serde_struct_impl!(Signature, signature);
 
 /// Optional aggregated public key
 pub type PublicKeyOpt = Option<PublicKey>;
@@ -229,7 +205,7 @@ mod tests {
 
     #[test]
     fn block_test() {
-        let some_block = hex_decode("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c364243a74762685f916378ce87c5384ad39b594aca206426d9d244ef51d644d2d74d6e4921032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af000201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac00000000").unwrap();
+        let some_block = hex_decode("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c364243a74762685f916378ce87c5384ad39b594aca206426d9d244ef51d644d2d74d6e4921032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af40f1453cd332262d74edf65f96688724b80a15c852fd50151e4aabc41a0d9560d2cd38f0746c3d9c9e18b236f20e37d0ae1bda457ea029db8a55b20f38143517d00201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac00000000").unwrap();
         let cutoff_block = hex_decode("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c364243a74762685f916378ce87c5384ad39b594aca206426d9d244ef51d644d2d74d6e4921032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af000201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac").unwrap();
 
         let prevhash =
@@ -240,6 +216,7 @@ mod tests {
             "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af",
         )
         .unwrap();
+        let sig = deserialize(&hex::decode("f1453cd332262d74edf65f96688724b80a15c852fd50151e4aabc41a0d9560d2cd38f0746c3d9c9e18b236f20e37d0ae1bda457ea029db8a55b20f38143517d0").unwrap()).unwrap();
         let decode: Result<Block, _> = deserialize(&some_block);
         let bad_decode: Result<Block, _> = deserialize(&cutoff_block);
 
@@ -256,12 +233,24 @@ mod tests {
         assert_eq!(serialize(&real_decode.header.merkle_root), merkle);
         assert_eq!(real_decode.header.time, 1231965655);
         assert_eq!(real_decode.header.aggregated_public_key.unwrap(), pk);
+        assert_eq!(real_decode.header.proof.unwrap(), sig);
         // [test] TODO: check the transaction data
 
         // should be also ok for a non-witness block as commitment is optional in that case
         assert!(real_decode.check_witness_commitment());
 
         assert_eq!(serialize(&real_decode), some_block);
+    }
+
+    #[test]
+    fn no_aggkey_and_no_proof_block_test() {
+        let some_block = hex_decode("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c364243a74762685f916378ce87c5384ad39b594aca206426d9d244ef51d644d2d74d6e4900000201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac00000000").unwrap();
+        let decode: Result<Block, _> = deserialize(&some_block);
+
+        assert!(decode.is_ok());
+        let real_decode = decode.unwrap();
+        assert!(real_decode.header.aggregated_public_key.is_none());
+        assert!(real_decode.header.proof.is_none());
     }
 
     // Check testnet block 000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b
