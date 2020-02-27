@@ -16,7 +16,7 @@ use hashes::{sha256, HashEngine, Hash};
 
 use util::key::{PublicKey, PrivateKey};
 use util::prime::jacobi;
-use util::rfc7969::nonce_rfc6979;
+use util::rfc6979::nonce_rfc6979;
 
 /// The size of scalar value on secp256k1 curve
 pub const SECP256K1_SCALAR_SIZE: usize = 32;
