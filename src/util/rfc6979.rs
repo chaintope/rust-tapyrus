@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-//! RFC6879
+//! RFC6979
 //!
 
 use hashes::{HmacEngine, HashEngine, Hmac, Hash};
@@ -26,7 +26,7 @@ pub fn nonce_rfc6979(
         keydata.extend(d);
     }
     keydata.extend(algo16);
-    let mut rng = RFC6879::new(&keydata[..]);
+    let mut rng = RFC6979::new(&keydata[..]);
     let mut ret: [u8; 32] = [0u8; 32];
     for _ in 0..=counter {
         ret = rng.generate();
@@ -35,13 +35,13 @@ pub fn nonce_rfc6979(
     ret
 }
 
-struct RFC6879 {
+struct RFC6979 {
     v: [u8; 32],
     k: [u8; 32],
     retry: bool,
 }
 
-impl RFC6879 {
+impl RFC6979 {
     pub fn new(keydata: &[u8]) -> Self {
         let mut rng = Self {
             v: [1u8; 32], // RFC6979 3.2.b.
@@ -101,7 +101,7 @@ impl RFC6879 {
 #[cfg(test)]
 mod tests {
     use test_helpers::{decode_message, decode_sk};
-    use util::rfc7969::nonce_rfc6979;
+    use util::rfc6979::nonce_rfc6979;
 
     #[test]
     fn test() {
