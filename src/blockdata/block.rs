@@ -74,6 +74,16 @@ pub enum ExtraField {
     AggregatePublicKey(PublicKey),
 }
 
+impl ExtraField {
+    /// Return xfieldType.
+    pub fn field_type(&self) -> u8 {
+        match *self {
+            ExtraField::None => 0u8,
+            ExtraField::AggregatePublicKey(_) => 1u8,
+        }
+    }
+}
+
 impl Decodable for ExtraField {
     #[inline]
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
@@ -94,10 +104,10 @@ impl Decodable for ExtraField {
 impl Encodable for ExtraField {
     #[inline]
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
+        self.field_type().consensus_encode(&mut s)?;
         match *self {
-            ExtraField::None => 0u8.consensus_encode(&mut s),
+            ExtraField::None => Ok(1),
             ExtraField::AggregatePublicKey(pk) => {
-                0u8.consensus_encode(&mut s)?;
                 let mut bytes = [0u8; 33];
                 bytes.copy_from_slice(&pk.to_bytes());
                 let len = bytes.consensus_encode(&mut s)?;
