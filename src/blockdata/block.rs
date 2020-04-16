@@ -26,10 +26,12 @@
 //!
 
 use std::io;
+use std::str::FromStr;
 
 use hashes::{Hash, HashEngine};
 use hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
-use consensus::{encode, Decodable, Encodable};
+use consensus::{serialize, encode, Decodable, Encodable};
+use consensus::encode::serialize_hex;
 use blockdata::transaction::Transaction;
 use util::hash::{bitcoin_merkle_root, BitcoinHash};
 use util::key::PublicKey;
@@ -81,6 +83,74 @@ impl ExtraField {
             ExtraField::None => 0u8,
             ExtraField::AggregatePublicKey(_) => 1u8,
         }
+    }
+}
+
+impl FromStr for ExtraField {
+    type Err = encode::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let x_type = &s[0..2];
+        match x_type {
+            "00" => Ok(ExtraField::None),
+            "01" => {
+                let pk = PublicKey::from_str(&s[2..68])
+                    .map_err(|_| encode::Error::ParseFailed("aggregate public key"))?;
+                Ok(ExtraField::AggregatePublicKey(pk))
+            }
+            _ => Err(encode::Error::ParseFailed("type")),
+        }
+    }
+}
+
+impl std::fmt::Display for ExtraField {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", serialize_hex(self))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for ExtraField {
+    /// User-facing serialization for `Script`.
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.collect_str(&self)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> ::serde::Deserialize<'de> for ExtraField {
+    fn deserialize<D: ::serde::Deserializer<'de>>(d: D) -> Result<ExtraField, D::Error> {
+        struct ExtraFieldVisitor;
+
+        impl<'de> ::serde::de::Visitor<'de> for ExtraFieldVisitor {
+            type Value = ExtraField;
+
+            fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                formatter.write_str("hex string")
+            }
+
+            fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+            where
+                E: ::serde::de::Error,
+            {
+                if let Ok(s) = ::std::str::from_utf8(v) {
+                    ExtraField::from_str(s).map_err(E::custom)
+                } else {
+                    Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
+                }
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: ::serde::de::Error,
+            {
+                ExtraField::from_str(v).map_err(E::custom)
+            }
+        }
+
+        d.deserialize_str(ExtraFieldVisitor)
     }
 }
 
@@ -197,7 +267,6 @@ impl Block {
 
 impl BitcoinHash<BlockHash> for BlockHeader {
     fn bitcoin_hash(&self) -> BlockHash {
-        use consensus::encode::serialize;
         BlockHash::hash(&serialize(self))
     }
 }
@@ -295,6 +364,9 @@ mod tests {
         let extra_field = hex_decode("00").unwrap();
         let decode: Result<ExtraField, _> = deserialize(&extra_field);
         assert_eq!(decode.unwrap(), ExtraField::None);
+
+        let extra_field = ExtraField::from_str("00");
+        assert_eq!(extra_field.unwrap(), ExtraField::None);
     }
 
     #[test]
@@ -306,6 +378,21 @@ mod tests {
         )
         .unwrap();
         assert_eq!(decode.unwrap(), ExtraField::AggregatePublicKey(pk));
+
+        let extra_field = ExtraField::from_str("01032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af");
+        assert_eq!(extra_field.unwrap(), ExtraField::AggregatePublicKey(pk));
+    }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn extra_field_serialize_test() {
+        let extra_field = hex_decode("00").unwrap();
+        let decode: ExtraField = deserialize(&extra_field).unwrap();
+        serde_round_trip!(decode);
+
+        let extra_field = hex_decode("01032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
+        let decode: ExtraField = deserialize(&extra_field).unwrap();
+        serde_round_trip!(decode);
     }
 
     // Check testnet block 000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b
