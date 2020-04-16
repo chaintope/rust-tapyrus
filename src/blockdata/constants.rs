@@ -29,7 +29,7 @@ use std::str::FromStr;
 
 use hashes::hex::FromHex;
 use hashes::sha256d;
-use blockdata::block::{Block, BlockHeader};
+use blockdata::block::{Block, BlockHeader, ExtraField};
 use blockdata::opcodes;
 use blockdata::script;
 use blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
@@ -108,7 +108,7 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root,
                     im_merkle_root,
                     time: 1231006505,
-                    aggregated_public_key: Some(public_key),
+                    extra_field: ExtraField::AggregatePublicKey(public_key),
                     proof: None,
                 },
                 txdata: txdata
@@ -122,7 +122,7 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root,
                     im_merkle_root,
                     time: 1296688602,
-                    aggregated_public_key: Some(public_key),
+                    extra_field: ExtraField::AggregatePublicKey(public_key),
                     proof: None,
                 },
                 txdata: txdata
@@ -136,7 +136,7 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root,
                     im_merkle_root,
                     time: 1296688602,
-                    aggregated_public_key: Some(public_key),
+                    extra_field: ExtraField::AggregatePublicKey(public_key),
                     proof: None,
                 },
                 txdata: txdata,
@@ -150,7 +150,7 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root,
                     im_merkle_root,
                     time: 1562925929,
-                    aggregated_public_key: Some(public_key),
+                    extra_field: ExtraField::AggregatePublicKey(public_key),
                     proof: None,
                 },
                 txdata: txdata,
@@ -203,7 +203,7 @@ mod test {
         assert_eq!(gen.header.time, 1231006505);
         assert_eq!(
             format!("{:x}", gen.header.bitcoin_hash()),
-            "1c184bf287b15f641f8b063aab2af4123519d227e8681463b91d675192f6279c".to_string()
+            "565370f06d0199eb108e77d52d9d255a402fcb392c5e605b235b8049d5c35368".to_string()
         );
     }
 
@@ -219,7 +219,7 @@ mod test {
         assert_eq!(gen.header.time, 1296688602);
         assert_eq!(
             format!("{:x}", gen.header.bitcoin_hash()),
-            "13530b95110ac11ae2d22d82acc5ad00a3510bb340c9667309cb811c2883cdc5".to_string()
+            "27c9964ae80f30b138a747ead8e94c887d3bc9ff6cf322be5cc8c1a0241d5913".to_string()
         );
     }
 
@@ -235,7 +235,7 @@ mod test {
         assert_eq!(gen.header.time, 1562925929);
         assert_eq!(
             format!("{:x}", gen.header.bitcoin_hash()),
-            "27136d27aba81a18449dfdeca2d0c2a973dfc0cdf0a2527b4860ed1f816145d4".to_string()
+            "ff6f403c6bdfeddff9831697c0cf01d37c356d3d18412fc2cd9b1d01581c1f09".to_string()
         );
     }
 }
