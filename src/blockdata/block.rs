@@ -68,6 +68,48 @@ impl Decodable for PublicKeyOpt {
     }
 }
 
+/// An extra field that allows the block header to hold arbitrary data.
+#[derive(Eq, PartialEq, Debug)]
+pub enum ExtraField {
+    /// xfield isn't used.
+    None,
+    /// Aggregate public key used to verify block proof.
+    AggregatePublicKey(PublicKey),
+}
+
+impl Decodable for ExtraField {
+    #[inline]
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+        let x_type: u8 = Decodable::consensus_decode(&mut d)?;
+        match x_type {
+            0 => Ok(ExtraField::None),
+            1 => {
+                let bytes: [u8; 33] = Decodable::consensus_decode(&mut d)?;
+                let pk = PublicKey::from_slice(&bytes)
+                    .map_err(|_| encode::Error::ParseFailed("aggregate public key"))?;
+                Ok(ExtraField::AggregatePublicKey(pk))
+            }
+            _ => Err(encode::Error::ParseFailed("type")),
+        }
+    }
+}
+
+impl Encodable for ExtraField {
+    #[inline]
+    fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
+        match *self {
+            ExtraField::None => 0u8.consensus_encode(&mut s),
+            ExtraField::AggregatePublicKey(pk) => {
+                0u8.consensus_encode(&mut s)?;
+                let mut bytes = [0u8; 33];
+                bytes.copy_from_slice(&pk.to_bytes());
+                let len = bytes.consensus_encode(&mut s)?;
+                Ok(1 + len)
+            }
+        }
+    }
+}
+
 impl Encodable for PublicKeyOpt {
     #[inline]
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
@@ -199,7 +241,7 @@ mod tests {
     use hex::decode as hex_decode;
     use std::str::FromStr;
 
-    use blockdata::block::Block;
+    use blockdata::block::{Block, ExtraField};
     use consensus::encode::{deserialize, serialize};
     use util::key::PublicKey;
 
@@ -251,6 +293,24 @@ mod tests {
         let real_decode = decode.unwrap();
         assert!(real_decode.header.aggregated_public_key.is_none());
         assert!(real_decode.header.proof.is_none());
+    }
+
+    #[test]
+    fn extra_field_none_test() {
+        let extra_field = hex_decode("00").unwrap();
+        let decode: Result<ExtraField, _> = deserialize(&extra_field);
+        assert_eq!(decode.unwrap(), ExtraField::None);
+    }
+
+    #[test]
+    fn extra_field_aggregate_public_key_test() {
+        let extra_field = hex_decode("01032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
+        let decode: Result<ExtraField, _> = deserialize(&extra_field);
+        let pk = PublicKey::from_str(
+            "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af",
+        )
+        .unwrap();
+        assert_eq!(decode.unwrap(), ExtraField::AggregatePublicKey(pk));
     }
 
     // Check testnet block 000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b
