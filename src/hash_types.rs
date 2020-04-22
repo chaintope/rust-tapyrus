@@ -41,6 +41,7 @@ macro_rules! impl_hashencode {
 hash_newtype!(Txid, sha256d::Hash, 32, doc="A bitcoin transaction hash/transaction ID.");
 hash_newtype!(Wtxid, sha256d::Hash, 32, doc="A bitcoin witness transaction ID.");
 hash_newtype!(BlockHash, sha256d::Hash, 32, doc="A bitcoin block hash.");
+hash_newtype!(BlockSigHash, sha256d::Hash, 32, doc="Hash of the block for sigining.");
 hash_newtype!(SigHash, sha256d::Hash, 32, doc="Hash of the transaction according to the signature algorithm");
 
 hash_newtype!(PubkeyHash, hash160::Hash, 20, doc="A hash of a public key.");
@@ -60,6 +61,7 @@ impl_hashencode!(Txid);
 impl_hashencode!(Wtxid);
 impl_hashencode!(SigHash);
 impl_hashencode!(BlockHash);
+impl_hashencode!(BlockSigHash);
 impl_hashencode!(TxMerkleNode);
 impl_hashencode!(WitnessMerkleNode);
 impl_hashencode!(FilterHash);
