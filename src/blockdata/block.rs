@@ -29,6 +29,7 @@ use std::io;
 use std::str::FromStr;
 
 use hashes::{Hash, HashEngine};
+use hashes::hex::FromHex;
 use hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
 use consensus::{serialize, encode, Decodable, Encodable};
 use consensus::encode::serialize_hex;
@@ -61,8 +62,8 @@ impl BlockHeader {
     /// Return the Aggregate public key in this BlockHeader
     pub fn aggregated_public_key(&self) -> Option<PublicKey> {
         match self.extra_field {
-            ExtraField::None => None,
             ExtraField::AggregatePublicKey(pk) => Some(pk),
+            _ => None,
         }
     }
 }
@@ -74,14 +75,17 @@ pub enum ExtraField {
     None,
     /// Aggregate public key used to verify block proof.
     AggregatePublicKey(PublicKey),
+    /// Unknown type
+    Unknown(u8, Vec<u8>),
 }
 
 impl ExtraField {
     /// Return xfieldType.
     pub fn field_type(&self) -> u8 {
-        match *self {
+        match self {
             ExtraField::None => 0u8,
             ExtraField::AggregatePublicKey(_) => 1u8,
+            ExtraField::Unknown(x_type, _) => *x_type,
         }
     }
 }
@@ -89,16 +93,8 @@ impl ExtraField {
 impl FromStr for ExtraField {
     type Err = encode::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let x_type = &s[0..2];
-        match x_type {
-            "00" => Ok(ExtraField::None),
-            "01" => {
-                let pk = PublicKey::from_str(&s[2..68])
-                    .map_err(|_| encode::Error::ParseFailed("aggregate public key"))?;
-                Ok(ExtraField::AggregatePublicKey(pk))
-            }
-            _ => Err(encode::Error::ParseFailed("type")),
-        }
+        let bytes: Vec<u8> = Vec::from_hex(&s[..]).map_err(|_| encode::Error::ParseFailed("invalid hex string"))?;
+        ExtraField::consensus_decode(&bytes[..])
     }
 }
 
@@ -161,12 +157,15 @@ impl Decodable for ExtraField {
         match x_type {
             0 => Ok(ExtraField::None),
             1 => {
-                let bytes: [u8; 33] = Decodable::consensus_decode(&mut d)?;
+                let bytes: Vec<u8> = Decodable::consensus_decode(&mut d)?;
                 let pk = PublicKey::from_slice(&bytes)
                     .map_err(|_| encode::Error::ParseFailed("aggregate public key"))?;
                 Ok(ExtraField::AggregatePublicKey(pk))
-            }
-            _ => Err(encode::Error::ParseFailed("type")),
+            },
+            _ => {
+                let data: Vec<u8> = Decodable::consensus_decode(&mut d)?;
+                Ok(ExtraField::Unknown(x_type, data))
+            },
         }
     }
 }
@@ -175,12 +174,14 @@ impl Encodable for ExtraField {
     #[inline]
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
         self.field_type().consensus_encode(&mut s)?;
-        match *self {
+        match self {
             ExtraField::None => Ok(1),
             ExtraField::AggregatePublicKey(pk) => {
-                let mut bytes = [0u8; 33];
-                bytes.copy_from_slice(&pk.to_bytes());
-                let len = bytes.consensus_encode(&mut s)?;
+                let len = pk.to_bytes().consensus_encode(&mut s)?;
+                Ok(1 + len)
+            },
+            ExtraField::Unknown(_type, data) => {
+                let len = data.consensus_encode(&mut s)?;
                 Ok(1 + len)
             }
         }
@@ -310,8 +311,8 @@ mod tests {
 
     #[test]
     fn block_test() {
-        let some_block = hex_decode("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c364243a74762685f916378ce87c5384ad39b594aca206426d9d244ef51d644d2d74d6e4901032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af40f1453cd332262d74edf65f96688724b80a15c852fd50151e4aabc41a0d9560d2cd38f0746c3d9c9e18b236f20e37d0ae1bda457ea029db8a55b20f38143517d00201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac00000000").unwrap();
-        let cutoff_block = hex_decode("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c364243a74762685f916378ce87c5384ad39b594aca206426d9d244ef51d644d2d74d6e4901032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af000201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac").unwrap();
+        let some_block = hex_decode("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c364243a74762685f916378ce87c5384ad39b594aca206426d9d244ef51d644d2d74d6e490121032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af40f1453cd332262d74edf65f96688724b80a15c852fd50151e4aabc41a0d9560d2cd38f0746c3d9c9e18b236f20e37d0ae1bda457ea029db8a55b20f38143517d00201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac00000000").unwrap();
+        let cutoff_block = hex_decode("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c364243a74762685f916378ce87c5384ad39b594aca206426d9d244ef51d644d2d74d6e490121032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af000201000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0804ffff001d026e04ffffffff0100f2052a0100000043410446ef0102d1ec5240f0d061a4246c1bdef63fc3dbab7733052fbbf0ecd8f41fc26bf049ebb4f9527f374280259e7cfa99c48b0e3f39c51347a19a5819651503a5ac00000000010000000321f75f3139a013f50f315b23b0c9a2b6eac31e2bec98e5891c924664889942260000000049483045022100cb2c6b346a978ab8c61b18b5e9397755cbd17d6eb2fe0083ef32e067fa6c785a02206ce44e613f31d9a6b0517e46f3db1576e9812cc98d159bfdaf759a5014081b5c01ffffffff79cda0945903627c3da1f85fc95d0b8ee3e76ae0cfdc9a65d09744b1f8fc85430000000049483045022047957cdd957cfd0becd642f6b84d82f49b6cb4c51a91f49246908af7c3cfdf4a022100e96b46621f1bffcf5ea5982f88cef651e9354f5791602369bf5a82a6cd61a62501fffffffffe09f5fe3ffbf5ee97a54eb5e5069e9da6b4856ee86fc52938c2f979b0f38e82000000004847304402204165be9a4cbab8049e1af9723b96199bfd3e85f44c6b4c0177e3962686b26073022028f638da23fc003760861ad481ead4099312c60030d4cb57820ce4d33812a5ce01ffffffff01009d966b01000000434104ea1feff861b51fe3f5f8a3b12d0f4712db80e919548a80839fc47c6a21e66d957e9c5d8cd108c7a2d2324bad71f9904ac0ae7336507d785b17a2c115e427a32fac").unwrap();
 
         let prevhash =
             hex_decode("4ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000").unwrap();
@@ -361,9 +362,11 @@ mod tests {
 
     #[test]
     fn extra_field_none_test() {
-        let extra_field = hex_decode("00").unwrap();
-        let decode: Result<ExtraField, _> = deserialize(&extra_field);
-        assert_eq!(decode.unwrap(), ExtraField::None);
+        let bytes = hex_decode("00").unwrap();
+        let decode: ExtraField = deserialize(&bytes).unwrap();
+        assert_eq!(serialize(&decode), bytes);
+
+        assert_eq!(decode, ExtraField::None);
 
         let extra_field = ExtraField::from_str("00");
         assert_eq!(extra_field.unwrap(), ExtraField::None);
@@ -371,16 +374,30 @@ mod tests {
 
     #[test]
     fn extra_field_aggregate_public_key_test() {
-        let extra_field = hex_decode("01032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
-        let decode: Result<ExtraField, _> = deserialize(&extra_field);
+        let bytes = hex_decode("0121032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
+        let decode: ExtraField = deserialize(&bytes).unwrap();
+        assert_eq!(serialize(&decode), bytes);
+
         let pk = PublicKey::from_str(
             "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af",
         )
         .unwrap();
-        assert_eq!(decode.unwrap(), ExtraField::AggregatePublicKey(pk));
+        assert_eq!(decode, ExtraField::AggregatePublicKey(pk));
 
-        let extra_field = ExtraField::from_str("01032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af");
+        let extra_field = ExtraField::from_str("0121032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af");
         assert_eq!(extra_field.unwrap(), ExtraField::AggregatePublicKey(pk));
+    }
+
+    #[test]
+    fn extra_field_unsupported_type_test() {
+        let bytes = hex_decode("ff0101").unwrap();
+        let decode: ExtraField = deserialize(&bytes).unwrap();
+        assert_eq!(serialize(&decode), bytes);
+
+        assert_eq!(decode, ExtraField::Unknown(0xff, vec![0x01]));
+
+        let extra_field = ExtraField::from_str("ff0101");
+        assert_eq!(extra_field.unwrap(), ExtraField::Unknown(0xff, vec![0x01]));
     }
 
     #[cfg(feature = "serde")]

@@ -203,7 +203,7 @@ mod test {
         assert_eq!(gen.header.time, 1231006505);
         assert_eq!(
             format!("{:x}", gen.header.bitcoin_hash()),
-            "565370f06d0199eb108e77d52d9d255a402fcb392c5e605b235b8049d5c35368".to_string()
+            "2b84df641d2dbae917c2f00e98a1d7a8fc6fc0988d80a1e0fc087c66228e7ee8".to_string()
         );
     }
 
@@ -219,7 +219,7 @@ mod test {
         assert_eq!(gen.header.time, 1296688602);
         assert_eq!(
             format!("{:x}", gen.header.bitcoin_hash()),
-            "27c9964ae80f30b138a747ead8e94c887d3bc9ff6cf322be5cc8c1a0241d5913".to_string()
+            "0abdbc494a14e90c1d89b8aad109a8266e689aa0c5478e76053524aa8976fb95".to_string()
         );
     }
 
@@ -235,7 +235,7 @@ mod test {
         assert_eq!(gen.header.time, 1562925929);
         assert_eq!(
             format!("{:x}", gen.header.bitcoin_hash()),
-            "ff6f403c6bdfeddff9831697c0cf01d37c356d3d18412fc2cd9b1d01581c1f09".to_string()
+            "abbaa74c35c0467802e1dfd8a20150ea7c0ac529feb245933702832d112c6b16".to_string()
         );
     }
 }
