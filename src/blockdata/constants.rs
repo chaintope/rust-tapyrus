@@ -100,7 +100,7 @@ pub fn genesis_block(network: Network) -> Block {
             .unwrap();
 
     match network {
-        Network::Bitcoin => {
+        Network::Prod => {
             Block {
                 header: BlockHeader {
                     version: 1,
@@ -114,7 +114,7 @@ pub fn genesis_block(network: Network) -> Block {
                 txdata: txdata
             }
         }
-        Network::Testnet => {
+        Network::Dev => {
             Block {
                 header: BlockHeader {
                     version: 1,
@@ -126,34 +126,6 @@ pub fn genesis_block(network: Network) -> Block {
                     proof: None,
                 },
                 txdata: txdata
-            }
-        }
-        Network::Regtest => {
-            Block {
-                header: BlockHeader {
-                    version: 1,
-                    prev_blockhash: Default::default(),
-                    merkle_root,
-                    im_merkle_root,
-                    time: 1296688602,
-                    xfield: XField::AggregatePublicKey(public_key),
-                    proof: None,
-                },
-                txdata: txdata,
-            }
-        }
-        Network::Paradium => {
-            Block {
-                header: BlockHeader {
-                    version: 1,
-                    prev_blockhash: Default::default(),
-                    merkle_root,
-                    im_merkle_root,
-                    time: 1562925929,
-                    xfield: XField::AggregatePublicKey(public_key),
-                    proof: None,
-                },
-                txdata: txdata,
             }
         }
     }
@@ -193,8 +165,8 @@ mod test {
     }
 
     #[test]
-    fn bitcoin_genesis_full_block() {
-        let gen = genesis_block(Network::Bitcoin);
+    fn prod_genesis_full_block() {
+        let gen = genesis_block(Network::Prod);
 
         assert_eq!(gen.header.version, 1);
         assert_eq!(gen.header.prev_blockhash, Default::default());
@@ -208,8 +180,8 @@ mod test {
     }
 
     #[test]
-    fn testnet_genesis_full_block() {
-        let gen = genesis_block(Network::Testnet);
+    fn dev_genesis_full_block() {
+        let gen = genesis_block(Network::Dev);
         assert_eq!(gen.header.version, 1);
         assert_eq!(gen.header.prev_blockhash, Default::default());
         assert_eq!(
@@ -220,22 +192,6 @@ mod test {
         assert_eq!(
             format!("{:x}", gen.header.bitcoin_hash()),
             "0abdbc494a14e90c1d89b8aad109a8266e689aa0c5478e76053524aa8976fb95".to_string()
-        );
-    }
-
-    #[test]
-    fn paradium_genesis_full_block() {
-        let gen = genesis_block(Network::Paradium);
-        assert_eq!(gen.header.version, 1);
-        assert_eq!(gen.header.prev_blockhash, Default::default());
-        assert_eq!(
-            format!("{:x}", gen.header.merkle_root),
-            "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b".to_string()
-        );
-        assert_eq!(gen.header.time, 1562925929);
-        assert_eq!(
-            format!("{:x}", gen.header.bitcoin_hash()),
-            "abbaa74c35c0467802e1dfd8a20150ea7c0ac529feb245933702832d112c6b16".to_string()
         );
     }
 }

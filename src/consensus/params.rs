@@ -35,17 +35,11 @@ impl Params {
     /// Creates parameters set for the given network.
     pub fn new(network: Network) -> Self {
         match network {
-            Network::Bitcoin => Params {
-                network: Network::Bitcoin,
+            Network::Prod => Params {
+                network: Network::Prod,
             },
-            Network::Testnet => Params {
-                network: Network::Testnet,
-            },
-            Network::Regtest => Params {
-                network: Network::Regtest,
-            },
-            Network::Paradium => Params {
-                network: Network::Paradium,
+            Network::Dev => Params {
+                network: Network::Dev,
             },
         }
     }

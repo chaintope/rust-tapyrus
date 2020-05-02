@@ -192,8 +192,8 @@ impl PrivateKey {
     pub fn fmt_wif(&self, fmt: &mut fmt::Write) -> fmt::Result {
         let mut ret = [0; 34];
         ret[0] = match self.network {
-            Network::Bitcoin | Network::Paradium => 128,
-            Network::Testnet | Network::Regtest => 239,
+            Network::Prod => 128,
+            Network::Dev => 239,
         };
         ret[1..33].copy_from_slice(&self.key[..]);
         let privkey = if self.compressed {
@@ -224,8 +224,8 @@ impl PrivateKey {
         };
 
         let network = match data[0] {
-            128 => Network::Bitcoin,
-            239 => Network::Testnet,
+            128 => Network::Prod,
+            239 => Network::Dev,
             x   => { return Err(Error::Base58(base58::Error::InvalidVersion(vec![x]))); }
         };
 
@@ -395,15 +395,15 @@ mod tests {
     use super::{PrivateKey, PublicKey};
     use secp256k1::Secp256k1;
     use std::str::FromStr;
-    use network::constants::Network::Testnet;
-    use network::constants::Network::Bitcoin;
+    use network::constants::Network::Dev;
+    use network::constants::Network::Prod;
     use util::address::Address;
 
     #[test]
     fn test_key_derivation() {
-        // testnet compressed
+        // dev compressed
         let sk = PrivateKey::from_wif("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
-        assert_eq!(sk.network, Testnet);
+        assert_eq!(sk.network, Dev);
         assert_eq!(sk.compressed, true);
         assert_eq!(&sk.to_wif(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
 
@@ -411,15 +411,15 @@ mod tests {
         let pk = Address::p2pkh(&sk.public_key(&secp), sk.network);
         assert_eq!(&pk.to_string(), "mqwpxxvfv3QbM8PU8uBx2jaNt9btQqvQNx");
 
-        // test string conversion
+        // dev string conversion
         assert_eq!(&sk.to_string(), "cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy");
         let sk_str =
             PrivateKey::from_str("cVt4o7BGAig1UXywgGSmARhxMdzP5qvQsxKkSsc1XEkw3tDTQFpy").unwrap();
         assert_eq!(&sk.to_wif(), &sk_str.to_wif());
 
-        // mainnet uncompressed
+        // prod uncompressed
         let sk = PrivateKey::from_wif("5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3").unwrap();
-        assert_eq!(sk.network, Bitcoin);
+        assert_eq!(sk.network, Prod);
         assert_eq!(sk.compressed, false);
         assert_eq!(&sk.to_wif(), "5JYkZjmN7PVMjJUfJWfRFwtuXTGB439XV6faajeHPAM9Z2PT2R3");
 

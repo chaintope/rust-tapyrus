@@ -314,7 +314,7 @@ mod tests {
         // This is the first withdraw ever, in alpha a94f95cc47b444c10449c0eed51d895e4970560c4a1a9d15d46124858abc3afe
         let contract = hex!("5032534894ffbf32c1f1c0d3089b27c98fd991d5d7329ebd7d711223e2cde5a9417a1fa3e852c576");
 
-        let addr = create_address(&secp, Network::Testnet, &contract, keys, &alpha_template!()).unwrap();
+        let addr = create_address(&secp, Network::Dev, &contract, keys, &alpha_template!()).unwrap();
         assert_eq!(addr.to_string(), "2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr".to_owned());
     }
 
@@ -340,17 +340,17 @@ mod tests {
         let sk1 = PrivateKey {
             key: sk1,
             compressed: true,
-            network: Network::Bitcoin,
+            network: Network::Prod,
         };
         let sk2 = PrivateKey {
             key: sk2,
             compressed: false,
-            network: Network::Bitcoin,
+            network: Network::Prod,
         };
         let sk3 = PrivateKey {
             key: sk3,
             compressed: true,
-            network: Network::Bitcoin,
+            network: Network::Prod,
         };
         let pks = [
             PublicKey { key: pk1, compressed: true },

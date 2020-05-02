@@ -41,7 +41,7 @@
 //!     };
 //!
 //!     // Generate pay-to-pubkey-hash address
-//!     let address = Address::p2pkh(&public_key, Network::Bitcoin);
+//!     let address = Address::p2pkh(&public_key, Network::Prod);
 //! }
 //! ```
 
@@ -231,8 +231,8 @@ impl Display for Address {
             Payload::PubkeyHash(ref hash) => {
                 let mut prefixed = [0; 21];
                 prefixed[0] = match self.network {
-                    Network::Bitcoin | Network::Paradium => 0,
-                    Network::Testnet | Network::Regtest => 111,
+                    Network::Prod => 0,
+                    Network::Dev => 111,
                 };
                 prefixed[1..].copy_from_slice(&hash[..]);
                 base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
@@ -240,8 +240,8 @@ impl Display for Address {
             Payload::ScriptHash(ref hash) => {
                 let mut prefixed = [0; 21];
                 prefixed[0] = match self.network {
-                    Network::Bitcoin | Network::Paradium => 5,
-                    Network::Testnet | Network::Regtest => 196,
+                    Network::Prod => 5,
+                    Network::Dev => 196,
                 };
                 prefixed[1..].copy_from_slice(&hash[..]);
                 base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
@@ -265,19 +265,19 @@ impl FromStr for Address {
 
         let (network, payload) = match data[0] {
             0 => (
-                Network::Bitcoin,
+                Network::Prod,
                 Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap()),
             ),
             5 => (
-                Network::Bitcoin,
+                Network::Prod,
                 Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap()),
             ),
             111 => (
-                Network::Testnet,
+                Network::Dev,
                 Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap()),
             ),
             196 => (
-                Network::Testnet,
+                Network::Dev,
                 Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap()),
             ),
             x => return Err(Error::Base58(base58::Error::InvalidVersion(vec![x]))),
@@ -305,7 +305,7 @@ mod tests {
     use hex::{decode as hex_decode};
 
     use blockdata::script::Script;
-    use network::constants::Network::{Bitcoin, Testnet};
+    use network::constants::Network::{Prod, Dev};
     use util::key::PublicKey;
 
     use super::*;
@@ -335,7 +335,7 @@ mod tests {
     #[test]
     fn test_p2pkh_address_58() {
         let addr = Address {
-            network: Bitcoin,
+            network: Prod,
             payload: Payload::PubkeyHash(hex_pubkeyhash!("162c5ea71c0b23f5b9022ef047c4a86470a5b070")),
         };
 
@@ -351,11 +351,11 @@ mod tests {
     #[test]
     fn test_p2pkh_from_key() {
         let key = hex_key!("048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183");
-        let addr = Address::p2pkh(&key, Bitcoin);
+        let addr = Address::p2pkh(&key, Prod);
         assert_eq!(&addr.to_string(), "1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY");
 
         let key = hex_key!(&"03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f");
-        let addr = Address::p2pkh(&key, Testnet);
+        let addr = Address::p2pkh(&key, Dev);
         assert_eq!(&addr.to_string(), "mqkhEMH6NCeYjFybv7pvFC22MFeaNT9AQC");
         assert_eq!(addr.address_type(), Some(AddressType::P2pkh));
         roundtrips(&addr);
@@ -364,7 +364,7 @@ mod tests {
     #[test]
     fn test_p2sh_address_58() {
         let addr = Address {
-            network: Bitcoin,
+            network: Prod,
             payload: Payload::ScriptHash(hex_scripthash!("162c5ea71c0b23f5b9022ef047c4a86470a5b070")),
         };
 
@@ -380,7 +380,7 @@ mod tests {
     #[test]
     fn test_p2sh_parse() {
         let script = hex_script!("552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae");
-        let addr = Address::p2sh(&script, Testnet);
+        let addr = Address::p2sh(&script, Dev);
 
         assert_eq!(&addr.to_string(), "2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr");
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));
