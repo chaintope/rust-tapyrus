@@ -54,7 +54,6 @@
 // Re-exported dependencies.
 #[macro_use] pub extern crate bitcoin_hashes as hashes;
 pub extern crate secp256k1;
-pub extern crate bech32;
 
 #[cfg(any(test, feature = "serde"))] extern crate hex;
 #[cfg(feature = "serde")] extern crate serde;
