@@ -53,6 +53,7 @@ pub const SERVICES: u64 = 0;
 pub const USER_AGENT: &'static str = "tapyrus-rust v0.1";
 
 /// Network ID is identifier of the Tapyrus network
+#[derive(Clone)]
 pub struct NetworkId(u32);
 
 impl NetworkId {
