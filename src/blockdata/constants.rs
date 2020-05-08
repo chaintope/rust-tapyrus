@@ -29,7 +29,7 @@ use std::str::FromStr;
 
 use hashes::hex::FromHex;
 use hashes::sha256d;
-use blockdata::block::{Block, BlockHeader, ExtraField};
+use blockdata::block::{Block, BlockHeader, XField};
 use blockdata::opcodes;
 use blockdata::script;
 use blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
@@ -108,7 +108,7 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root,
                     im_merkle_root,
                     time: 1231006505,
-                    extra_field: ExtraField::AggregatePublicKey(public_key),
+                    xfield: XField::AggregatePublicKey(public_key),
                     proof: None,
                 },
                 txdata: txdata
@@ -122,7 +122,7 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root,
                     im_merkle_root,
                     time: 1296688602,
-                    extra_field: ExtraField::AggregatePublicKey(public_key),
+                    xfield: XField::AggregatePublicKey(public_key),
                     proof: None,
                 },
                 txdata: txdata
@@ -136,7 +136,7 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root,
                     im_merkle_root,
                     time: 1296688602,
-                    extra_field: ExtraField::AggregatePublicKey(public_key),
+                    xfield: XField::AggregatePublicKey(public_key),
                     proof: None,
                 },
                 txdata: txdata,
@@ -150,7 +150,7 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root,
                     im_merkle_root,
                     time: 1562925929,
-                    extra_field: ExtraField::AggregatePublicKey(public_key),
+                    xfield: XField::AggregatePublicKey(public_key),
                     proof: None,
                 },
                 txdata: txdata,

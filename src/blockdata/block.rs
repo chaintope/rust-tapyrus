@@ -53,7 +53,7 @@ pub struct BlockHeader {
     /// The timestamp of the block, as claimed by the miner
     pub time: u32,
     /// Extra field. This field can host any type of data defined in Tapyrus protocol.
-    pub extra_field: ExtraField,
+    pub xfield: XField,
     /// Collection holds a signature for block hash which is consisted of block header without Proof.
     pub proof: Option<Signature>,
 }
@@ -61,8 +61,8 @@ pub struct BlockHeader {
 impl BlockHeader {
     /// Return the Aggregate public key in this BlockHeader
     pub fn aggregated_public_key(&self) -> Option<PublicKey> {
-        match self.extra_field {
-            ExtraField::AggregatePublicKey(pk) => Some(pk),
+        match self.xfield {
+            XField::AggregatePublicKey(pk) => Some(pk),
             _ => None,
         }
     }
@@ -70,7 +70,7 @@ impl BlockHeader {
 
 /// An extra field that allows the block header to hold arbitrary data.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum ExtraField {
+pub enum XField {
     /// xfield isn't used.
     None,
     /// Aggregate public key used to verify block proof.
@@ -79,33 +79,33 @@ pub enum ExtraField {
     Unknown(u8, Vec<u8>),
 }
 
-impl ExtraField {
+impl XField {
     /// Return xfieldType.
     pub fn field_type(&self) -> u8 {
         match self {
-            ExtraField::None => 0u8,
-            ExtraField::AggregatePublicKey(_) => 1u8,
-            ExtraField::Unknown(x_type, _) => *x_type,
+            XField::None => 0u8,
+            XField::AggregatePublicKey(_) => 1u8,
+            XField::Unknown(x_type, _) => *x_type,
         }
     }
 }
 
-impl FromStr for ExtraField {
+impl FromStr for XField {
     type Err = encode::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let bytes: Vec<u8> = Vec::from_hex(&s[..]).map_err(|_| encode::Error::ParseFailed("invalid hex string"))?;
-        ExtraField::consensus_decode(&bytes[..])
+        XField::consensus_decode(&bytes[..])
     }
 }
 
-impl std::fmt::Display for ExtraField {
+impl std::fmt::Display for XField {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", serialize_hex(self))
     }
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for ExtraField {
+impl serde::Serialize for XField {
     /// User-facing serialization for `Script`.
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -116,12 +116,12 @@ impl serde::Serialize for ExtraField {
 }
 
 #[cfg(feature = "serde")]
-impl<'de> ::serde::Deserialize<'de> for ExtraField {
-    fn deserialize<D: ::serde::Deserializer<'de>>(d: D) -> Result<ExtraField, D::Error> {
-        struct ExtraFieldVisitor;
+impl<'de> ::serde::Deserialize<'de> for XField {
+    fn deserialize<D: ::serde::Deserializer<'de>>(d: D) -> Result<XField, D::Error> {
+        struct XFieldVisitor;
 
-        impl<'de> ::serde::de::Visitor<'de> for ExtraFieldVisitor {
-            type Value = ExtraField;
+        impl<'de> ::serde::de::Visitor<'de> for XFieldVisitor {
+            type Value = XField;
 
             fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
                 formatter.write_str("hex string")
@@ -132,7 +132,7 @@ impl<'de> ::serde::Deserialize<'de> for ExtraField {
                 E: ::serde::de::Error,
             {
                 if let Ok(s) = ::std::str::from_utf8(v) {
-                    ExtraField::from_str(s).map_err(E::custom)
+                    XField::from_str(s).map_err(E::custom)
                 } else {
                     Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
                 }
@@ -142,45 +142,45 @@ impl<'de> ::serde::Deserialize<'de> for ExtraField {
             where
                 E: ::serde::de::Error,
             {
-                ExtraField::from_str(v).map_err(E::custom)
+                XField::from_str(v).map_err(E::custom)
             }
         }
 
-        d.deserialize_str(ExtraFieldVisitor)
+        d.deserialize_str(XFieldVisitor)
     }
 }
 
-impl Decodable for ExtraField {
+impl Decodable for XField {
     #[inline]
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         let x_type: u8 = Decodable::consensus_decode(&mut d)?;
         match x_type {
-            0 => Ok(ExtraField::None),
+            0 => Ok(XField::None),
             1 => {
                 let bytes: Vec<u8> = Decodable::consensus_decode(&mut d)?;
                 let pk = PublicKey::from_slice(&bytes)
                     .map_err(|_| encode::Error::ParseFailed("aggregate public key"))?;
-                Ok(ExtraField::AggregatePublicKey(pk))
+                Ok(XField::AggregatePublicKey(pk))
             },
             _ => {
                 let data: Vec<u8> = Decodable::consensus_decode(&mut d)?;
-                Ok(ExtraField::Unknown(x_type, data))
+                Ok(XField::Unknown(x_type, data))
             },
         }
     }
 }
 
-impl Encodable for ExtraField {
+impl Encodable for XField {
     #[inline]
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, encode::Error> {
         self.field_type().consensus_encode(&mut s)?;
         match self {
-            ExtraField::None => Ok(1),
-            ExtraField::AggregatePublicKey(pk) => {
+            XField::None => Ok(1),
+            XField::AggregatePublicKey(pk) => {
                 let len = pk.to_bytes().consensus_encode(&mut s)?;
                 Ok(1 + len)
             },
-            ExtraField::Unknown(_type, data) => {
+            XField::Unknown(_type, data) => {
                 let len = data.consensus_encode(&mut s)?;
                 Ok(1 + len)
             }
@@ -285,7 +285,7 @@ impl_consensus_encoding!(
     merkle_root,
     im_merkle_root,
     time,
-    extra_field,
+    xfield,
     proof
 );
 impl_consensus_encoding!(Block, header, txdata);
@@ -296,7 +296,7 @@ serde_struct_impl!(
     merkle_root,
     im_merkle_root,
     time,
-    extra_field,
+    xfield,
     proof);
 serde_struct_impl!(Block, header, txdata);
 
@@ -305,7 +305,7 @@ mod tests {
     use hex::decode as hex_decode;
     use std::str::FromStr;
 
-    use blockdata::block::{Block, ExtraField};
+    use blockdata::block::{Block, XField};
     use consensus::encode::{deserialize, serialize};
     use util::key::PublicKey;
 
@@ -356,59 +356,59 @@ mod tests {
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
         assert!(real_decode.header.aggregated_public_key().is_none());
-        assert_eq!(real_decode.header.extra_field, ExtraField::None);
+        assert_eq!(real_decode.header.xfield, XField::None);
         assert!(real_decode.header.proof.is_none());
     }
 
     #[test]
-    fn extra_field_none_test() {
+    fn xfield_none_test() {
         let bytes = hex_decode("00").unwrap();
-        let decode: ExtraField = deserialize(&bytes).unwrap();
+        let decode: XField = deserialize(&bytes).unwrap();
         assert_eq!(serialize(&decode), bytes);
 
-        assert_eq!(decode, ExtraField::None);
+        assert_eq!(decode, XField::None);
 
-        let extra_field = ExtraField::from_str("00");
-        assert_eq!(extra_field.unwrap(), ExtraField::None);
+        let xfield = XField::from_str("00");
+        assert_eq!(xfield.unwrap(), XField::None);
     }
 
     #[test]
-    fn extra_field_aggregate_public_key_test() {
+    fn xfield_aggregate_public_key_test() {
         let bytes = hex_decode("0121032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
-        let decode: ExtraField = deserialize(&bytes).unwrap();
+        let decode: XField = deserialize(&bytes).unwrap();
         assert_eq!(serialize(&decode), bytes);
 
         let pk = PublicKey::from_str(
             "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af",
         )
         .unwrap();
-        assert_eq!(decode, ExtraField::AggregatePublicKey(pk));
+        assert_eq!(decode, XField::AggregatePublicKey(pk));
 
-        let extra_field = ExtraField::from_str("0121032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af");
-        assert_eq!(extra_field.unwrap(), ExtraField::AggregatePublicKey(pk));
+        let xfield = XField::from_str("0121032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af");
+        assert_eq!(xfield.unwrap(), XField::AggregatePublicKey(pk));
     }
 
     #[test]
-    fn extra_field_unsupported_type_test() {
+    fn xfield_unsupported_type_test() {
         let bytes = hex_decode("ff0101").unwrap();
-        let decode: ExtraField = deserialize(&bytes).unwrap();
+        let decode: XField = deserialize(&bytes).unwrap();
         assert_eq!(serialize(&decode), bytes);
 
-        assert_eq!(decode, ExtraField::Unknown(0xff, vec![0x01]));
+        assert_eq!(decode, XField::Unknown(0xff, vec![0x01]));
 
-        let extra_field = ExtraField::from_str("ff0101");
-        assert_eq!(extra_field.unwrap(), ExtraField::Unknown(0xff, vec![0x01]));
+        let xfield = XField::from_str("ff0101");
+        assert_eq!(xfield.unwrap(), XField::Unknown(0xff, vec![0x01]));
     }
 
     #[cfg(feature = "serde")]
     #[test]
-    fn extra_field_serialize_test() {
-        let extra_field = hex_decode("00").unwrap();
-        let decode: ExtraField = deserialize(&extra_field).unwrap();
+    fn xfield_serialize_test() {
+        let xfield = hex_decode("00").unwrap();
+        let decode: XField = deserialize(&xfield).unwrap();
         serde_round_trip!(decode);
 
-        let extra_field = hex_decode("01032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
-        let decode: ExtraField = deserialize(&extra_field).unwrap();
+        let xfield = hex_decode("01032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
+        let decode: XField = deserialize(&xfield).unwrap();
         serde_round_trip!(decode);
     }
 
