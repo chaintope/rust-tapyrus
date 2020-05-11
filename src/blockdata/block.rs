@@ -407,7 +407,7 @@ mod tests {
         let decode: XField = deserialize(&xfield).unwrap();
         serde_round_trip!(decode);
 
-        let xfield = hex_decode("01032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
+        let xfield = hex_decode("0121032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
         let decode: XField = deserialize(&xfield).unwrap();
         serde_round_trip!(decode);
     }
