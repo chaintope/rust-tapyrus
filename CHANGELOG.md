@@ -1,4 +1,14 @@
 
+# 0.2.0
+
+- Support TapyrusCore v0.4.0
+    - Add configurable network id
+    - Add new network mode 'Prod' and 'Dev'
+    - Add an extra field in block header
+    - Remove segwit address support
+
+The followings are changes in rust-bitcoin.
+
 # 0.23.0 - 2020-01-07
 
 - Update `secp256k1` dependency to `0.17.1`.

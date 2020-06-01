@@ -1,6 +1,6 @@
 [package]
 name = "tapyrus"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
 license = "MIT"
 homepage = "https://github.com/chaintope/rust-tapyrus/"
