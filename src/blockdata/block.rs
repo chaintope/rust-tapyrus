@@ -30,7 +30,7 @@ use std::str::FromStr;
 
 use hashes::{Hash, HashEngine};
 use hashes::hex::FromHex;
-use hash_types::{Wtxid, BlockHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
+use hash_types::{Wtxid, BlockHash, BlockSigHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment};
 use consensus::{serialize, encode, Decodable, Encodable};
 use consensus::encode::serialize_hex;
 use blockdata::transaction::Transaction;
@@ -58,12 +58,42 @@ pub struct BlockHeader {
     pub proof: Option<Signature>,
 }
 
+struct BlockHeaderWithoutProof {
+    version: u32,
+    prev_blockhash: BlockHash,
+    merkle_root: TxMerkleNode,
+    im_merkle_root: TxMerkleNode,
+    time: u32,
+    xfield: XField,
+}
+
 impl BlockHeader {
     /// Return the Aggregate public key in this BlockHeader
     pub fn aggregated_public_key(&self) -> Option<PublicKey> {
         match self.xfield {
             XField::AggregatePublicKey(pk) => Some(pk),
             _ => None,
+        }
+    }
+
+    /// Computes a signature hash for this block.
+    /// Tapyrus signer needs to sign this hash. The signature will be added to
+    /// the block header as the proof field and submitted to the tapyrus node.
+    pub fn signature_hash(&self) -> BlockSigHash {
+        let block = BlockHeaderWithoutProof::from(&self);
+        BlockSigHash::hash(&serialize(&block))
+    }
+}
+
+impl BlockHeaderWithoutProof {
+    fn from(header: &BlockHeader) -> Self {
+        Self {
+            version: header.version,
+            prev_blockhash: header.prev_blockhash,
+            merkle_root: header.merkle_root,
+            im_merkle_root: header.im_merkle_root,
+            time: header.time,
+            xfield: header.xfield.clone(),
         }
     }
 }
@@ -289,6 +319,15 @@ impl_consensus_encoding!(
     proof
 );
 impl_consensus_encoding!(Block, header, txdata);
+impl_consensus_encoding!(
+    BlockHeaderWithoutProof,
+    version,
+    prev_blockhash,
+    merkle_root,
+    im_merkle_root,
+    time,
+    xfield
+);
 serde_struct_impl!(
     BlockHeader,
     version,
@@ -308,6 +347,8 @@ mod tests {
     use blockdata::block::{Block, XField};
     use consensus::encode::{deserialize, serialize};
     use util::key::PublicKey;
+    use hash_types::BlockSigHash;
+    use hashes::hex::{FromHex};
 
     #[test]
     fn block_test() {
@@ -440,5 +481,13 @@ mod tests {
         assert!(real_decode.check_witness_commitment());
 
         assert_eq!(serialize(&real_decode), segwit_block);
+    }
+
+    #[test]
+    fn signature_hash_test() {
+        let block = hex::decode("010000000000000000000000000000000000000000000000000000000000000000000000c1457ff3e5c527e69858108edf0ff1f49eea9c58d8d37300a164b3b4f8c8c7cef1a2e72770d547feae29f2dd40123a97c580d44fd4493de072416d53331997617b96f05d00403a4c09253c7b583e5260074380c9b99b895f938e37799d326ded984fb707e91fa4df2e0524a4ccf5fe224945b4fb94784b411a760eb730d95402d3383dd7ffdc01010000000100000000000000000000000000000000000000000000000000000000000000000000000022210366262690cbdf648132ce0c088962c6361112582364ede120f3780ab73438fc4bffffffff0100f2052a010000002776a9226d70757956774d32596a454d755a4b72687463526b614a787062715447417346484688ac00000000").unwrap();
+        let decode: Result<Block, _> = deserialize(&block);
+        assert!(decode.is_ok());
+        assert_eq!(decode.unwrap().header.signature_hash(), BlockSigHash::from_hex("3d856f50e0718f72bab6516c1ab020ce3390ebc97490b6d2bad4054dc7a40a93").unwrap());
     }
 }
