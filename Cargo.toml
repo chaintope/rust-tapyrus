@@ -20,7 +20,6 @@ rand = ["secp256k1/rand"]
 use-serde = ["hex", "serde", "bitcoin_hashes/serde", "secp256k1/serde"]
 
 [dependencies]
-bech32 = "0.7.2"
 bitcoin_hashes = "0.7.3"
 secp256k1 = { git = "https://github.com/rantan/rust-secp256k1", branch = "add_negate_support" }
 rug = "1.7.0"
