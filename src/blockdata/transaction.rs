@@ -62,9 +62,6 @@ impl OutPoint {
     }
 
     /// Creates a "null" `OutPoint`.
-    ///
-    /// This value is used for coinbase transactions because they don't have
-    /// any previous outputs.
     #[inline]
     pub fn null() -> OutPoint {
         OutPoint {
@@ -450,6 +447,9 @@ impl Transaction {
     }
 
     /// Is this a coin base transaction?
+    /// 
+    /// In Tapyrus, a coinbase transaction has a default txid ("0000000000000000000000000000000000000000000000000000000000000000") in its input.
+    /// See https://github.com/chaintope/tapyrus-core/blob/master/doc/tapyrus/fix_transaction_malleability.md#tapyrus-transaction-structure for more information.
     pub fn is_coin_base(&self) -> bool {
         self.input.len() == 1 && self.input[0].previous_output.txid == Default::default()
     }
