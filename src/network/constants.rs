@@ -42,6 +42,7 @@
 //! ```
 
 use std::{fmt, io, ops};
+use std::str::FromStr;
 
 use consensus::encode::{self, Encodable, Decodable};
 
@@ -53,7 +54,7 @@ pub const SERVICES: u64 = 0;
 pub const USER_AGENT: &'static str = "tapyrus-rust v0.1";
 
 /// Network ID is identifier of the Tapyrus network
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct NetworkId(u32);
 
 impl NetworkId {
@@ -76,6 +77,13 @@ impl NetworkId {
 impl From<u32> for NetworkId {
     fn from(n: u32) -> Self {
         NetworkId(n)
+    }
+}
+
+impl FromStr for NetworkId {
+    type Err = std::num::ParseIntError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(NetworkId::from(s.parse::<u32>()?))
     }
 }
 
@@ -264,6 +272,7 @@ impl Decodable for ServiceFlags {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
     use super::{NetworkId, Network, ServiceFlags};
     use consensus::encode::{deserialize, serialize};
 
@@ -320,6 +329,11 @@ mod tests {
         assert_eq!("prod".parse::<Network>().unwrap(), Network::Prod);
         assert_eq!("dev".parse::<Network>().unwrap(), Network::Dev);
         assert!("fakenet".parse::<Network>().is_err());
+    }
+
+    #[test]
+    fn network_id_from_str_test() {
+        assert_eq!(NetworkId::from_str("1").unwrap(), NetworkId::from(1));
     }
 
     #[test]
