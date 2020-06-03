@@ -116,7 +116,7 @@ mod tests {
     fn p2pkh_hex(pk: &str) -> Script {
         let pk = hex::decode(pk).unwrap();
         let pk = PublicKey::from_slice(pk.as_slice()).unwrap();
-        let witness_script = Address::p2pkh(&pk, Network::Bitcoin).script_pubkey();
+        let witness_script = Address::p2pkh(&pk, Network::Prod).script_pubkey();
         witness_script
     }
 

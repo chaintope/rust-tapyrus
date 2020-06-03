@@ -29,14 +29,13 @@
 //! [1]: enum.Network.html
 //! [2]: ../../consensus/encode/trait.Decodable.html
 //! [3]: ../../consensus/encode/trait.Encodable.html
-//!
 //! # Example: encoding a network's magic bytes
 //!
 //! ```rust
-//! use tapyrus::network::constants::Network;
+//! use tapyrus::network::constants::NetworkId;
 //! use tapyrus::consensus::encode::serialize;
 //!
-//! let network = Network::Bitcoin;
+//! let network = NetworkId::from(1);
 //! let bytes = serialize(&network.magic());
 //!
 //! assert_eq!(&bytes[..], &[0x01, 0xFF, 0xF0, 0x00]);
@@ -53,62 +52,41 @@ pub const SERVICES: u64 = 0;
 /// User agent as it appears in the version message
 pub const USER_AGENT: &'static str = "tapyrus-rust v0.1";
 
-user_enum! {
-    /// The cryptocurrency to act on
-    #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
-    pub enum Network {
-        /// Classic Bitcoin
-        Bitcoin <-> "bitcoin",
-        /// Bitcoin's testnet
-        Testnet <-> "testnet",
-        /// Bitcoin's regtest
-        Regtest <-> "regtest",
-        /// Paradium
-        Paradium <-> "paradium"
-    }
-}
+/// Network ID is identifier of the Tapyrus network
+#[derive(Clone)]
+pub struct NetworkId(u32);
 
-impl Network {
-    /// Creates a `Network` from the magic bytes.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use tapyrus::network::constants::Network;
-    ///
-    /// assert_eq!(Some(Network::Bitcoin), Network::from_magic(0x00F0FF01));
-    /// assert_eq!(None, Network::from_magic(0xFFFFFFFF));
-    /// ```
-    pub fn from_magic(magic: u32) -> Option<Network> {
-        // Note: any new entries here must be added to `magic` below
-        match magic {
-            0x00F0FF01 => Some(Network::Bitcoin),
-            0x74839A75 => Some(Network::Testnet),
-            0x74979A73 => Some(Network::Regtest),
-            0x64F0FF01 => Some(Network::Paradium),
-            _ => None,
-        }
-    }
-
+impl NetworkId {
     /// Return the network magic bytes, which should be encoded little-endian
     /// at the start of every message
     ///
     /// # Examples
     ///
     /// ```rust
-    /// use tapyrus::network::constants::Network;
+    /// use tapyrus::network::constants::NetworkId;
     ///
-    /// let network = Network::Bitcoin;
+    /// let network = NetworkId::from(1);
     /// assert_eq!(network.magic(), 0x00F0FF01);
     /// ```
     pub fn magic(&self) -> u32 {
-        // Note: any new entries here must be added to `from_magic` above
-        match *self {
-            Network::Bitcoin => 0x00F0FF01,
-            Network::Testnet => 0x74839A75,
-            Network::Regtest => 0x74979A73,
-            Network::Paradium => 0x64F0FF01,
-        }
+        (33550335 + self.0).swap_bytes()
+    }
+}
+
+impl From<u32> for NetworkId {
+    fn from(n: u32) -> Self {
+        NetworkId(n)
+    }
+}
+
+user_enum! {
+    /// The cryptocurrency to act on
+    #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
+    pub enum Network {
+        /// For production
+        Prod <-> "prod",
+        /// For development
+        Dev <-> "dev"
     }
 }
 
@@ -286,57 +264,61 @@ impl Decodable for ServiceFlags {
 
 #[cfg(test)]
 mod tests {
-    use super::{Network, ServiceFlags};
+    use super::{NetworkId, Network, ServiceFlags};
     use consensus::encode::{deserialize, serialize};
 
     #[test]
     fn serialize_test() {
+        // Production
         assert_eq!(
-            serialize(&Network::Bitcoin.magic()),
+            serialize(&NetworkId::from(1).magic()),
             &[0x01, 0xff, 0xf0, 0x00]
         );
+        // Public Testnet
         assert_eq!(
-            serialize(&Network::Testnet.magic()),
+            serialize(&NetworkId::from(1939510133).magic()),
             &[0x75, 0x9a, 0x83, 0x74]
         );
+        // Regtest
         assert_eq!(
-            serialize(&Network::Regtest.magic()),
+            serialize(&NetworkId::from(1905960821).magic()),
             &[0x73, 0x9a, 0x97, 0x74]
         );
+        // Paradium
         assert_eq!(
-            serialize(&Network::Paradium.magic()),
+            serialize(&NetworkId::from(101).magic()),
             &[0x01, 0xff, 0xf0, 0x64]
         );
 
+        // Production
         assert_eq!(
             deserialize(&[0x01, 0xff, 0xf0, 0x00]).ok(),
-            Some(Network::Bitcoin.magic())
+            Some(NetworkId::from(1).magic())
         );
+        // Public Testnet
         assert_eq!(
             deserialize(&[0x75, 0x9a, 0x83, 0x74]).ok(),
-            Some(Network::Testnet.magic())
+            Some(NetworkId::from(1939510133).magic())
         );
+        // Regtest
         assert_eq!(
             deserialize(&[0x73, 0x9a, 0x97, 0x74]).ok(),
-            Some(Network::Regtest.magic())
+            Some(NetworkId::from(1905960821).magic())
         );
+        // Paradium
         assert_eq!(
             deserialize(&[0x01, 0xff, 0xf0, 0x64]).ok(),
-            Some(Network::Paradium.magic())
+            Some(NetworkId::from(101).magic())
         );
     }
 
     #[test]
     fn string_test() {
-        assert_eq!(Network::Bitcoin.to_string(), "bitcoin");
-        assert_eq!(Network::Testnet.to_string(), "testnet");
-        assert_eq!(Network::Regtest.to_string(), "regtest");
-        assert_eq!(Network::Paradium.to_string(), "paradium");
+        assert_eq!(Network::Prod.to_string(), "prod");
+        assert_eq!(Network::Dev.to_string(), "dev");
 
-        assert_eq!("bitcoin".parse::<Network>().unwrap(), Network::Bitcoin);
-        assert_eq!("testnet".parse::<Network>().unwrap(), Network::Testnet);
-        assert_eq!("regtest".parse::<Network>().unwrap(), Network::Regtest);
-        assert_eq!("paradium".parse::<Network>().unwrap(), Network::Paradium);
+        assert_eq!("prod".parse::<Network>().unwrap(), Network::Prod);
+        assert_eq!("dev".parse::<Network>().unwrap(), Network::Dev);
         assert!("fakenet".parse::<Network>().is_err());
     }
 
