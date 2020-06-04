@@ -62,9 +62,6 @@ impl OutPoint {
     }
 
     /// Creates a "null" `OutPoint`.
-    ///
-    /// This value is used for coinbase transactions because they don't have
-    /// any previous outputs.
     #[inline]
     pub fn null() -> OutPoint {
         OutPoint {
@@ -450,8 +447,11 @@ impl Transaction {
     }
 
     /// Is this a coin base transaction?
+    /// 
+    /// In Tapyrus, a coinbase transaction has a default txid ("0000000000000000000000000000000000000000000000000000000000000000") in its input.
+    /// See https://github.com/chaintope/tapyrus-core/blob/master/doc/tapyrus/fix_transaction_malleability.md#tapyrus-transaction-structure for more information.
     pub fn is_coin_base(&self) -> bool {
-        self.input.len() == 1 && self.input[0].previous_output.is_null()
+        self.input.len() == 1 && self.input[0].previous_output.txid == Default::default()
     }
 }
 
@@ -688,6 +688,17 @@ mod tests {
         assert_eq!(txin.sequence, 0xFFFFFFFF);
         assert_eq!(txin.previous_output, OutPoint::default());
         assert_eq!(txin.witness.len(), 0 as usize);
+    }
+
+    #[test]
+    fn test_is_coinbase () {
+        use blockdata::block::Block;
+        let hex_block = Vec::<u8>::from_hex("010000000000000000000000000000000000000000000000000000000000000000000000c0d6961ad2819f74eb6d085f04f9cceb0a9a6d5c153fd3c39fc47c3ca0bb548f85fbd09a5f7d8ac4c9552e52931ef6672984f64e52ad6d05d1cdb18907da8527db317c5e012103addb2555f37abf8f28f11f498bec7bd1460e7243c1813847c49a7ae326a97d1c40e2d9e39bfb25f5534cf3fa235697e18efa81ce02e161946a73b9b20b3641576a9636f19747447ab8b02a97a9d96ecdaf0aa3a56b93f9e8f81d55252854270617010100000001000000000000000000000000000000000000000000000000000000000000000000000000222103addb2555f37abf8f28f11f498bec7bd1460e7243c1813847c49a7ae326a97d1cffffffff0100f2052a010000001976a914a15f16ea2ba840d178e4c19781abca5f4fb1b4c288ac00000000").unwrap();
+        let block: Block = deserialize(&hex_block).unwrap();
+        assert! (block.txdata[0].is_coin_base());
+        let hex_tx = Vec::<u8>::from_hex("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000").unwrap();
+        let tx: Transaction = deserialize(&hex_tx).unwrap();
+        assert!(!tx.is_coin_base());
     }
 
     #[test]
