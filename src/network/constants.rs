@@ -87,6 +87,40 @@ impl FromStr for NetworkId {
     }
 }
 
+#[cfg(feature = "serde")]
+impl serde::Serialize for NetworkId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_u32(self.0)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> ::serde::Deserialize<'de> for NetworkId {
+    fn deserialize<D: ::serde::Deserializer<'de>>(d: D) -> Result<NetworkId, D::Error> {
+        struct NetworkIdVisitor;
+
+        impl<'de> ::serde::de::Visitor<'de> for NetworkIdVisitor {
+            type Value = NetworkId;
+
+            fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                formatter.write_str("an integer u32")
+            }
+
+            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+            where
+                E: ::serde::de::Error,
+            {
+                Ok(NetworkId::from(v as u32))
+            }
+        }
+
+        d.deserialize_u32(NetworkIdVisitor)
+    }
+}
+
 user_enum! {
     /// The cryptocurrency to act on
     #[derive(Copy, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
@@ -374,6 +408,12 @@ mod tests {
         assert_eq!("ServiceFlags(NETWORK|BLOOM|WITNESS)", flag.to_string());
         let flag = ServiceFlags::WITNESS | 0xf0.into();
         assert_eq!("ServiceFlags(WITNESS|COMPACT_FILTERS|0xb0)", flag.to_string());
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn test_network_id_serialize() {
+        serde_round_trip!(NetworkId::from(1));
     }
 }
 
