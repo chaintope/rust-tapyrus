@@ -325,6 +325,40 @@ impl Script {
                                opcodes::All::from(self.0[0]).classify() == opcodes::Class::IllegalOp)
     }
 
+    /// Check if a script pubkey is a cp2pkh output
+    pub fn is_cp2pkh(&self) -> bool {
+        self.0.len() == 60 &&
+        self.0[0] == opcodes::all::OP_PUSHBYTES_33.into_u8() &&
+        Script::is_supported_color(&self.0[1]) &&
+        self.0[34] == opcodes::all::OP_COLOR.into_u8() &&
+        self.0[35] == opcodes::all::OP_DUP.into_u8() &&
+        self.0[36] == opcodes::all::OP_HASH160.into_u8() &&
+        self.0[37] == opcodes::all::OP_PUSHBYTES_20.into_u8() &&
+        self.0[58] == opcodes::all::OP_EQUALVERIFY.into_u8() &&
+        self.0[59] == opcodes::all::OP_CHECKSIG.into_u8()
+    }
+
+    /// Check if a script pubkey is a cp2sh output
+    pub fn is_cp2sh(&self) -> bool {
+        self.0.len() == 58 &&
+        self.0[0] == opcodes::all::OP_PUSHBYTES_33.into_u8() &&
+        Script::is_supported_color(&self.0[1]) &&
+        self.0[34] == opcodes::all::OP_COLOR.into_u8() &&
+        self.0[35] == opcodes::all::OP_HASH160.into_u8() &&
+        self.0[36] == opcodes::all::OP_PUSHBYTES_20.into_u8() &&
+        self.0[57] == opcodes::all::OP_EQUAL.into_u8()
+    }
+
+    /// Check if a script pubkey is a colored coin script
+    pub fn is_colored(&self) -> bool {
+        self.is_cp2pkh() || self.is_cp2sh()
+    }
+
+    /// return true if token type is supported
+    pub fn is_supported_color(token_type: &u8) -> bool {
+        [0xc1, 0xc2, 0xc3].contains(token_type)
+    }
+
     /// Iterate over the script in the form of `Instruction`s, which are an enum covering
     /// opcodes, datapushes and errors. At most one error will be returned and then the
     /// iterator will end. To instead iterate over the script as sequence of bytes, treat
@@ -972,6 +1006,42 @@ mod test {
     fn script_p2pk() {
         assert!(hex_script!("21021aeaf2f8638a129a3156fbe7e5ef635226b0bafd495ff03afe2c843d7e3a4b51ac").is_p2pk());
         assert!(hex_script!("410496b538e853519c726a2c91e61ec11600ae1390813a627c66fb8be7947be63c52da7589379515d4e0a604f8141781e62294721166bf621e73a82cbf2342c858eeac").is_p2pk());
+    }
+
+    #[test]
+    fn script_cp2pkh() {
+        // cp2pkh
+        assert!(hex_script!("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").is_cp2pkh());
+        // cp2sh
+        assert!(!hex_script!("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bca9147620a79e8657d066cff10e21228bf983cf546ac687").is_cp2pkh());
+        // p2pkh
+        assert!(!hex_script!("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").is_cp2pkh());
+        // invalid type
+        assert!(!hex_script!("21c4ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").is_cp2pkh());
+    }
+
+    #[test]
+    fn script_cp2sh() {
+        // cp2sh
+        assert!(hex_script!("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bca9147620a79e8657d066cff10e21228bf983cf546ac687").is_cp2sh());
+        // cp2pkh
+        assert!(!hex_script!("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").is_cp2sh());
+        // p2sh
+        assert!(!hex_script!("a9147620a79e8657d066cff10e21228bf983cf546ac687").is_cp2sh());
+        // invalid type
+        assert!(!hex_script!("21c4ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bca9147620a79e8657d066cff10e21228bf983cf546ac687").is_cp2sh());
+    }
+
+    #[test]
+    fn is_colored_test() {
+        // cp2pkh
+        assert!(hex_script!("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").is_colored());
+        // cp2sh
+        assert!(hex_script!("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bca9147620a79e8657d066cff10e21228bf983cf546ac687").is_colored());
+        // p2pkh
+        assert!(!hex_script!("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").is_colored());
+        // p2sh
+        assert!(!hex_script!("a9147620a79e8657d066cff10e21228bf983cf546ac687").is_colored());
     }
 
     #[test]

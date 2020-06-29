@@ -414,13 +414,13 @@ pub mod all {
     pub const OP_NOP9: All = All {code: 0xb8};
     /// Does nothing
     pub const OP_NOP10: All = All {code: 0xb9};
-    // Every other opcode acts as OP_RETURN
     /// Synonym for OP_RETURN
     pub const OP_RETURN_186: All = All {code: 0xba};
     /// Synonym for OP_RETURN
     pub const OP_RETURN_187: All = All {code: 0xbb};
     /// Synonym for OP_RETURN
-    pub const OP_RETURN_188: All = All {code: 0xbc};
+    pub const OP_COLOR: All = All {code: 0xbc};
+    // Every other opcode acts as OP_RETURN
     /// Synonym for OP_RETURN
     pub const OP_RETURN_189: All = All {code: 0xbd};
     /// Synonym for OP_RETURN
@@ -649,6 +649,7 @@ impl fmt::Debug for All {
             all::OP_CHECKMULTISIGVERIFY => write!(f, "CHECKMULTISIGVERIFY"),
             all::OP_CLTV => write!(f, "CLTV"),
             all::OP_CSV => write!(f, "CSV"),
+            all::OP_COLOR => write!(f, "COLOR"),
             All {code: x} if x >= all::OP_NOP1.code && x <= all::OP_NOP10.code => write!(f, "NOP{}", x - all::OP_NOP1.code + 1),
             All {code: x} => write!(f, "RETURN_{}", x),
         }
@@ -677,7 +678,9 @@ impl All {
         // 75 opcodes
         } else if *self == all::OP_RESERVED || *self == all::OP_VER || *self == all::OP_RETURN ||
                   *self == all::OP_RESERVED1 || *self == all::OP_RESERVED2 ||
-                  self.code >= all::OP_RETURN_186.code {
+                  *self == all::OP_RETURN_186 ||
+                  *self == all::OP_RETURN_187 ||
+                  self.code >= all::OP_RETURN_189.code {
             Class::ReturnOp
         // 1 opcode
         } else if *self == all::OP_PUSHNUM_NEG1 {
@@ -1023,7 +1026,7 @@ mod tests {
         roundtrip!(unique, OP_NOP10);
         roundtrip!(unique, OP_RETURN_186);
         roundtrip!(unique, OP_RETURN_187);
-        roundtrip!(unique, OP_RETURN_188);
+        roundtrip!(unique, OP_COLOR);
         roundtrip!(unique, OP_RETURN_189);
         roundtrip!(unique, OP_RETURN_190);
         roundtrip!(unique, OP_RETURN_191);
