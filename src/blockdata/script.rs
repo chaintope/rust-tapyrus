@@ -212,6 +212,13 @@ pub fn read_uint(data: &[u8], size: usize) -> Result<usize, Error> {
     }
 }
 
+/// Error occured with colored coin
+#[derive(Debug)]
+pub enum ColoredCoinError {
+    /// original script is not based p2pkh and p2sh
+    UnsuppotedScriptType,
+}
+
 impl Script {
     /// Creates a new empty script
     pub fn new() -> Script { Script(vec![].into_boxed_slice()) }
@@ -352,6 +359,19 @@ impl Script {
     /// Check if a script pubkey is a colored coin script
     pub fn is_colored(&self) -> bool {
         self.is_cp2pkh() || self.is_cp2sh()
+    }
+
+    /// Create new script with color identifier
+    pub fn add_color(&self, color_id: ColorIdentifier) -> Result<Script, ColoredCoinError> {
+        if !self.is_p2pkh() && !self.is_p2sh() {
+            return Err(ColoredCoinError::UnsuppotedScriptType);
+        }
+        let mut payload = vec![];
+        payload.push(opcodes::all::OP_PUSHBYTES_33.into_u8());
+        payload.extend(encode::serialize(&color_id));
+        payload.push(opcodes::all::OP_COLOR.into_u8());
+        payload.extend(self.to_bytes());
+        Ok(Script::from(payload))
     }
 
     /// Iterate over the script in the form of `Instruction`s, which are an enum covering
@@ -833,6 +853,18 @@ impl ColorIdentifier {
     }
 }
 
+impl Encodable for ColorIdentifier {
+    #[inline]
+    fn consensus_encode<S: io::Write>(
+        &self,
+        mut s: S,
+    ) -> Result<usize, encode::Error> {
+        let mut len = (self.token_type.clone() as u8).consensus_encode(&mut s)?;
+        len += self.payload.0.into_inner().consensus_encode(s)?;
+        Ok(len)
+    }
+}
+
 /// Token types
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum TokenTypes {
@@ -862,6 +894,8 @@ mod test {
     use consensus::encode::{deserialize, serialize};
     use blockdata::opcodes;
     use util::key::PublicKey;
+    use hash_types::Txid;
+    use hashes::hex::FromHex;
 
     #[test]
     fn script() {
@@ -1121,6 +1155,29 @@ mod test {
         assert!(TokenTypes::is_valid(&0xc2));
         assert!(TokenTypes::is_valid(&0xc3));
         assert!(!TokenTypes::is_valid(&0xc4));
+    }
+
+    #[test]
+    fn add_color_test() {
+        let out_point = OutPoint::new(Txid::from_hex("0101010101010101010101010101010101010101010101010101010101010101").unwrap(), 1);
+        let color_id = ColorIdentifier::nft(out_point);
+        let p2pkh = hex_script!("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac");
+        let p2sh = hex_script!("a9147620a79e8657d066cff10e21228bf983cf546ac687");
+        let op_return = hex_script!("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87");
+
+        // p2pkh -> cp2pkh
+        let cp2pkh = p2pkh.add_color(color_id.clone()).unwrap();
+        assert!(cp2pkh.is_cp2pkh());
+        assert_eq!(hex::encode(cp2pkh.to_bytes()), "21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac");
+
+        // p2sh -> cp2sh
+        let cp2sh = p2sh.add_color(color_id.clone()).unwrap();
+        assert!(cp2sh.is_cp2sh());
+        assert_eq!(hex::encode(cp2sh.to_bytes()), "21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bca9147620a79e8657d066cff10e21228bf983cf546ac687");
+
+        // op_return -> err
+        let op_return = op_return.add_color(color_id.clone());
+        assert!(op_return.is_err());
     }
 
     #[test]
