@@ -31,11 +31,11 @@ use std::{error, fmt, io};
 
 use hash_types::{ScriptHash, WScriptHash};
 use blockdata::opcodes;
+use blockdata::transaction::OutPoint;
 use consensus::{encode, Decodable, Encodable};
-use hashes::Hash;
+use hashes::{sha256d, Hash};
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
-#[cfg(feature="bitcoinconsensus")] use OutPoint;
 
 use util::key::PublicKey;
 
@@ -329,7 +329,7 @@ impl Script {
     pub fn is_cp2pkh(&self) -> bool {
         self.0.len() == 60 &&
         self.0[0] == opcodes::all::OP_PUSHBYTES_33.into_u8() &&
-        Script::is_supported_color(&self.0[1]) &&
+        TokenTypes::is_valid(&self.0[1]) &&
         self.0[34] == opcodes::all::OP_COLOR.into_u8() &&
         self.0[35] == opcodes::all::OP_DUP.into_u8() &&
         self.0[36] == opcodes::all::OP_HASH160.into_u8() &&
@@ -342,7 +342,7 @@ impl Script {
     pub fn is_cp2sh(&self) -> bool {
         self.0.len() == 58 &&
         self.0[0] == opcodes::all::OP_PUSHBYTES_33.into_u8() &&
-        Script::is_supported_color(&self.0[1]) &&
+        TokenTypes::is_valid(&self.0[1]) &&
         self.0[34] == opcodes::all::OP_COLOR.into_u8() &&
         self.0[35] == opcodes::all::OP_HASH160.into_u8() &&
         self.0[36] == opcodes::all::OP_PUSHBYTES_20.into_u8() &&
@@ -352,11 +352,6 @@ impl Script {
     /// Check if a script pubkey is a colored coin script
     pub fn is_colored(&self) -> bool {
         self.is_cp2pkh() || self.is_cp2sh()
-    }
-
-    /// return true if token type is supported
-    pub fn is_supported_color(token_type: &u8) -> bool {
-        [0xc1, 0xc2, 0xc3].contains(token_type)
     }
 
     /// Iterate over the script in the form of `Instruction`s, which are an enum covering
@@ -792,6 +787,70 @@ impl Decodable for Script {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+struct ColorIdentifierPayload(sha256d::Hash);
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+/// ColorIdentifier
+pub struct ColorIdentifier {
+    /// Token type
+    pub token_type: TokenTypes,
+    payload: ColorIdentifierPayload,
+}
+
+impl ColorIdentifier {
+    /// initialize ColorIdentifier with type Reissuable
+    pub fn reissuable(script_pubkey: Script) -> Self {
+        let mut enc = sha256d::Hash::engine();
+        script_pubkey.consensus_encode(&mut enc).unwrap();
+        let hash = sha256d::Hash::from_engine(enc);
+        ColorIdentifier {
+            token_type: TokenTypes::Reissuable,
+            payload: ColorIdentifierPayload(hash)
+        }
+    }
+
+    /// initialize ColorIdentifier with type Non Reissuable
+    pub fn non_reissuable(out_point: OutPoint) -> Self {
+        let mut enc = sha256d::Hash::engine();
+        out_point.consensus_encode(&mut enc).unwrap();
+        let hash = sha256d::Hash::from_engine(enc);
+        ColorIdentifier {
+            token_type: TokenTypes::NonReissuable,
+            payload: ColorIdentifierPayload(hash)
+        }
+    }
+
+    /// initialize ColorIdentifier with type Nft
+    pub fn nft(out_point: OutPoint) -> Self {
+        let mut enc = sha256d::Hash::engine();
+        out_point.consensus_encode(&mut enc).unwrap();
+        let hash = sha256d::Hash::from_engine(enc);
+        ColorIdentifier {
+            token_type: TokenTypes::Nft,
+            payload: ColorIdentifierPayload(hash)
+        }
+    }
+}
+
+/// Token types
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum TokenTypes {
+    /// Reissuable
+    Reissuable = 0xc1,
+    /// Non reissuable
+    NonReissuable = 0xc2,
+    /// Non fungible token
+    Nft = 0xc3,
+}
+
+impl TokenTypes {
+    /// return true if token type is supported
+    pub fn is_valid(token_type: &u8) -> bool {
+        vec![TokenTypes::Reissuable, TokenTypes::NonReissuable, TokenTypes::Nft].iter().any(|e| e.clone() as u8 == *token_type)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use std::str::FromStr;
@@ -1042,6 +1101,26 @@ mod test {
         assert!(!hex_script!("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").is_colored());
         // p2sh
         assert!(!hex_script!("a9147620a79e8657d066cff10e21228bf983cf546ac687").is_colored());
+    }
+
+    #[test]
+    fn color_identifier_test() {
+        let color_id = ColorIdentifier::reissuable(hex_script!("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac"));
+        assert_eq!(color_id.token_type, TokenTypes::Reissuable);
+
+        let color_id = ColorIdentifier::non_reissuable(OutPoint::default());
+        assert_eq!(color_id.token_type, TokenTypes::NonReissuable);
+
+        let color_id = ColorIdentifier::nft(OutPoint::default());
+        assert_eq!(color_id.token_type, TokenTypes::Nft);
+    }
+
+    #[test]
+    fn token_type_is_valid() {
+        assert!(TokenTypes::is_valid(&0xc1));
+        assert!(TokenTypes::is_valid(&0xc2));
+        assert!(TokenTypes::is_valid(&0xc3));
+        assert!(!TokenTypes::is_valid(&0xc4));
     }
 
     #[test]
