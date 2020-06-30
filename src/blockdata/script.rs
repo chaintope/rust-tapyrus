@@ -33,7 +33,7 @@ use hash_types::{ScriptHash, WScriptHash};
 use blockdata::opcodes;
 use blockdata::transaction::OutPoint;
 use consensus::{encode, Decodable, Encodable};
-use hashes::{sha256d, Hash};
+use hashes::{sha256, Hash};
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
 
@@ -788,7 +788,7 @@ impl Decodable for Script {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-struct ColorIdentifierPayload(sha256d::Hash);
+struct ColorIdentifierPayload(sha256::Hash);
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 /// ColorIdentifier
@@ -801,9 +801,9 @@ pub struct ColorIdentifier {
 impl ColorIdentifier {
     /// initialize ColorIdentifier with type Reissuable
     pub fn reissuable(script_pubkey: Script) -> Self {
-        let mut enc = sha256d::Hash::engine();
+        let mut enc = sha256::Hash::engine();
         script_pubkey.consensus_encode(&mut enc).unwrap();
-        let hash = sha256d::Hash::from_engine(enc);
+        let hash = sha256::Hash::from_engine(enc);
         ColorIdentifier {
             token_type: TokenTypes::Reissuable,
             payload: ColorIdentifierPayload(hash)
@@ -812,9 +812,9 @@ impl ColorIdentifier {
 
     /// initialize ColorIdentifier with type Non Reissuable
     pub fn non_reissuable(out_point: OutPoint) -> Self {
-        let mut enc = sha256d::Hash::engine();
+        let mut enc = sha256::Hash::engine();
         out_point.consensus_encode(&mut enc).unwrap();
-        let hash = sha256d::Hash::from_engine(enc);
+        let hash = sha256::Hash::from_engine(enc);
         ColorIdentifier {
             token_type: TokenTypes::NonReissuable,
             payload: ColorIdentifierPayload(hash)
@@ -823,9 +823,9 @@ impl ColorIdentifier {
 
     /// initialize ColorIdentifier with type Nft
     pub fn nft(out_point: OutPoint) -> Self {
-        let mut enc = sha256d::Hash::engine();
+        let mut enc = sha256::Hash::engine();
         out_point.consensus_encode(&mut enc).unwrap();
-        let hash = sha256d::Hash::from_engine(enc);
+        let hash = sha256::Hash::from_engine(enc);
         ColorIdentifier {
             token_type: TokenTypes::Nft,
             payload: ColorIdentifierPayload(hash)
