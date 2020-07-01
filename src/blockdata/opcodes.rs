@@ -675,7 +675,7 @@ impl All {
                   (all::OP_NOP1.code <= self.code &&
                    self.code <= all::OP_NOP10.code) {
             Class::NoOp
-        // 75 opcodes
+        // 74 opcodes
         } else if *self == all::OP_RESERVED || *self == all::OP_VER || *self == all::OP_RETURN ||
                   *self == all::OP_RESERVED1 || *self == all::OP_RESERVED2 ||
                   *self == all::OP_RETURN_186 ||
@@ -692,7 +692,7 @@ impl All {
         // 76 opcodes
         } else if self.code <= all::OP_PUSHBYTES_75.code {
             Class::PushBytes(self.code as u32)
-        // 60 opcodes
+        // 61 opcodes
         } else {
             Class::Ordinary(Ordinary::try_from_all(*self).unwrap())
         }
@@ -784,7 +784,7 @@ macro_rules! ordinary_opcode {
     );
 }
 
-// "Ordinary" opcodes -- should be 60 of these
+// "Ordinary" opcodes -- should be 61 of these
 ordinary_opcode! {
     // pushdata
     OP_PUSHDATA1, OP_PUSHDATA2, OP_PUSHDATA4,
