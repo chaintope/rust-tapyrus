@@ -1,4 +1,11 @@
 
+# 0.3.0
+
+- Support colored coin feature.
+    - Add new opcode `OP_COLOR`.
+    - Add support for new script type CP2PKH, and CP2SH.
+    - Add struct `ColorIdentifier` and enum `TokenTypes`.
+
 # 0.2.0
 
 - Support TapyrusCore v0.4.0
