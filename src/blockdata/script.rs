@@ -33,6 +33,7 @@ use hash_types::{ScriptHash, WScriptHash};
 use blockdata::opcodes;
 use blockdata::transaction::OutPoint;
 use consensus::{encode, Decodable, Encodable};
+use consensus::encode::serialize_hex;
 use hashes::{sha256, Hash};
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
@@ -865,6 +866,12 @@ impl Encodable for ColorIdentifier {
     }
 }
 
+impl std::fmt::Display for ColorIdentifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", serialize_hex(self))
+    }
+}
+
 /// Token types
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum TokenTypes {
@@ -1178,6 +1185,14 @@ mod test {
         // op_return -> err
         let op_return = op_return.add_color(color_id.clone());
         assert!(op_return.is_err());
+    }
+
+    #[test]
+    fn serialize_color_id() {
+        let out_point = OutPoint::new(Txid::from_hex("0101010101010101010101010101010101010101010101010101010101010101").unwrap(), 1);
+        let color_id = ColorIdentifier::nft(out_point);
+
+        assert_eq!(format!("{}",color_id), "c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46");
     }
 
     #[test]
