@@ -866,6 +866,25 @@ impl Encodable for ColorIdentifier {
     }
 }
 
+impl Decodable for ColorIdentifier {
+    #[inline]
+    fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
+        let bytes: [u8; 33] = Decodable::consensus_decode(&mut d)?;
+        let token_type = match bytes[0] {
+            0xC1 => TokenTypes::Reissuable,
+            0xC2 => TokenTypes::NonReissuable,
+            0xC3 => TokenTypes::Nft,
+            _ => return Err(encode::Error::ParseFailed("invalid token type."))
+        };
+
+        let payload = sha256::Hash::from_slice(&bytes[1..]).map_err(|_| encode::Error::ParseFailed("invalid payload."))?;
+        Ok(ColorIdentifier {
+            token_type: token_type,
+            payload: ColorIdentifierPayload(payload)
+        })
+    }
+}
+
 impl std::fmt::Display for ColorIdentifier {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", serialize_hex(self))
@@ -1193,6 +1212,13 @@ mod test {
         let color_id = ColorIdentifier::nft(out_point);
 
         assert_eq!(format!("{}",color_id), "c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46");
+
+        let hex_script = hex_decode("c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46").unwrap();
+        let script: Result<ColorIdentifier, _> = deserialize(&hex_script);
+        assert!(script.is_ok());
+        let color_id = script.unwrap();
+        assert_eq!(color_id.token_type, TokenTypes::Nft);
+        assert_eq!(serialize(&color_id), hex_script);
     }
 
     #[test]
