@@ -41,6 +41,7 @@ use util::signature::Signature;
 /// A block header, which contains all the block's information except
 /// the actual transactions
 #[derive(PartialEq, Eq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BlockHeader {
     /// The protocol version. Should always be 1.
     pub version: u32,
@@ -221,6 +222,7 @@ impl Encodable for XField {
 /// A Bitcoin block, which is a collection of transactions with an attached
 /// proof of work.
 #[derive(PartialEq, Eq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Block {
     /// The block header
     pub header: BlockHeader,
@@ -328,16 +330,6 @@ impl_consensus_encoding!(
     time,
     xfield
 );
-serde_struct_impl!(
-    BlockHeader,
-    version,
-    prev_blockhash,
-    merkle_root,
-    im_merkle_root,
-    time,
-    xfield,
-    proof);
-serde_struct_impl!(Block, header, txdata);
 
 #[cfg(test)]
 mod tests {

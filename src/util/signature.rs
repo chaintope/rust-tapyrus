@@ -28,6 +28,7 @@ pub const ALGO16: [u8; 16] = [
 
 /// Schnorr signature struct
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Signature {
     /// R.x
     pub r_x: [u8; SECP256K1_SCALAR_SIZE],
@@ -166,7 +167,6 @@ impl Default for Signature {
 }
 
 impl_consensus_encoding!(Signature, r_x, sigma);
-serde_struct_impl!(Signature, r_x, sigma);
 
 /// Signature error
 #[derive(Debug)]

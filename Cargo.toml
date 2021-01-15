@@ -25,12 +25,11 @@ secp256k1 = "0.20.0"
 rug = "1.7.0"
 
 bitcoinconsensus = { version = "0.19.0-1", optional = true }
-serde = { version = "1", optional = true }
+serde = { version = "1", features = ["derive"], optional = true }
 hex = { version = "=0.3.2", optional = true }
 
 [dev-dependencies]
 hex = "=0.3.2"
-serde_derive = "<1.0.99"
 serde_json = "<1.0.45"
 serde_test = "1"
 secp256k1 = { version = "0.20.0", features = ["rand-std"] }
