@@ -93,6 +93,12 @@ impl BlockHeader {
         let block = BlockHeaderWithoutProof::from(&self);
         BlockSigHash::hash(&serialize(&block))
     }
+
+    /// Return block header size
+    pub fn get_size(&self) -> usize {
+        let proof_size: usize = self.proof.map(|_| 65).unwrap_or(1);
+        4 + 32 + 32 + 32 + 4 + self.xfield.get_size() + proof_size
+    }
 }
 
 impl BlockHeaderWithoutProof {
@@ -126,6 +132,15 @@ impl XField {
             XField::None => 0u8,
             XField::AggregatePublicKey(_) => 1u8,
             XField::Unknown(x_type, _) => *x_type,
+        }
+    }
+
+    /// Return size of XField
+    pub fn get_size(&self) -> usize {
+        match self {
+            XField::None => 1,
+            XField::AggregatePublicKey(_) => 35,
+            XField::Unknown(_, _) => 0,
         }
     }
 }
@@ -314,14 +329,14 @@ impl Block {
     /// Get the size of the block
     pub fn get_size(&self) -> usize {
         // The size of the header + the size of the varint with the tx count + the txs themselves
-        let base_size = 80 + VarInt(self.txdata.len() as u64).len();
+        let base_size = self.header.get_size() + VarInt(self.txdata.len() as u64).len();
         let txs_size: usize = self.txdata.iter().map(Transaction::get_size).sum();
         base_size + txs_size
     }
 
     /// Get the weight of the block
     pub fn get_weight(&self) -> usize {
-        let base_weight = WITNESS_SCALE_FACTOR * (80 + VarInt(self.txdata.len() as u64).len());
+        let base_weight = WITNESS_SCALE_FACTOR * (self.header.get_size() + VarInt(self.txdata.len() as u64).len());
         let txs_weight: usize = self.txdata.iter().map(Transaction::get_weight).sum();
         base_weight + txs_weight
     }
@@ -490,7 +505,7 @@ mod tests {
         // [test] TODO: check the transaction data
 
         assert_eq!(real_decode.get_size(), segwit_block.len());
-        assert_eq!(real_decode.get_weight(), 17168);
+        assert_eq!(real_decode.get_weight(), 17272);
 
         assert!(real_decode.check_witness_commitment());
 
@@ -499,13 +514,13 @@ mod tests {
 
     #[test]
     fn block_version_test() {
-        let block = Vec::from_hex("ffffff7f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000").unwrap();
+        let block = Vec::from_hex("ffffff7f00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000").unwrap();
         let decode: Result<Block, _> = deserialize(&block);
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.header.version, 2147483647);
 
-        let block2 = Vec::from_hex("000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000").unwrap();
+        let block2 = Vec::from_hex("0000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000").unwrap();
         let decode2: Result<Block, _> = deserialize(&block2);
         assert!(decode2.is_ok());
         let real_decode2 = decode2.unwrap();
