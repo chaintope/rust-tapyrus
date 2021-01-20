@@ -23,26 +23,22 @@
 //! # Example: creating a new address from a randomly-generated key pair
 //!
 //! ```rust
-//! extern crate secp256k1;
-//! extern crate tapyrus;
 //!
 //! use tapyrus::network::constants::Network;
 //! use tapyrus::util::address::Address;
 //! use tapyrus::util::key;
-//! use secp256k1::Secp256k1;
-//! use secp256k1::rand::thread_rng;
+//! use tapyrus::secp256k1::Secp256k1;
+//! use tapyrus::secp256k1::rand::thread_rng;
 //!
-//! fn main() {
-//!     // Generate random key pair
-//!     let s = Secp256k1::new();
-//!     let public_key = key::PublicKey {
-//!         compressed: true,
-//!         key: s.generate_keypair(&mut thread_rng()).1,
-//!     };
+//! // Generate random key pair
+//! let s = Secp256k1::new();
+//! let public_key = key::PublicKey {
+//!     compressed: true,
+//!     key: s.generate_keypair(&mut thread_rng()).1,
+//! };
 //!
-//!     // Generate pay-to-pubkey-hash address
-//!     let address = Address::p2pkh(&public_key, Network::Prod);
-//! }
+//! // Generate pay-to-pubkey-hash address
+//! let address = Address::p2pkh(&public_key, Network::Prod);
 //! ```
 
 use std::fmt::{self, Display, Formatter};
@@ -62,25 +58,32 @@ use util::key;
 pub enum Error {
     /// Base58 encoding error
     Base58(base58::Error),
+    /// An uncompressed pubkey was used where it is not allowed.
+    UncompressedPubkey,
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::Base58(ref e) => write!(f, "base58: {}", e),
+            Error::UncompressedPubkey => write!(f,
+                "an uncompressed pubkey was used where it is not allowed",
+            ),
         }
     }
 }
 
+#[allow(deprecated)]
 impl ::std::error::Error for Error {
     fn cause(&self) -> Option<&::std::error::Error> {
         match *self {
             Error::Base58(ref e) => Some(e),
+            _ => None,
         }
     }
 
-    fn description(&self) -> &'static str {
-        "std::error::Error::description is deprecated"
+    fn description(&self) -> &str {
+        "description() is deprecated; use Display"
     }
 }
 
@@ -302,7 +305,7 @@ mod tests {
     use std::string::ToString;
 
     use hashes::Hash;
-    use hex::{decode as hex_decode};
+    use hashes::hex::{FromHex, ToHex};
 
     use blockdata::script::Script;
     use network::constants::Network::{Prod, Dev};
@@ -310,11 +313,11 @@ mod tests {
 
     use super::*;
 
-    macro_rules! hex (($hex:expr) => (hex_decode($hex).unwrap()));
+    macro_rules! hex (($hex:expr) => (Vec::from_hex($hex).unwrap()));
     macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
     macro_rules! hex_script (($hex:expr) => (Script::from(hex!($hex))));
-    macro_rules! hex_pubkeyhash (($hex:expr) => (PubkeyHash::from_slice(&hex!($hex)).unwrap()));
-    macro_rules! hex_scripthash (($hex:expr) => (ScriptHash::from_slice(&hex!($hex)).unwrap()));
+    macro_rules! hex_pubkeyhash (($hex:expr) => (PubkeyHash::from_hex(&$hex).unwrap()));
+    macro_rules! hex_scripthash (($hex:expr) => (ScriptHash::from_hex(&$hex).unwrap()));
 
     fn roundtrips(addr: &Address) {
         assert_eq!(

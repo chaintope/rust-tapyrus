@@ -18,6 +18,8 @@
 //! at http://blockstream.com/sidechains.pdf for details of
 //! what this does.
 
+#![cfg_attr(not(test), deprecated)]
+
 use secp256k1::{self, Secp256k1};
 use PrivateKey;
 use PublicKey;
@@ -69,6 +71,7 @@ impl fmt::Display for Error {
     }
 }
 
+#[allow(deprecated)]
 impl error::Error for Error {
     fn cause(&self) -> Option<&error::Error> {
         match *self {
@@ -78,16 +81,8 @@ impl error::Error for Error {
         }
     }
 
-    fn description(&self) -> &'static str {
-        match *self {
-            Error::Secp(_) => "libsecp256k1 error",
-            Error::Script(_) => "script error",
-            Error::UncompressedKey => "encountered uncompressed secp public key",
-            Error::ExpectedKey => "expected key when deserializing script",
-            Error::ExpectedChecksig => "expected OP_*CHECKSIG* when deserializing script",
-            Error::TooFewKeys(_) => "too few keys for template",
-            Error::TooManyKeys(_) => "too many keys for template"
-        }
+    fn description(&self) -> &str {
+        "description() is deprecated; use Display"
     }
 }
 
@@ -227,8 +222,11 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
     }
 
     let mut mode = Mode::SeekingKeys;
-    for instruction in script.iter(false) {
-        match instruction {
+    for instruction in script.instructions() {
+        if let Err(e) = instruction {
+            return Err(Error::Script(e));
+        }
+        match instruction.unwrap() {
             script::Instruction::PushBytes(data) => {
                 let n = data.len();
                 ret = match PublicKey::from_slice(data) {
@@ -275,7 +273,6 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
                 }
                 ret = ret.push_opcode(op);
             }
-            script::Instruction::Error(e) => { return Err(Error::Script(e)); }
         }
     }
     Ok((Template::from(&ret[..]), retkeys))
@@ -284,7 +281,7 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
 #[cfg(test)]
 mod tests {
     use secp256k1::Secp256k1;
-    use hex::decode as hex_decode;
+    use hashes::hex::FromHex;
     use secp256k1::rand::thread_rng;
     use std::str::FromStr;
 
@@ -294,7 +291,7 @@ mod tests {
     use super::*;
     use PublicKey;
 
-    macro_rules! hex (($hex:expr) => (hex_decode($hex).unwrap()));
+    macro_rules! hex (($hex:expr) => (Vec::from_hex($hex).unwrap()));
     macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
     macro_rules! alpha_template(() => (Template::from(&hex!("55fefefefefefefe57AE")[..])));
     macro_rules! alpha_keys(() => (

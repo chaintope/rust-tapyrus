@@ -88,6 +88,7 @@ impl fmt::Display for Error {
     }
 }
 
+#[allow(deprecated)]
 impl error::Error for Error {
     fn cause(&self) -> Option<&error::Error> {
         match *self {
@@ -98,11 +99,7 @@ impl error::Error for Error {
     }
 
     fn description(&self) -> &str {
-        match *self {
-            Error::Encode(ref e) => e.description(),
-            Error::Network(ref e) => e.description(),
-            Error::Signature(ref e) => e.description(),
-        }
+        "description() is deprecated; use Display"
     }
 }
 

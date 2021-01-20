@@ -58,7 +58,7 @@ impl error::Error for Error {
     }
 
     fn description(&self) -> &str {
-		"Bitcoin key error"
+		"description() is deprecated; use Display"
     }
 }
 

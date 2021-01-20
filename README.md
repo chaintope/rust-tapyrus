@@ -47,10 +47,12 @@ Please refer to the [`cargo` documentation](https://doc.rust-lang.org/stable/car
 
 # Release Notes
 
-See CHANGELOG.md
+See [CHANGELOG.md](CHANGELOG.md).
 
 
 # Licensing
 
 The code which was forked from rust-bitcoin is still CC0 1.0 Universal license and the code 
 which was added and modified after forked is licensed as MIT License.
+
+See [LICENCE](LICENSE)
