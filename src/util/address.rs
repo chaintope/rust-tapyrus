@@ -304,8 +304,7 @@ mod tests {
     use std::str::FromStr;
     use std::string::ToString;
 
-    use hashes::Hash;
-    use hashes::hex::{FromHex, ToHex};
+    use hashes::hex::FromHex;
 
     use blockdata::script::Script;
     use network::constants::Network::{Prod, Dev};

@@ -188,19 +188,15 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::Secp256k1Error(ref e) => fmt::Display::fmt(e, f),
-            Error::InvalidSignature => {
-                f.write_str(error::Error::description(self))
-            }
+            Error::InvalidSignature => write!(f, "InvalidSignature error"),
         }
     }
 }
 
+#[allow(deprecated)]
 impl error::Error for Error {
     fn description(&self) -> &str {
-        match *self {
-            Error::Secp256k1Error(ref e) => e.description(),
-            Error::InvalidSignature => "Invalid signature",
-        }
+        "description() is deprecated; use Display"
     }
 
     fn cause(&self) -> Option<&error::Error> {
@@ -213,7 +209,7 @@ impl error::Error for Error {
 
 #[cfg(test)]
 mod tests {
-    use hex::decode as hex_decode;
+    use hashes::hex::FromHex;
 
     use hashes::Hash;
     use consensus::encode::{deserialize, serialize};
@@ -292,7 +288,7 @@ mod tests {
         assert!(sign.verify_inner(&message, &pk).is_ok());
 
         // test vector 5, public key not on the curve
-        let pk = hex::decode("02EEFDEA4CDB677750A420FEE807EACF21EB9898AE79B9768766E4FAA04A2D4A34").unwrap();
+        let pk = Vec::from_hex("02EEFDEA4CDB677750A420FEE807EACF21EB9898AE79B9768766E4FAA04A2D4A34").unwrap();
         assert!(secp256k1::PublicKey::from_slice(&pk[..]).is_err());
 
         // test vector 6, has_square_y(R) is false
@@ -328,19 +324,19 @@ mod tests {
         assert!(sign.verify_inner(&default_message, &default_pk).is_err());
 
         // test vector 14, public key is not a valid X coordinate because it exceeds the field size
-        let pk = hex::decode("02FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC30").unwrap();
+        let pk = Vec::from_hex("02FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC30").unwrap();
         assert!(secp256k1::PublicKey::from_slice(&pk[..]).is_err());
     }
 
     #[test]
     fn test_decode() {
         let sig_data =
-            hex_decode("6ba8aee2e8cee077cb4a799c770e417fb750586ee5dd9f61db65f5158a596e77aaa87e4fec16c70b102bbe99a6c4fe77be424a44a2f5cfdc5fe04d5b4bca799c").unwrap();
+            Vec::from_hex("6ba8aee2e8cee077cb4a799c770e417fb750586ee5dd9f61db65f5158a596e77aaa87e4fec16c70b102bbe99a6c4fe77be424a44a2f5cfdc5fe04d5b4bca799c").unwrap();
 
         let r_x =
-            hex_decode("6ba8aee2e8cee077cb4a799c770e417fb750586ee5dd9f61db65f5158a596e77").unwrap();
+            Vec::from_hex("6ba8aee2e8cee077cb4a799c770e417fb750586ee5dd9f61db65f5158a596e77").unwrap();
         let sigma =
-            hex_decode("aaa87e4fec16c70b102bbe99a6c4fe77be424a44a2f5cfdc5fe04d5b4bca799c").unwrap();
+            Vec::from_hex("aaa87e4fec16c70b102bbe99a6c4fe77be424a44a2f5cfdc5fe04d5b4bca799c").unwrap();
 
         let decode: Result<Signature, _> = deserialize(&sig_data);
         assert!(decode.is_ok());
