@@ -31,8 +31,8 @@
 //! # Examples
 //!
 //! ```rust
-//! use bitcoin_hashes::sha256d;
-//! use bitcoin_hashes::hex::FromHex;
+//! use tapyrus::hashes::sha256d;
+//! use tapyrus::hashes::hex::FromHex;
 //! use tapyrus::hash_types::Txid;
 //! use tapyrus::{Block, MerkleBlock};
 //!
