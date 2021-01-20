@@ -47,9 +47,8 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Error::Io(ref e) => fmt::Display::fmt(e, f),
-            Error::SocketMutexPoisoned | Error::SocketNotConnectedToPeer => {
-                f.write_str(error::Error::description(self))
-            }
+            Error::SocketMutexPoisoned => f.write_str("socket mutex was poisoned"),
+            Error::SocketNotConnectedToPeer => f.write_str("not connected to peer"),
         }
     }
 }
@@ -61,13 +60,10 @@ impl From<io::Error> for Error {
     }
 }
 
+#[allow(deprecated)]
 impl error::Error for Error {
     fn description(&self) -> &str {
-        match *self {
-            Error::Io(ref e) => e.description(),
-            Error::SocketMutexPoisoned => "socket mutex was poisoned",
-            Error::SocketNotConnectedToPeer => "not connected to peer",
-        }
+        "description() is deprecated; use Display"
     }
 
     fn cause(&self) -> Option<&error::Error> {

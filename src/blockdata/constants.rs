@@ -34,6 +34,8 @@ pub const COIN_VALUE: u64 = 100_000_000;
 pub const MAX_BLOCK_WEIGHT: u32 = 4_000_000;
 /// The minimum transaction weight for a valid serialized transaction
 pub const MIN_TRANSACTION_WEIGHT: u32 = 4 * 60;
+/// The factor that non-witness serialization data is multiplied by during weight calculation
+pub const WITNESS_SCALE_FACTOR: usize = 4;
 
 /// The maximum value allowed in an output (useful for sanity checking,
 /// since keeping everything below this value should prevent overflows

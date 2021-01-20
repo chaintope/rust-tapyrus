@@ -43,7 +43,6 @@
 #![deny(dead_code)]
 #![deny(unused_imports)]
 #![deny(missing_docs)]
-#![forbid(unsafe_code)]
 
 // In general, rust is absolutely horrid at supporting users doing things like,
 // for example, compiling Rust code for real environments. Disable useless lints
@@ -55,7 +54,6 @@
 #[macro_use] pub extern crate bitcoin_hashes as hashes;
 pub extern crate secp256k1;
 
-#[cfg(any(test, feature = "serde"))] extern crate hex;
 #[cfg(feature = "serde")] #[macro_use] extern crate serde;
 #[cfg(all(test, feature = "serde"))] extern crate serde_json;
 #[cfg(all(test, feature = "serde"))] extern crate serde_test;
@@ -99,8 +97,8 @@ pub use util::Error;
 pub use util::address::Address;
 pub use util::address::AddressType;
 pub use util::amount::Amount;
+pub use util::amount::Denomination;
 pub use util::amount::SignedAmount;
-pub use util::hash::BitcoinHash;
 pub use util::key::PrivateKey;
 pub use util::key::PublicKey;
 pub use util::merkleblock::MerkleBlock;

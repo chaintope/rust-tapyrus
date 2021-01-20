@@ -31,14 +31,11 @@
 //! # Examples
 //!
 //! ```rust
-//! extern crate bitcoin_hashes;
-//! extern crate tapyrus;
 //! use bitcoin_hashes::sha256d;
 //! use bitcoin_hashes::hex::FromHex;
 //! use tapyrus::hash_types::Txid;
 //! use tapyrus::{Block, MerkleBlock};
 //!
-//! # fn main() {
 //! // Get the proof from a bitcoind by running in the terminal:
 //! // $ TXID="5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2"
 //! // $ bitcoin-cli gettxoutproof [\"$TXID\"]
@@ -61,7 +58,6 @@
 //! );
 //! assert_eq!(1, index.len());
 //! assert_eq!(1, index[0]);
-//! # }
 //! ```
 
 use std::collections::HashSet;
@@ -142,12 +138,10 @@ impl PartialMerkleTree {
     /// # Examples
     ///
     /// ```rust
-    /// extern crate tapyrus;
     /// use tapyrus::hash_types::Txid;
     /// use tapyrus::hashes::hex::FromHex;
     /// use tapyrus::util::merkleblock::PartialMerkleTree;
     ///
-    /// # fn main() {
     /// // Block 80000
     /// let txids: Vec<Txid> = [
     ///     "c06fbab289f723c6261d3030ddb6be121f7d2508d77862bb1e484f5cd7f92b25",
@@ -161,7 +155,6 @@ impl PartialMerkleTree {
     /// let matches = vec![false, true];
     /// let tree = PartialMerkleTree::from_txids(&txids, &matches);
     /// assert!(tree.extract_matches(&mut vec![], &mut vec![]).is_ok());
-    /// # }
     /// ```
     pub fn from_txids(txids: &[Txid], matches: &[bool]) -> Self {
         // We can never have zero txs in a merkle block, we always need the coinbase tx
@@ -280,7 +273,7 @@ impl PartialMerkleTree {
         if height == 0 || !parent_of_match {
             // If at height 0, or nothing interesting below, store hash and stop
             let hash = self.calc_hash(height, pos, txids);
-            self.hashes.push(hash.into());
+            self.hashes.push(hash);
         } else {
             // Otherwise, don't store any hash, but descend into the subtrees
             self.traverse_and_build(height - 1, pos * 2, txids, matches);
@@ -416,12 +409,10 @@ impl MerkleBlock {
     /// # Examples
     ///
     /// ```rust
-    /// extern crate tapyrus;
     /// use tapyrus::hash_types::Txid;
     /// use tapyrus::hashes::hex::FromHex;
     /// use tapyrus::{Block, MerkleBlock};
     ///
-    /// # fn main() {
     /// // Block 80000
     /// let block_bytes = Vec::from_hex("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad2\
     ///     7b9137190000000000190760b278fe7b8565fda3b968b918d5fd997f993b23674c0af3b6fde300b38fa3\
@@ -446,21 +437,32 @@ impl MerkleBlock {
     /// let mut index: Vec<u32> = vec![];
     /// assert!(mb.extract_matches(&mut matches, &mut index).is_ok());
     /// assert_eq!(txid, matches[0]);
-    /// # }
     /// ```
     pub fn from_block(block: &Block, match_txids: &HashSet<Txid>) -> Self {
-        let header = block.header.clone();
+        let block_txids: Vec<_> = block.txdata.iter().map(Transaction::txid).collect();
+        Self::from_header_txids(&block.header, &block_txids, match_txids)
+    }
 
-        let mut matches: Vec<bool> = Vec::with_capacity(block.txdata.len());
-        let mut hashes: Vec<Txid> = Vec::with_capacity(block.txdata.len());
+    /// Create a MerkleBlock from the block's header and txids, that should contain proofs for match_txids.
+    ///
+    /// The `header` is the block header, `block_txids` is the full list of txids included in the block and
+    /// `match_txids` is a set containing the transaction ids that should be included in the partial merkle tree.
+    pub fn from_header_txids(
+        header: &BlockHeader,
+        block_txids: &[Txid],
+        match_txids: &HashSet<Txid>,
+    ) -> Self {
+        let matches: Vec<bool> = block_txids
+            .into_iter()
+            .map(|txid| match_txids.contains(txid))
+            .collect();
 
-        for hash in block.txdata.iter().map(Transaction::txid) {
-            matches.push(match_txids.contains(&hash));
-            hashes.push(hash);
+
+        let pmt = PartialMerkleTree::from_txids(&block_txids, &matches);
+        MerkleBlock {
+            header: *header,
+            txn: pmt,
         }
-
-        let pmt = PartialMerkleTree::from_txids(&hashes, &matches);
-        MerkleBlock { header, txn: pmt }
     }
 
     /// Extract the matching txid's represented by this partial merkle tree
@@ -511,9 +513,9 @@ mod tests {
     use secp256k1::rand::prelude::*;
 
     use consensus::encode::{deserialize, serialize};
-    use util::hash::{bitcoin_merkle_root, BitcoinHash};
+    use util::hash::bitcoin_merkle_root;
     use util::merkleblock::{MerkleBlock, PartialMerkleTree};
-    use {hex, Block};
+    use Block;
 
     #[test]
     fn pmt_tests() {
@@ -625,8 +627,8 @@ mod tests {
             a71da757e553cada9f3b5b1434f3923673adb57d83caac392c38af156d6fc30b55fad4112df2b95531e6811\
             4e9ad10011e72f7b7cfdb025700";
 
-        let mb: MerkleBlock = deserialize(&hex::decode(mb_hex).unwrap()).unwrap();
-        assert_eq!(get_block_13b8a().bitcoin_hash(), mb.header.bitcoin_hash());
+        let mb: MerkleBlock = deserialize(&Vec::from_hex(mb_hex).unwrap()).unwrap();
+        assert_eq!(get_block_13b8a().block_hash(), mb.header.block_hash());
         assert_eq!(
             mb.header.merkle_root,
             mb.txn.extract_matches(&mut vec![], &mut vec![]).unwrap()
@@ -655,7 +657,7 @@ mod tests {
 
         let merkle_block = MerkleBlock::from_block(&block, &txids);
 
-        assert_eq!(merkle_block.header.bitcoin_hash(), block.bitcoin_hash());
+        assert_eq!(merkle_block.header.block_hash(), block.block_hash());
 
         let mut matches: Vec<Txid> = vec![];
         let mut index: Vec<u32> = vec![];
@@ -688,7 +690,7 @@ mod tests {
 
         let merkle_block = MerkleBlock::from_block(&block, &txids);
 
-        assert_eq!(merkle_block.header.bitcoin_hash(), block.bitcoin_hash());
+        assert_eq!(merkle_block.header.block_hash(), block.block_hash());
 
         let mut matches: Vec<Txid> = vec![];
         let mut index: Vec<u32> = vec![];
@@ -791,6 +793,6 @@ mod tests {
             c73b9840e8860c066b7e87432c477e9a59a453e71e6d76d5fe34058b800a098fc1740ce3012e8fc8a00c96a\
             f966ffffffff02c0e1e400000000001976a9144134e75a6fcb6042034aab5e18570cf1f844f54788ac404b4\
             c00000000001976a9142b6ba7c9d796b75eef7942fc9288edd37c32f5c388ac00000000";
-        deserialize(&hex::decode(block_hex).unwrap()).unwrap()
+        deserialize(&Vec::from_hex(block_hex).unwrap()).unwrap()
     }
 }

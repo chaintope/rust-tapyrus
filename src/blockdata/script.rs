@@ -106,15 +106,7 @@ pub enum Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(error::Error::description(self))
-    }
-}
-
-impl error::Error for Error {
-    fn cause(&self) -> Option<&error::Error> { None }
-
-    fn description(&self) -> &'static str {
-        match *self {
+        let str = match *self {
             Error::NonMinimalPush => "non-minimal datapush",
             Error::EarlyEndOfScript => "unexpected end of script",
             Error::NumericOverflow => "numeric overflow (number on stack larger than 4 bytes)",
@@ -124,7 +116,15 @@ impl error::Error for Error {
             Error::UnknownSpentOutput(ref _point) => "unknown spent output Transaction::verify()",
             #[cfg(feature="bitcoinconsensus")]
             Error::SerializationError => "can not serialize the spending transaction in Transaction::verify()",
-        }
+        };
+        f.write_str(str)
+    }
+}
+
+#[allow(deprecated)]
+impl error::Error for Error {
+    fn description(&self) -> &str {
+        "description() is deprecated; use Display"
     }
 }
 
@@ -379,10 +379,21 @@ impl Script {
     /// opcodes, datapushes and errors. At most one error will be returned and then the
     /// iterator will end. To instead iterate over the script as sequence of bytes, treat
     /// it as a slice using `script[..]` or convert it to a vector using `into_bytes()`.
-    pub fn iter(&self, enforce_minimal: bool) -> Instructions {
+    ///
+    /// To force minimal pushes, use [instructions_minimal].
+    pub fn instructions(&self) -> Instructions {
         Instructions {
             data: &self.0[..],
-            enforce_minimal: enforce_minimal,
+            enforce_minimal: false,
+        }
+    }
+
+     /// Iterate over the script in the form of `Instruction`s while enforcing
+    /// minimal pushes.
+    pub fn instructions_minimal(&self) -> Instructions {
+        Instructions {
+            data: &self.0[..],
+            enforce_minimal: true,
         }
     }
 
@@ -487,8 +498,6 @@ pub enum Instruction<'a> {
     PushBytes(&'a [u8]),
     /// Some non-push opcode
     Op(opcodes::All),
-    /// An opcode we were unable to parse
-    Error(Error)
 }
 
 /// Iterator over a script returning parsed opcodes
@@ -498,9 +507,9 @@ pub struct Instructions<'a> {
 }
 
 impl<'a> Iterator for Instructions<'a> {
-    type Item = Instruction<'a>;
+    type Item = Result<Instruction<'a>, Error>;
 
-    fn next(&mut self) -> Option<Instruction<'a>> {
+    fn next(&mut self) -> Option<Result<Instruction<'a>, Error>> {
         if self.data.is_empty() {
             return None;
         }
@@ -510,93 +519,93 @@ impl<'a> Iterator for Instructions<'a> {
                 let n = n as usize;
                 if self.data.len() < n + 1 {
                     self.data = &[];  // Kill iterator so that it does not return an infinite stream of errors
-                    return Some(Instruction::Error(Error::EarlyEndOfScript));
+                    return Some(Err(Error::EarlyEndOfScript));
                 }
                 if self.enforce_minimal {
                     if n == 1 && (self.data[1] == 0x81 || (self.data[1] > 0 && self.data[1] <= 16)) {
                         self.data = &[];
-                        return Some(Instruction::Error(Error::NonMinimalPush));
+                        return Some(Err(Error::NonMinimalPush));
                     }
                 }
-                let ret = Some(Instruction::PushBytes(&self.data[1..n+1]));
+                let ret = Some(Ok(Instruction::PushBytes(&self.data[1..n+1])));
                 self.data = &self.data[n + 1..];
                 ret
             }
             opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA1) => {
                 if self.data.len() < 2 {
                     self.data = &[];
-                    return Some(Instruction::Error(Error::EarlyEndOfScript));
+                    return Some(Err(Error::EarlyEndOfScript));
                 }
                 let n = match read_uint(&self.data[1..], 1) {
                     Ok(n) => n,
                     Err(e) => {
                         self.data = &[];
-                        return Some(Instruction::Error(e));
+                        return Some(Err(e));
                     }
                 };
                 if self.data.len() < n + 2 {
                     self.data = &[];
-                    return Some(Instruction::Error(Error::EarlyEndOfScript));
+                    return Some(Err(Error::EarlyEndOfScript));
                 }
                 if self.enforce_minimal && n < 76 {
                     self.data = &[];
-                    return Some(Instruction::Error(Error::NonMinimalPush));
+                    return Some(Err(Error::NonMinimalPush));
                 }
-                let ret = Some(Instruction::PushBytes(&self.data[2..n+2]));
+                let ret = Some(Ok(Instruction::PushBytes(&self.data[2..n+2])));
                 self.data = &self.data[n + 2..];
                 ret
             }
             opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA2) => {
                 if self.data.len() < 3 {
                     self.data = &[];
-                    return Some(Instruction::Error(Error::EarlyEndOfScript));
+                    return Some(Err(Error::EarlyEndOfScript));
                 }
                 let n = match read_uint(&self.data[1..], 2) {
                     Ok(n) => n,
                     Err(e) => {
                         self.data = &[];
-                        return Some(Instruction::Error(e));
+                        return Some(Err(e));
                     }
                 };
                 if self.enforce_minimal && n < 0x100 {
                     self.data = &[];
-                    return Some(Instruction::Error(Error::NonMinimalPush));
+                    return Some(Err(Error::NonMinimalPush));
                 }
                 if self.data.len() < n + 3 {
                     self.data = &[];
-                    return Some(Instruction::Error(Error::EarlyEndOfScript));
+                    return Some(Err(Error::EarlyEndOfScript));
                 }
-                let ret = Some(Instruction::PushBytes(&self.data[3..n + 3]));
+                let ret = Some(Ok(Instruction::PushBytes(&self.data[3..n + 3])));
                 self.data = &self.data[n + 3..];
                 ret
             }
             opcodes::Class::Ordinary(opcodes::Ordinary::OP_PUSHDATA4) => {
                 if self.data.len() < 5 {
                     self.data = &[];
-                    return Some(Instruction::Error(Error::EarlyEndOfScript));
+                    return Some(Err(Error::EarlyEndOfScript));
                 }
                 let n = match read_uint(&self.data[1..], 4) {
                     Ok(n) => n,
                     Err(e) => {
                         self.data = &[];
-                        return Some(Instruction::Error(e));
+                        return Some(Err(e));
                     }
                 };
                 if self.enforce_minimal && n < 0x10000 {
                     self.data = &[];
-                    return Some(Instruction::Error(Error::NonMinimalPush));
+                    return Some(Err(Error::NonMinimalPush));
                 }
                 if self.data.len() < n + 5 {
                     self.data = &[];
-                    return Some(Instruction::Error(Error::EarlyEndOfScript));
+                    return Some(Err(Error::EarlyEndOfScript));
                 }
-                let ret = Some(Instruction::PushBytes(&self.data[5..n + 5]));
+                let ret = Some(Ok(Instruction::PushBytes(&self.data[5..n + 5])));
                 self.data = &self.data[n + 5..];
                 ret
             }
             // Everything else we can push right through
             _ => {
-                let ret = Some(Instruction::Op(opcodes::All::from(self.data[0])));
+                let ret = Some(Ok(Instruction::Op(opcodes::All::from(self.data[0]))));
                 self.data = &self.data[1..];
                 ret
             }
@@ -726,8 +735,8 @@ impl Default for Builder {
 impl From<Vec<u8>> for Builder {
     fn from(v: Vec<u8>) -> Builder {
         let script = Script(v.into_boxed_slice());
-        let last_op = match script.iter(false).last() {
-            Some(Instruction::Op(op)) => Some(op),
+        let last_op = match script.instructions().last() {
+            Some(Ok(Instruction::Op(op))) => Some(op),
             _ => None,
         };
         Builder(script.into_bytes(), last_op)
@@ -743,6 +752,7 @@ impl<'de> serde::Deserialize<'de> for Script {
         D: serde::Deserializer<'de>,
     {
         use std::fmt::Formatter;
+        use hashes::hex::FromHex;
 
         struct Visitor;
         impl<'de> serde::de::Visitor<'de> for Visitor {
@@ -756,7 +766,7 @@ impl<'de> serde::Deserialize<'de> for Script {
             where
                 E: serde::de::Error,
             {
-                let v: Vec<u8> = ::hex::decode(v).map_err(E::custom)?;
+                let v = Vec::from_hex(v).map_err(E::custom)?;
                 Ok(Script::from(v))
             }
 
@@ -912,7 +922,6 @@ impl TokenTypes {
 #[cfg(test)]
 mod test {
     use std::str::FromStr;
-    use hex::decode as hex_decode;
 
     use super::*;
     use super::build_scriptint;
@@ -949,10 +958,10 @@ mod test {
         // keys
         let keystr = "21032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af";
         let key = PublicKey::from_str(&keystr[2..]).unwrap();
-        script = script.push_key(&key); comp.extend(hex_decode(keystr).unwrap().iter().cloned()); assert_eq!(&script[..], &comp[..]);
+        script = script.push_key(&key); comp.extend(Vec::from_hex(keystr).unwrap().iter().cloned()); assert_eq!(&script[..], &comp[..]);
         let keystr = "41042e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af191923a2964c177f5b5923ae500fca49e99492d534aa3759d6b25a8bc971b133";
         let key = PublicKey::from_str(&keystr[2..]).unwrap();
-        script = script.push_key(&key); comp.extend(hex_decode(keystr).unwrap().iter().cloned()); assert_eq!(&script[..], &comp[..]);
+        script = script.push_key(&key); comp.extend(Vec::from_hex(keystr).unwrap().iter().cloned()); assert_eq!(&script[..], &comp[..]);
 
         // opcodes
         script = script.push_opcode(opcodes::all::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
@@ -964,7 +973,7 @@ mod test {
         // from txid 3bb5e6434c11fb93f64574af5d116736510717f2c595eb45b52c28e31622dfff which was in my mempool when I wrote the test
         let script = Builder::new().push_opcode(opcodes::all::OP_DUP)
                                    .push_opcode(opcodes::all::OP_HASH160)
-                                   .push_slice(&hex_decode("16e1ae70ff0fa102905d4af297f6912bda6cce19").unwrap())
+                                   .push_slice(&Vec::from_hex("16e1ae70ff0fa102905d4af297f6912bda6cce19").unwrap())
                                    .push_opcode(opcodes::all::OP_EQUALVERIFY)
                                    .push_opcode(opcodes::all::OP_CHECKSIG)
                                    .into_script();
@@ -1045,7 +1054,7 @@ mod test {
 
     #[test]
     fn script_serialize() {
-        let hex_script = hex_decode("6c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52").unwrap();
+        let hex_script = Vec::from_hex("6c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52").unwrap();
         let script: Result<Script, _> = deserialize(&hex_script);
         assert!(script.is_ok());
         assert_eq!(serialize(&script.unwrap()), hex_script);
@@ -1213,7 +1222,7 @@ mod test {
 
         assert_eq!(format!("{}",color_id), "c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46");
 
-        let hex_script = hex_decode("c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46").unwrap();
+        let hex_script = Vec::from_hex("c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46").unwrap();
         let script: Result<ColorIdentifier, _> = deserialize(&hex_script);
         assert!(script.is_ok());
         let color_id = script.unwrap();
@@ -1255,31 +1264,31 @@ mod test {
         let minimal = hex_script!("0169b2");           // minimal
         let nonminimal_alt = hex_script!("026900b2");  // non-minimal number but minimal push (should be OK)
 
-        let v_zero: Vec<Instruction> = zero.iter(true).collect();
-        let v_zeropush: Vec<Instruction> = zeropush.iter(true).collect();
+        let v_zero: Result<Vec<Instruction>, Error> = zero.instructions_minimal().collect();
+        let v_zeropush: Result<Vec<Instruction>, Error> = zeropush.instructions_minimal().collect();
 
-        let v_min: Vec<Instruction> = minimal.iter(true).collect();
-        let v_nonmin: Vec<Instruction> = nonminimal.iter(true).collect();
-        let v_nonmin_alt: Vec<Instruction> = nonminimal_alt.iter(true).collect();
-        let slop_v_min: Vec<Instruction> = minimal.iter(false).collect();
-        let slop_v_nonmin: Vec<Instruction> = nonminimal.iter(false).collect();
-        let slop_v_nonmin_alt: Vec<Instruction> = nonminimal_alt.iter(false).collect();
+        let v_min: Result<Vec<Instruction>, Error> = minimal.instructions_minimal().collect();
+        let v_nonmin: Result<Vec<Instruction>, Error> = nonminimal.instructions_minimal().collect();
+        let v_nonmin_alt: Result<Vec<Instruction>, Error> = nonminimal_alt.instructions_minimal().collect();
+        let slop_v_min: Result<Vec<Instruction>, Error> = minimal.instructions().collect();
+        let slop_v_nonmin: Result<Vec<Instruction>, Error> = nonminimal.instructions().collect();
+        let slop_v_nonmin_alt: Result<Vec<Instruction>, Error> = nonminimal_alt.instructions().collect();
 
         assert_eq!(
-            v_zero,
+            v_zero.unwrap(),
             vec![
                 Instruction::PushBytes(&[]),
             ]
         );
         assert_eq!(
-            v_zeropush,
+            v_zeropush.unwrap(),
             vec![
                 Instruction::PushBytes(&[0]),
             ]
         );
 
         assert_eq!(
-            v_min,
+            v_min.clone().unwrap(),
             vec![
                 Instruction::PushBytes(&[105]),
                 Instruction::Op(opcodes::OP_NOP3),
@@ -1287,23 +1296,21 @@ mod test {
         );
 
         assert_eq!(
-            v_nonmin,
-            vec![
-                Instruction::Error(Error::NonMinimalPush),
-            ]
+            v_nonmin.err().unwrap(),
+            Error::NonMinimalPush
         );
 
         assert_eq!(
-            v_nonmin_alt,
+            v_nonmin_alt.clone().unwrap(),
             vec![
                 Instruction::PushBytes(&[105, 0]),
                 Instruction::Op(opcodes::OP_NOP3),
             ]
         );
 
-        assert_eq!(v_min, slop_v_min);
-        assert_eq!(v_min, slop_v_nonmin);
-        assert_eq!(v_nonmin_alt, slop_v_nonmin_alt);
+        assert_eq!(v_min.clone().unwrap(), slop_v_min.unwrap());
+        assert_eq!(v_min.unwrap(), slop_v_nonmin.unwrap());
+        assert_eq!(v_nonmin_alt.unwrap(), slop_v_nonmin_alt.unwrap());
     }
 
 	#[test]
@@ -1329,8 +1336,8 @@ mod test {
 	#[cfg(feature="bitcoinconsensus")]
 	fn test_bitcoinconsensus () {
 		// a random segwit transaction from the blockchain using native segwit
-		let spent = Builder::from(hex_decode("0020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d").unwrap()).into_script();
-		let spending = hex_decode("010000000001011f97548fbbe7a0db7588a66e18d803d0089315aa7d4cc28360b6ec50ef36718a0100000000ffffffff02df1776000000000017a9146c002a686959067f4866b8fb493ad7970290ab728757d29f0000000000220020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d04004730440220565d170eed95ff95027a69b313758450ba84a01224e1f7f130dda46e94d13f8602207bdd20e307f062594022f12ed5017bbf4a055a06aea91c10110a0e3bb23117fc014730440220647d2dc5b15f60bc37dc42618a370b2a1490293f9e5c8464f53ec4fe1dfe067302203598773895b4b16d37485cbe21b337f4e4b650739880098c592553add7dd4355016952210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae00000000").unwrap();
+		let spent = Builder::from(Vec::from_hex("0020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d").unwrap()).into_script();
+		let spending = Vec::from_hex("010000000001011f97548fbbe7a0db7588a66e18d803d0089315aa7d4cc28360b6ec50ef36718a0100000000ffffffff02df1776000000000017a9146c002a686959067f4866b8fb493ad7970290ab728757d29f0000000000220020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d04004730440220565d170eed95ff95027a69b313758450ba84a01224e1f7f130dda46e94d13f8602207bdd20e307f062594022f12ed5017bbf4a055a06aea91c10110a0e3bb23117fc014730440220647d2dc5b15f60bc37dc42618a370b2a1490293f9e5c8464f53ec4fe1dfe067302203598773895b4b16d37485cbe21b337f4e4b650739880098c592553add7dd4355016952210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae00000000").unwrap();
 		spent.verify(0, 18393430, spending.as_slice()).unwrap();
 	}
 }

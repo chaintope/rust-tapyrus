@@ -54,6 +54,7 @@ use std::collections::HashSet;
 use std::error;
 use std::fmt::{Display, Formatter};
 use std::io::Cursor;
+use std::cmp::Ordering;
 
 use hashes::{Hash, siphash24};
 use hash_types::{BlockHash, FilterHash};
@@ -63,7 +64,6 @@ use blockdata::script::Script;
 use blockdata::transaction::OutPoint;
 use consensus::{Decodable, Encodable};
 use consensus::encode::VarInt;
-use util::hash::BitcoinHash;
 use util::endian;
 
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
@@ -79,12 +79,10 @@ pub enum Error {
     Io(io::Error),
 }
 
+#[allow(deprecated)]
 impl error::Error for Error {
     fn description(&self) -> &str {
-        match *self {
-            Error::UtxoMissing(_) => "unresolved UTXO",
-            Error::Io(_) => "IO Error"
-        }
+        "description() is deprecated; use Display"
     }
 }
 
@@ -160,7 +158,7 @@ pub struct BlockFilterWriter<'a> {
 impl<'a> BlockFilterWriter<'a> {
     /// Create a block filter writer
     pub fn new(writer: &'a mut io::Write, block: &'a Block) -> BlockFilterWriter<'a> {
-        let block_hash_as_int = block.bitcoin_hash().into_inner();
+        let block_hash_as_int = block.block_hash().into_inner();
         let k0 = endian::slice_to_u64_le(&block_hash_as_int[0..8]);
         let k1 = endian::slice_to_u64_le(&block_hash_as_int[8..16]);
         let writer = GCSFilterWriter::new(writer, k0, k1, M, P);
@@ -247,7 +245,7 @@ impl GCSFilterReader {
     pub fn match_any(&self, reader: &mut io::Read, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
         let mut decoder = reader;
         let n_elements: VarInt = Decodable::consensus_decode(&mut decoder).unwrap_or(VarInt(0));
-        let ref mut reader = decoder;
+        let reader = &mut decoder;
         // map hashes to [0, n_elements << grp]
         let nm = n_elements.0 * self.m;
         let mut mapped = query.map(|e| map_to_range(self.filter.hash(e), nm)).collect::<Vec<_>>();
@@ -266,17 +264,17 @@ impl GCSFilterReader {
         let mut remaining = n_elements.0 - 1;
         for p in mapped {
             loop {
-                if data == p {
-                    return Ok(true);
-                } else if data < p {
-                    if remaining > 0 {
-                        data += self.filter.golomb_rice_decode(&mut reader)?;
-                        remaining -= 1;
-                    } else {
-                        return Ok(false);
+                match data.cmp(&p) {
+                    Ordering::Equal => return Ok(true),
+                    Ordering::Less => {
+                        if remaining > 0 {
+                            data += self.filter.golomb_rice_decode(&mut reader)?;
+                            remaining -= 1;
+                        } else {
+                            return Ok(false);
+                        }
                     }
-                } else {
-                    break;
+                    Ordering::Greater => break,
                 }
             }
         }
@@ -287,7 +285,7 @@ impl GCSFilterReader {
     pub fn match_all(&self, reader: &mut io::Read, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
         let mut decoder = reader;
         let n_elements: VarInt = Decodable::consensus_decode(&mut decoder).unwrap_or(VarInt(0));
-        let ref mut reader = decoder;
+        let reader = &mut decoder;
         // map hashes to [0, n_elements << grp]
         let nm = n_elements.0 * self.m;
         let mut mapped = query.map(|e| map_to_range(self.filter.hash(e), nm)).collect::<Vec<_>>();
@@ -307,17 +305,17 @@ impl GCSFilterReader {
         let mut remaining = n_elements.0 - 1;
         for p in mapped {
             loop {
-                if data == p {
-                    break;
-                } else if data < p {
-                    if remaining > 0 {
-                        data += self.filter.golomb_rice_decode(&mut reader)?;
-                        remaining -= 1;
-                    } else {
-                        return Ok(false);
-                    }
-                } else {
-                    return Ok(false);
+                match data.cmp(&p) {
+                    Ordering::Equal => break,
+                    Ordering::Less => {
+                        if remaining > 0 {
+                            data += self.filter.golomb_rice_decode(&mut reader)?;
+                            remaining -= 1;
+                        } else {
+                            return Ok(false);
+                        }
+                    },
+                    Ordering::Greater => return Ok(false),
                 }
             }
         }
@@ -429,7 +427,7 @@ impl GCSFilter {
             q += 1;
         }
         let r = reader.read(self.p)?;
-        return Ok((q << self.p) + r);
+        Ok((q << self.p) + r)
     }
 
     /// Hash an arbitrary slice with siphash using parameters of this filter
@@ -565,7 +563,7 @@ mod test {
         for t in testdata.iter().skip(1) {
             let block_hash = BlockHash::from_hex(&t.get(1).unwrap().as_str().unwrap()).unwrap();
             let block: Block = deserialize(hex::decode(&t.get(2).unwrap().as_str().unwrap().as_bytes()).unwrap().as_slice()).unwrap();
-            assert_eq!(block.bitcoin_hash(), block_hash);
+            assert_eq!(block.block_hash(), block_hash);
             let scripts = t.get(3).unwrap().as_array().unwrap();
             let previous_filter_id = FilterHash::from_hex(&t.get(4).unwrap().as_str().unwrap()).unwrap();
             let filter_content = hex::decode(&t.get(5).unwrap().as_str().unwrap().as_bytes()).unwrap();
@@ -590,7 +588,7 @@ mod test {
 
             assert_eq!(test_filter.content, filter.content);
 
-            let block_hash = &block.header.bitcoin_hash();
+            let block_hash = &block.block_hash();
             assert!(filter.match_all(block_hash, &mut txmap.iter()
                 .filter_map(|(_, s)| if !s.is_empty() { Some(s.as_bytes()) } else { None })).unwrap());
 
