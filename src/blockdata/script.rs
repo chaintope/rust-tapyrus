@@ -32,8 +32,10 @@ use std::{error, fmt, io};
 use hash_types::{ScriptHash, WScriptHash};
 use blockdata::opcodes;
 use blockdata::transaction::OutPoint;
+#[cfg(feature = "serde")] use consensus::deserialize;
 use consensus::{encode, Decodable, Encodable};
 use consensus::encode::serialize_hex;
+
 use hashes::{sha256, Hash};
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
@@ -864,6 +866,61 @@ impl ColorIdentifier {
     }
 }
 
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for ColorIdentifier {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use std::fmt::Formatter;
+        use hashes::hex::FromHex;
+
+        struct Visitor;
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = ColorIdentifier;
+
+            fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+                formatter.write_str("a color identifier")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                let bytes = Vec::from_hex(v).unwrap();
+                let color_identifier: ColorIdentifier = deserialize(&bytes).unwrap();
+                Ok(color_identifier)
+            }
+
+            fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                self.visit_str(v)
+            }
+
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                self.visit_str(&v)
+            }
+        }
+
+        deserializer.deserialize_str(Visitor)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for ColorIdentifier {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&format!("{}", self))
+    }
+}
+
 impl Encodable for ColorIdentifier {
     #[inline]
     fn consensus_encode<S: io::Write>(
@@ -1103,6 +1160,18 @@ mod test {
         assert_eq!(json, serde_json::Value::String("827651a0698faaa9a8a7a687".to_owned()));
         let des = serde_json::from_value(json).unwrap();
         assert_eq!(original, des);
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn color_id_json_serialize() {
+        use serde_json;
+        let bytes = Vec::from_hex("c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46").unwrap();
+        let color_identifier: ColorIdentifier = deserialize(&bytes).unwrap();
+        let json = serde_json::to_value(&color_identifier).unwrap();
+        assert_eq!(json, serde_json::Value::String("c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46".to_owned()));
+        let des = serde_json::from_value(json).unwrap();
+        assert_eq!(color_identifier, des);
     }
 
     #[test]
