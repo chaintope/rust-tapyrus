@@ -887,8 +887,8 @@ impl<'de> serde::Deserialize<'de> for ColorIdentifier {
             where
                 E: serde::de::Error,
             {
-                let bytes = Vec::from_hex(v).unwrap();
-                let color_identifier: ColorIdentifier = deserialize(&bytes).unwrap();
+                let bytes = Vec::from_hex(v).map_err(E::custom)?;
+                let color_identifier: ColorIdentifier = deserialize(&bytes).map_err(E::custom)?;
                 Ok(color_identifier)
             }
 
@@ -1170,8 +1170,21 @@ mod test {
         let color_identifier: ColorIdentifier = deserialize(&bytes).unwrap();
         let json = serde_json::to_value(&color_identifier).unwrap();
         assert_eq!(json, serde_json::Value::String("c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46".to_owned()));
-        let des = serde_json::from_value(json).unwrap();
-        assert_eq!(color_identifier, des);
+        let result = serde_json::from_value(json).unwrap();
+        assert_eq!(color_identifier, result);
+
+        let invalid_token_type =
+            serde_json::Value::String("c0ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46".to_owned());
+        let result: Result<ColorIdentifier, _> = serde_json::from_value(invalid_token_type);
+        assert_eq!(result.is_err(), true);
+
+        let too_short = serde_json::Value::String("c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b".to_owned());
+        let result: Result<ColorIdentifier, _> = serde_json::from_value(too_short);
+        assert_eq!(result.is_err(), true);
+
+        let too_long = serde_json::Value::String("c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46ff".to_owned());
+        let result: Result<ColorIdentifier, _> = serde_json::from_value(too_long);
+        assert_eq!(result.is_err(), true);
     }
 
     #[test]
@@ -1297,6 +1310,22 @@ mod test {
         let color_id = script.unwrap();
         assert_eq!(color_id.token_type, TokenTypes::Nft);
         assert_eq!(serialize(&color_id), hex_script);
+
+        let invalid_token_type =
+            "c0ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46";
+        let bytes = Vec::from_hex(invalid_token_type).unwrap();
+        let result: Result<ColorIdentifier, _> = deserialize(&bytes);
+        assert_eq!(result.is_err(), true);
+
+        let too_short = "c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b";
+        let bytes = Vec::from_hex(too_short).unwrap();
+        let result: Result<ColorIdentifier, _> = deserialize(&bytes);
+        assert_eq!(result.is_err(), true);
+
+        let too_long = "c1ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46ff";
+        let bytes = Vec::from_hex(too_long).unwrap();
+        let result: Result<ColorIdentifier, _> = deserialize(&bytes);
+        assert_eq!(result.is_err(), true);
     }
 
     #[test]
