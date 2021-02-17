@@ -32,8 +32,7 @@ use std::{error, fmt, io};
 use hash_types::{ScriptHash, WScriptHash};
 use blockdata::opcodes;
 use blockdata::transaction::OutPoint;
-#[cfg(feature = "serde")] use consensus::deserialize;
-use consensus::{encode, Decodable, Encodable};
+use consensus::{deserialize, encode, Decodable, Encodable};
 use consensus::encode::serialize_hex;
 
 use hashes::{sha256, Hash};
@@ -483,6 +482,17 @@ impl Script {
         let mut buf = String::new();
         self.fmt_asm(&mut buf).unwrap();
         buf
+    }
+
+    /// Extract a color_id and a remaining script
+    /// Return None if script is not colored coin
+    pub fn split_color(&self) -> Option<(ColorIdentifier, Script)> {
+        if self.is_colored() {
+            let color_id = deserialize(&self[1..34]).expect("unexpect color_id");
+            Some((color_id, Script::from(Vec::from(&self[35..]))))
+        } else {
+            None
+        }
     }
 }
 
@@ -1264,6 +1274,23 @@ mod test {
 
         let color_id = ColorIdentifier::nft(OutPoint::default());
         assert_eq!(color_id.token_type, TokenTypes::Nft);
+    }
+
+    #[test]
+    fn split_color_test() {
+        let out_point = OutPoint::new(Txid::from_hex("0101010101010101010101010101010101010101010101010101010101010101").unwrap(), 1);
+        let p2pkh = hex_script!("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac");
+
+        // p2pkh -> cp2pkh
+        let cp2pkh = p2pkh.add_color(ColorIdentifier::nft(out_point)).unwrap();
+
+        // cp2pkh -> (color_id, p2pkh)
+        let (color_id, script) = cp2pkh.split_color().unwrap();
+        assert_eq!(format!("{}", color_id), "c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46");
+        assert_eq!(script, p2pkh);
+
+        // p2pkh -> None
+        assert_eq!(p2pkh.split_color(), None);
     }
 
     #[test]
