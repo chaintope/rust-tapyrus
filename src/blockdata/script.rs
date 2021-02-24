@@ -874,6 +874,25 @@ impl ColorIdentifier {
             payload: ColorIdentifierPayload(hash)
         }
     }
+
+    /// return true if this is colored coin
+    pub fn is_colored(&self) -> bool {
+        self.token_type != TokenTypes::None
+    }
+
+    /// return true if this is uncolored coin(TPC)
+    pub fn is_default(&self) -> bool {
+        self.token_type == TokenTypes::None
+    }
+}
+
+impl Default for ColorIdentifier {
+    fn default() -> Self {
+        ColorIdentifier {
+            token_type: TokenTypes::None,
+            payload: ColorIdentifierPayload(sha256::Hash::default())
+        }
+    }
 }
 
 #[cfg(feature = "serde")]
@@ -948,6 +967,7 @@ impl Decodable for ColorIdentifier {
     fn consensus_decode<D: io::Read>(mut d: D) -> Result<Self, encode::Error> {
         let bytes: [u8; 33] = Decodable::consensus_decode(&mut d)?;
         let token_type = match bytes[0] {
+            0x00 => TokenTypes::None,
             0xC1 => TokenTypes::Reissuable,
             0xC2 => TokenTypes::NonReissuable,
             0xC3 => TokenTypes::Nft,
@@ -971,6 +991,8 @@ impl std::fmt::Display for ColorIdentifier {
 /// Token types
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum TokenTypes {
+    /// TPC
+    None = 0x00,
     /// Reissuable
     Reissuable = 0xc1,
     /// Non reissuable
@@ -982,7 +1004,12 @@ pub enum TokenTypes {
 impl TokenTypes {
     /// return true if token type is supported
     pub fn is_valid(token_type: &u8) -> bool {
-        vec![TokenTypes::Reissuable, TokenTypes::NonReissuable, TokenTypes::Nft].iter().any(|e| e.clone() as u8 == *token_type)
+        vec![
+            TokenTypes::None,
+            TokenTypes::Reissuable,
+            TokenTypes::NonReissuable,
+            TokenTypes::Nft,
+        ].iter().any(|e| e.clone() as u8 == *token_type)
     }
 }
 
@@ -1268,12 +1295,23 @@ mod test {
     fn color_identifier_test() {
         let color_id = ColorIdentifier::reissuable(hex_script!("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac"));
         assert_eq!(color_id.token_type, TokenTypes::Reissuable);
+        assert_eq!(color_id.is_colored(), true);
+        assert_eq!(color_id.is_default(), false);
 
         let color_id = ColorIdentifier::non_reissuable(OutPoint::default());
         assert_eq!(color_id.token_type, TokenTypes::NonReissuable);
+        assert_eq!(color_id.is_colored(), true);
+        assert_eq!(color_id.is_default(), false);
 
         let color_id = ColorIdentifier::nft(OutPoint::default());
         assert_eq!(color_id.token_type, TokenTypes::Nft);
+        assert_eq!(color_id.is_colored(), true);
+        assert_eq!(color_id.is_default(), false);
+
+        let color_id = ColorIdentifier::default();
+        assert_eq!(color_id.token_type, TokenTypes::None);
+        assert_eq!(color_id.is_colored(), false);
+        assert_eq!(color_id.is_default(), true);
     }
 
     #[test]
@@ -1295,6 +1333,7 @@ mod test {
 
     #[test]
     fn token_type_is_valid() {
+        assert!(TokenTypes::is_valid(&0x00));
         assert!(TokenTypes::is_valid(&0xc1));
         assert!(TokenTypes::is_valid(&0xc2));
         assert!(TokenTypes::is_valid(&0xc3));
