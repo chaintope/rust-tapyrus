@@ -1,6 +1,6 @@
 [package]
 name = "tapyrus"
-version = "0.4.3"
+version = "0.4.4"
 authors = ["Kohei Taniguchi <kohei@chaintope.com>", "Hajime Yamaguchi <h_yamaguchi@chaintope.com>"]
 license = "MIT"
 homepage = "https://github.com/chaintope/rust-tapyrus/"

@@ -1,4 +1,14 @@
 
+# 0.4.4
+
+- Add `TPC` token type(0x00).
+- Implement `Hash` with `#[derive(Hash)]` for `ColorIdentifier`
+
+# 0.4.3
+
+- Implement `Script::split_color`
+- Implement serialize/deserialize interface for `ColorIdentifier`
+
 # 0.3.0
 
 - Support colored coin feature.
