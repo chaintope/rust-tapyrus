@@ -830,10 +830,10 @@ impl Decodable for Script {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct ColorIdentifierPayload(sha256::Hash);
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 /// ColorIdentifier
 pub struct ColorIdentifier {
     /// Token type
@@ -989,7 +989,7 @@ impl std::fmt::Display for ColorIdentifier {
 }
 
 /// Token types
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum TokenTypes {
     /// TPC
     None = 0x00,
