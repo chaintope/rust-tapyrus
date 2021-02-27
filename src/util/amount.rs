@@ -24,30 +24,27 @@ use std::cmp::Ordering;
 /// A set of denominations in which amounts can be expressed.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Denomination {
-    /// BTC
-    Bitcoin,
-    /// mBTC
-    MilliBitcoin,
-    /// uBTC
-    MicroBitcoin,
-    /// bits
-    Bit,
-    /// satoshi
-    Satoshi,
-    /// msat
-    MilliSatoshi,
+    /// TPC
+    TPC,
+    /// mTPC
+    MilliTPC,
+    /// uTPC
+    MicroTPC,
+    /// tapyrus
+    Tapyrus,
+    /// mtap
+    MilliTapyrus,
 }
 
 impl Denomination {
-    /// The number of decimal places more than a satoshi.
+    /// The number of decimal places more than a tapyrus.
     fn precision(self) -> i32 {
         match self {
-            Denomination::Bitcoin => -8,
-            Denomination::MilliBitcoin => -5,
-            Denomination::MicroBitcoin => -2,
-            Denomination::Bit => -2,
-            Denomination::Satoshi => 0,
-            Denomination::MilliSatoshi => 3,
+            Denomination::TPC => -8,
+            Denomination::MilliTPC => -5,
+            Denomination::MicroTPC => -2,
+            Denomination::Tapyrus => 0,
+            Denomination::MilliTapyrus => 3,
         }
     }
 }
@@ -55,12 +52,11 @@ impl Denomination {
 impl fmt::Display for Denomination {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str(match *self {
-            Denomination::Bitcoin => "BTC",
-            Denomination::MilliBitcoin => "mBTC",
-            Denomination::MicroBitcoin => "uBTC",
-            Denomination::Bit => "bits",
-            Denomination::Satoshi => "satoshi",
-            Denomination::MilliSatoshi => "msat",
+            Denomination::TPC => "TPC",
+            Denomination::MilliTPC => "mTPC",
+            Denomination::MicroTPC => "uTPC",
+            Denomination::Tapyrus => "tapyrus",
+            Denomination::MilliTapyrus => "mtap",
         })
     }
 }
@@ -70,13 +66,12 @@ impl FromStr for Denomination {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "BTC" => Ok(Denomination::Bitcoin),
-            "mBTC" => Ok(Denomination::MilliBitcoin),
-            "uBTC" => Ok(Denomination::MicroBitcoin),
-            "bits" => Ok(Denomination::Bit),
-            "satoshi" => Ok(Denomination::Satoshi),
-            "sat" => Ok(Denomination::Satoshi),
-            "msat" => Ok(Denomination::MilliSatoshi),
+            "TPC" => Ok(Denomination::TPC),
+            "mTPC" => Ok(Denomination::MilliTPC),
+            "uTPC" => Ok(Denomination::MicroTPC),
+            "tapyrus" => Ok(Denomination::Tapyrus),
+            "tap" => Ok(Denomination::Tapyrus),
+            "mtap" => Ok(Denomination::MilliTapyrus),
             d => Err(ParseAmountError::UnknownDenomination(d.to_owned())),
         }
     }
@@ -127,9 +122,9 @@ fn is_too_precise(s: &str, precision: usize) -> bool {
     s.contains('.') || precision >= s.len() || s.chars().rev().take(precision).any(|d| d != '0')
 }
 
-/// Parse decimal string in the given denomination into a satoshi value and a
+/// Parse decimal string in the given denomination into a tapyrus value and a
 /// bool indicator for a negative amount.
-fn parse_signed_to_satoshi(
+fn parse_signed_to_tapyrus(
     mut s: &str,
     denom: Denomination,
 ) -> Result<(bool, u64), ParseAmountError> {
@@ -149,7 +144,7 @@ fn parse_signed_to_satoshi(
     }
 
     let max_decimals = {
-        // The difference in precision between native (satoshi)
+        // The difference in precision between native (tapyrus)
         // and desired denomination.
         let precision_diff = -denom.precision();
         if precision_diff < 0 {
@@ -169,7 +164,7 @@ fn parse_signed_to_satoshi(
     };
 
     let mut decimals = None;
-    let mut value: u64 = 0; // as satoshis
+    let mut value: u64 = 0; // as tapyruses
     for c in s.chars() {
         match c {
             '0'...'9' => {
@@ -209,11 +204,11 @@ fn parse_signed_to_satoshi(
     Ok((is_negative, value))
 }
 
-/// Format the given satoshi amount in the given denomination.
+/// Format the given tapyrus amount in the given denomination.
 ///
 /// Does not include the denomination.
-fn fmt_satoshi_in(
-    satoshi: u64,
+fn fmt_tapyrus_in(
+    tapyrus: u64,
     negative: bool,
     f: &mut fmt::Write,
     denom: Denomination,
@@ -227,12 +222,12 @@ fn fmt_satoshi_in(
         Ordering::Greater => {
             // add zeroes in the end
             let width = precision as usize;
-            write!(f, "{}{:0width$}", satoshi, 0, width = width)?;
+            write!(f, "{}{:0width$}", tapyrus, 0, width = width)?;
         }
         Ordering::Less => {
             // need to inject a comma in the number
             let nb_decimals = precision.abs() as usize;
-            let real = format!("{:0width$}", satoshi, width = nb_decimals);
+            let real = format!("{:0width$}", tapyrus, width = nb_decimals);
             if real.len() == nb_decimals {
                 write!(f, "0.{}", &real[real.len() - nb_decimals..])?;
             } else {
@@ -244,14 +239,14 @@ fn fmt_satoshi_in(
                 )?;
             }
         }
-        Ordering::Equal => write!(f, "{}", satoshi)?,
+        Ordering::Equal => write!(f, "{}", tapyrus)?,
     }
     Ok(())
 }
 
 /// Amount
 ///
-/// The [Amount] type can be used to express Bitcoin amounts that supports
+/// The [Amount] type can be used to express TPC amounts that supports
 /// arithmetic and conversion to various denominations.
 ///
 ///
@@ -272,18 +267,18 @@ pub struct Amount(u64);
 impl Amount {
     /// The zero amount.
     pub const ZERO: Amount = Amount(0);
-    /// Exactly one satoshi.
-    pub const ONE_SAT: Amount = Amount(1);
-    /// Exactly one bitcoin.
-    pub const ONE_BTC: Amount = Amount(100_000_000);
+    /// Exactly one tapyrus.
+    pub const ONE_TAP: Amount = Amount(1);
+    /// Exactly one TPC.
+    pub const ONE_TPC: Amount = Amount(100_000_000);
 
-    /// Create an [Amount] with satoshi precision and the given number of satoshis.
-    pub fn from_sat(satoshi: u64) -> Amount {
-        Amount(satoshi)
+    /// Create an [Amount] with tapyrus precision and the given number of tapyrus.
+    pub fn from_tap(tapyrus: u64) -> Amount {
+        Amount(tapyrus)
     }
 
-    /// Get the number of satoshis in this [Amount].
-    pub fn as_sat(self) -> u64 {
+    /// Get the number of tapyrus in this [Amount].
+    pub fn as_tap(self) -> u64 {
         self.0
     }
 
@@ -297,9 +292,9 @@ impl Amount {
         Amount(u64::min_value())
     }
 
-    /// Convert from a value expressing bitcoins to an [Amount].
-    pub fn from_btc(btc: f64) -> Result<Amount, ParseAmountError> {
-        Amount::from_float_in(btc, Denomination::Bitcoin)
+    /// Convert from a value expressing tpcs to an [Amount].
+    pub fn from_tpc(tpc: f64) -> Result<Amount, ParseAmountError> {
+        Amount::from_float_in(tpc, Denomination::TPC)
     }
 
     /// Parse a decimal string as a value in the given denomination.
@@ -307,14 +302,14 @@ impl Amount {
     /// Note: This only parses the value string.  If you want to parse a value
     /// with denomination, use [FromStr].
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<Amount, ParseAmountError> {
-        let (negative, satoshi) = parse_signed_to_satoshi(s, denom)?;
+        let (negative, tapyrus) = parse_signed_to_tapyrus(s, denom)?;
         if negative {
             return Err(ParseAmountError::Negative);
         }
-        if satoshi > i64::max_value() as u64 {
+        if tapyrus > i64::max_value() as u64 {
             return Err(ParseAmountError::TooBig);
         }
-        Ok(Amount::from_sat(satoshi))
+        Ok(Amount::from_tap(tapyrus))
     }
 
     /// Parses amounts with denomination suffix like they are produced with
@@ -339,13 +334,13 @@ impl Amount {
         f64::from_str(&self.to_string_in(denom)).unwrap()
     }
 
-    /// Express this [Amount] as a floating-point value in Bitcoin.
+    /// Express this [Amount] as a floating-point value in TPC.
     ///
-    /// Equivalent to `to_float_in(Denomination::Bitcoin)`.
+    /// Equivalent to `to_float_in(Denomination::TPC)`.
     ///
     /// Please be aware of the risk of using floating-point numbers.
-    pub fn as_btc(self) -> f64 {
-        self.to_float_in(Denomination::Bitcoin)
+    pub fn as_tpc(self) -> f64 {
+        self.to_float_in(Denomination::TPC)
     }
 
     /// Convert this [Amount] in floating-point notation with a given
@@ -366,7 +361,7 @@ impl Amount {
     ///
     /// Does not include the denomination.
     pub fn fmt_value_in(self, f: &mut fmt::Write, denom: Denomination) -> fmt::Result {
-        fmt_satoshi_in(self.as_sat(), false, f, denom)
+        fmt_tapyrus_in(self.as_tap(), false, f, denom)
     }
 
     /// Get a string number of this [Amount] in the given denomination.
@@ -423,10 +418,10 @@ impl Amount {
 
     /// Convert to a signed amount.
     pub fn to_signed(self) -> Result<SignedAmount, ParseAmountError> {
-        if self.as_sat() > SignedAmount::max_value().as_sat() as u64 {
+        if self.as_tap() > SignedAmount::max_value().as_tap() as u64 {
             Err(ParseAmountError::TooBig)
         } else {
-            Ok(SignedAmount::from_sat(self.as_sat() as i64))
+            Ok(SignedAmount::from_tap(self.as_tap() as i64))
         }
     }
 }
@@ -439,16 +434,16 @@ impl default::Default for Amount {
 
 impl fmt::Debug for Amount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Amount({} satoshi)", self.as_sat())
+        write!(f, "Amount({} tapyrus)", self.as_tap())
     }
 }
 
 // No one should depend on a binding contract for Display for this type.
-// Just using Bitcoin denominated string.
+// Just using TPC denominated string.
 impl fmt::Display for Amount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.fmt_value_in(f, Denomination::Bitcoin)?;
-        write!(f, " {}", Denomination::Bitcoin)
+        self.fmt_value_in(f, Denomination::TPC)?;
+        write!(f, " {}", Denomination::TPC)
     }
 }
 
@@ -532,7 +527,7 @@ impl FromStr for Amount {
 
 /// SignedAmount
 ///
-/// The [SignedAmount] type can be used to express Bitcoin amounts that supports
+/// The [SignedAmount] type can be used to express TPC amounts that supports
 /// arithmetic and conversion to various denominations.
 ///
 ///
@@ -550,18 +545,18 @@ pub struct SignedAmount(i64);
 impl SignedAmount {
     /// The zero amount.
     pub const ZERO: SignedAmount = SignedAmount(0);
-    /// Exactly one satoshi.
-    pub const ONE_SAT: SignedAmount = SignedAmount(1);
-    /// Exactly one bitcoin.
-    pub const ONE_BTC: SignedAmount = SignedAmount(100_000_000);
+    /// Exactly one tapyrus.
+    pub const ONE_TAP: SignedAmount = SignedAmount(1);
+    /// Exactly one TPC.
+    pub const ONE_TPC: SignedAmount = SignedAmount(100_000_000);
 
-    /// Create an [SignedAmount] with satoshi precision and the given number of satoshis.
-    pub fn from_sat(satoshi: i64) -> SignedAmount {
-        SignedAmount(satoshi)
+    /// Create an [SignedAmount] with tapyrus precision and the given number of tapyruses.
+    pub fn from_tap(tapyrus: i64) -> SignedAmount {
+        SignedAmount(tapyrus)
     }
 
-    /// Get the number of satoshis in this [SignedAmount].
-    pub fn as_sat(self) -> i64 {
+    /// Get the number of tapyrus in this [SignedAmount].
+    pub fn as_tap(self) -> i64 {
         self.0
     }
 
@@ -575,9 +570,9 @@ impl SignedAmount {
         SignedAmount(i64::min_value())
     }
 
-    /// Convert from a value expressing bitcoins to an [SignedAmount].
-    pub fn from_btc(btc: f64) -> Result<SignedAmount, ParseAmountError> {
-        SignedAmount::from_float_in(btc, Denomination::Bitcoin)
+    /// Convert from a value expressing tpcs to an [SignedAmount].
+    pub fn from_tpc(tpc: f64) -> Result<SignedAmount, ParseAmountError> {
+        SignedAmount::from_float_in(tpc, Denomination::TPC)
     }
 
     /// Parse a decimal string as a value in the given denomination.
@@ -585,13 +580,13 @@ impl SignedAmount {
     /// Note: This only parses the value string.  If you want to parse a value
     /// with denomination, use [FromStr].
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<SignedAmount, ParseAmountError> {
-        let (negative, satoshi) = parse_signed_to_satoshi(s, denom)?;
-        if satoshi > i64::max_value() as u64 {
+        let (negative, tapyrus) = parse_signed_to_tapyrus(s, denom)?;
+        if tapyrus > i64::max_value() as u64 {
             return Err(ParseAmountError::TooBig);
         }
         Ok(match negative {
-            true => SignedAmount(-(satoshi as i64)),
-            false => SignedAmount(satoshi as i64),
+            true => SignedAmount(-(tapyrus as i64)),
+            false => SignedAmount(tapyrus as i64),
         })
     }
 
@@ -617,13 +612,13 @@ impl SignedAmount {
         f64::from_str(&self.to_string_in(denom)).unwrap()
     }
 
-    /// Express this [SignedAmount] as a floating-point value in Bitcoin.
+    /// Express this [SignedAmount] as a floating-point value in TPC.
     ///
-    /// Equivalent to `to_float_in(Denomination::Bitcoin)`.
+    /// Equivalent to `to_float_in(Denomination::TPC)`.
     ///
     /// Please be aware of the risk of using floating-point numbers.
-    pub fn as_btc(self) -> f64 {
-        self.to_float_in(Denomination::Bitcoin)
+    pub fn as_tpc(self) -> f64 {
+        self.to_float_in(Denomination::TPC)
     }
 
     /// Convert this [SignedAmount] in floating-point notation with a given
@@ -644,11 +639,11 @@ impl SignedAmount {
     ///
     /// Does not include the denomination.
     pub fn fmt_value_in(self, f: &mut fmt::Write, denom: Denomination) -> fmt::Result {
-        let sats = self.as_sat().checked_abs().map(|a: i64| a as u64).unwrap_or_else(|| {
+        let taps = self.as_tap().checked_abs().map(|a: i64| a as u64).unwrap_or_else(|| {
             // We could also hard code this into `9223372036854775808`
-            u64::max_value() - self.as_sat() as u64 +1
+            u64::max_value() - self.as_tap() as u64 +1
         });
-        fmt_satoshi_in(sats, self.is_negative(), f, denom)
+        fmt_tapyrus_in(taps, self.is_negative(), f, denom)
     }
 
     /// Get a string number of this [SignedAmount] in the given denomination.
@@ -750,7 +745,7 @@ impl SignedAmount {
         if self.is_negative() {
             Err(ParseAmountError::Negative)
         } else {
-            Ok(Amount::from_sat(self.as_sat() as u64))
+            Ok(Amount::from_tap(self.as_tap() as u64))
         }
     }
 }
@@ -763,16 +758,16 @@ impl default::Default for SignedAmount {
 
 impl fmt::Debug for SignedAmount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "SignedAmount({} satoshi)", self.as_sat())
+        write!(f, "SignedAmount({} tapyrus)", self.as_tap())
     }
 }
 
 // No one should depend on a binding contract for Display for this type.
-// Just using Bitcoin denominated string.
+// Just using TPC denominated string.
 impl fmt::Display for SignedAmount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.fmt_value_in(f, Denomination::Bitcoin)?;
-        write!(f, " {}", Denomination::Bitcoin)
+        self.fmt_value_in(f, Denomination::TPC)?;
+        write!(f, " {}", Denomination::TPC)
     }
 }
 
@@ -869,11 +864,11 @@ pub mod serde {
     //!
     //! ```rust,ignore
     //! use serde::{Serialize, Deserialize};
-    //! use bitcoin::Amount;
+    //! use tapyrus::Amount;
     //!
     //! #[derive(Serialize, Deserialize)]
     //! pub struct HasAmount {
-    //!     #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    //!     #[serde(with = "tapyrus::util::amount::serde::as_tpc")]
     //!     pub amount: Amount,
     //! }
     //! ```
@@ -884,62 +879,62 @@ pub mod serde {
     /// This trait is used only to avoid code duplication and naming collisions
     /// of the different serde serialization crates.
     pub trait SerdeAmount: Copy + Sized {
-        fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
-        fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
-        fn ser_btc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
-        fn des_btc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
+        fn ser_tap<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
+        fn des_tap<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
+        fn ser_tpc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
+        fn des_tpc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
     }
 
     impl SerdeAmount for Amount {
-        fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
-            u64::serialize(&self.as_sat(), s)
+        fn ser_tap<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+            u64::serialize(&self.as_tap(), s)
         }
-        fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
-            Ok(Amount::from_sat(u64::deserialize(d)?))
+        fn des_tap<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
+            Ok(Amount::from_tap(u64::deserialize(d)?))
         }
-        fn ser_btc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
-            f64::serialize(&self.to_float_in(Denomination::Bitcoin), s)
+        fn ser_tpc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+            f64::serialize(&self.to_float_in(Denomination::TPC), s)
         }
-        fn des_btc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
+        fn des_tpc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
             use serde::de::Error;
-            Ok(Amount::from_btc(f64::deserialize(d)?).map_err(D::Error::custom)?)
+            Ok(Amount::from_tpc(f64::deserialize(d)?).map_err(D::Error::custom)?)
         }
     }
 
     impl SerdeAmount for SignedAmount {
-        fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
-            i64::serialize(&self.as_sat(), s)
+        fn ser_tap<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+            i64::serialize(&self.as_tap(), s)
         }
-        fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
-            Ok(SignedAmount::from_sat(i64::deserialize(d)?))
+        fn des_tap<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
+            Ok(SignedAmount::from_tap(i64::deserialize(d)?))
         }
-        fn ser_btc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
-            f64::serialize(&self.to_float_in(Denomination::Bitcoin), s)
+        fn ser_tpc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+            f64::serialize(&self.to_float_in(Denomination::TPC), s)
         }
-        fn des_btc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
+        fn des_tpc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
             use serde::de::Error;
-            Ok(SignedAmount::from_btc(f64::deserialize(d)?).map_err(D::Error::custom)?)
+            Ok(SignedAmount::from_tpc(f64::deserialize(d)?).map_err(D::Error::custom)?)
         }
     }
 
-    pub mod as_sat {
-        //! Serialize and deserialize [Amount] as real numbers denominated in satoshi.
-        //! Use with `#[serde(with = "amount::serde::as_sat")]`.
+    pub mod as_tap {
+        //! Serialize and deserialize [Amount] as real numbers denominated in tapyrus.
+        //! Use with `#[serde(with = "amount::serde::as_tap")]`.
 
         use serde::{Deserializer, Serializer};
         use util::amount::serde::SerdeAmount;
 
         pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
-            a.ser_sat(s)
+            a.ser_tap(s)
         }
 
         pub fn deserialize<'d, A: SerdeAmount, D: Deserializer<'d>>(d: D) -> Result<A, D::Error> {
-            A::des_sat(d)
+            A::des_tap(d)
         }
 
         pub mod opt {
-            //! Serialize and deserialize [Optoin<Amount>] as real numbers denominated in satoshi.
-            //! Use with `#[serde(default, with = "amount::serde::as_sat::opt")]`.
+            //! Serialize and deserialize [Optoin<Amount>] as real numbers denominated in tapyrus.
+            //! Use with `#[serde(default, with = "amount::serde::as_tap::opt")]`.
 
             use serde::{Deserializer, Serializer};
             use util::amount::serde::SerdeAmount;
@@ -949,7 +944,7 @@ pub mod serde {
                 s: S,
             ) -> Result<S::Ok, S::Error> {
                 match *a {
-                    Some(a) => a.ser_sat(s),
+                    Some(a) => a.ser_tap(s),
                     None => s.serialize_none(),
                 }
             }
@@ -957,29 +952,29 @@ pub mod serde {
             pub fn deserialize<'d, A: SerdeAmount, D: Deserializer<'d>>(
                 d: D,
             ) -> Result<Option<A>, D::Error> {
-                Ok(Some(A::des_sat(d)?))
+                Ok(Some(A::des_tap(d)?))
             }
         }
     }
 
-    pub mod as_btc {
-        //! Serialize and deserialize [Amount] as JSON numbers denominated in BTC.
-        //! Use with `#[serde(with = "amount::serde::as_btc")]`.
+    pub mod as_tpc {
+        //! Serialize and deserialize [Amount] as JSON numbers denominated in TPC.
+        //! Use with `#[serde(with = "amount::serde::as_tpc")]`.
 
         use serde::{Deserializer, Serializer};
         use util::amount::serde::SerdeAmount;
 
         pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
-            a.ser_btc(s)
+            a.ser_tpc(s)
         }
 
         pub fn deserialize<'d, A: SerdeAmount, D: Deserializer<'d>>(d: D) -> Result<A, D::Error> {
-            A::des_btc(d)
+            A::des_tpc(d)
         }
 
         pub mod opt {
-            //! Serialize and deserialize [Option<Amount>] as JSON numbers denominated in BTC.
-            //! Use with `#[serde(default, with = "amount::serde::as_btc::opt")]`.
+            //! Serialize and deserialize [Option<Amount>] as JSON numbers denominated in TPC.
+            //! Use with `#[serde(default, with = "amount::serde::as_tpc::opt")]`.
 
             use serde::{Deserializer, Serializer};
             use util::amount::serde::SerdeAmount;
@@ -989,7 +984,7 @@ pub mod serde {
                 s: S,
             ) -> Result<S::Ok, S::Error> {
                 match *a {
-                    Some(a) => a.ser_btc(s),
+                    Some(a) => a.ser_tpc(s),
                     None => s.serialize_none(),
                 }
             }
@@ -997,7 +992,7 @@ pub mod serde {
             pub fn deserialize<'d, A: SerdeAmount, D: Deserializer<'d>>(
                 d: D,
             ) -> Result<Option<A>, D::Error> {
-                Ok(Some(A::des_btc(d)?))
+                Ok(Some(A::des_tpc(d)?))
             }
         }
     }
@@ -1014,62 +1009,62 @@ mod tests {
 
     #[test]
     fn add_sub_mul_div() {
-        let sat = Amount::from_sat;
-        let ssat = SignedAmount::from_sat;
+        let tap = Amount::from_tap;
+        let stap = SignedAmount::from_tap;
 
-        assert_eq!(sat(15) + sat(15), sat(30));
-        assert_eq!(sat(15) - sat(15), sat(0));
-        assert_eq!(sat(14) * 3, sat(42));
-        assert_eq!(sat(14) / 2, sat(7));
-        assert_eq!(sat(14) % 3, sat(2));
-        assert_eq!(ssat(15) - ssat(20), ssat(-5));
-        assert_eq!(ssat(-14) * 3, ssat(-42));
-        assert_eq!(ssat(-14) / 2, ssat(-7));
-        assert_eq!(ssat(-14) % 3, ssat(-2));
+        assert_eq!(tap(15) + tap(15), tap(30));
+        assert_eq!(tap(15) - tap(15), tap(0));
+        assert_eq!(tap(14) * 3, tap(42));
+        assert_eq!(tap(14) / 2, tap(7));
+        assert_eq!(tap(14) % 3, tap(2));
+        assert_eq!(stap(15) - stap(20), stap(-5));
+        assert_eq!(stap(-14) * 3, stap(-42));
+        assert_eq!(stap(-14) / 2, stap(-7));
+        assert_eq!(stap(-14) % 3, stap(-2));
 
-        let mut b = ssat(-5);
-        b += ssat(13);
-        assert_eq!(b, ssat(8));
-        b -= ssat(3);
-        assert_eq!(b, ssat(5));
+        let mut b = stap(-5);
+        b += stap(13);
+        assert_eq!(b, stap(8));
+        b -= stap(3);
+        assert_eq!(b, stap(5));
         b *= 6;
-        assert_eq!(b, ssat(30));
+        assert_eq!(b, stap(30));
         b /= 3;
-        assert_eq!(b, ssat(10));
+        assert_eq!(b, stap(10));
         b %= 3;
-        assert_eq!(b, ssat(1));
+        assert_eq!(b, stap(1));
 
         // panic on overflow
-        let result = panic::catch_unwind(|| Amount::max_value() + Amount::from_sat(1));
+        let result = panic::catch_unwind(|| Amount::max_value() + Amount::from_tap(1));
         assert!(result.is_err());
-        let result = panic::catch_unwind(|| Amount::from_sat(8446744073709551615) * 3);
+        let result = panic::catch_unwind(|| Amount::from_tap(8446744073709551615) * 3);
         assert!(result.is_err());
     }
 
     #[test]
     fn checked_arithmetic() {
-        let sat = Amount::from_sat;
-        let ssat = SignedAmount::from_sat;
+        let tap = Amount::from_tap;
+        let stap = SignedAmount::from_tap;
 
-        assert_eq!(sat(42).checked_add(sat(1)), Some(sat(43)));
-        assert_eq!(SignedAmount::max_value().checked_add(ssat(1)), None);
-        assert_eq!(SignedAmount::min_value().checked_sub(ssat(1)), None);
-        assert_eq!(Amount::max_value().checked_add(sat(1)), None);
-        assert_eq!(Amount::min_value().checked_sub(sat(1)), None);
+        assert_eq!(tap(42).checked_add(tap(1)), Some(tap(43)));
+        assert_eq!(SignedAmount::max_value().checked_add(stap(1)), None);
+        assert_eq!(SignedAmount::min_value().checked_sub(stap(1)), None);
+        assert_eq!(Amount::max_value().checked_add(tap(1)), None);
+        assert_eq!(Amount::min_value().checked_sub(tap(1)), None);
 
-        assert_eq!(sat(5).checked_sub(sat(3)), Some(sat(2)));
-        assert_eq!(sat(5).checked_sub(sat(6)), None);
-        assert_eq!(ssat(5).checked_sub(ssat(6)), Some(ssat(-1)));
-        assert_eq!(sat(5).checked_rem(2), Some(sat(1)));
+        assert_eq!(tap(5).checked_sub(tap(3)), Some(tap(2)));
+        assert_eq!(tap(5).checked_sub(tap(6)), None);
+        assert_eq!(stap(5).checked_sub(stap(6)), Some(stap(-1)));
+        assert_eq!(tap(5).checked_rem(2), Some(tap(1)));
 
-        assert_eq!(sat(5).checked_div(2), Some(sat(2))); // integer division
-        assert_eq!(ssat(-6).checked_div(2), Some(ssat(-3)));
+        assert_eq!(tap(5).checked_div(2), Some(tap(2))); // integer division
+        assert_eq!(stap(-6).checked_div(2), Some(stap(-3)));
 
-        assert_eq!(ssat(-5).positive_sub(ssat(3)), None);
-        assert_eq!(ssat(5).positive_sub(ssat(-3)), None);
-        assert_eq!(ssat(3).positive_sub(ssat(5)), None);
-        assert_eq!(ssat(3).positive_sub(ssat(3)), Some(ssat(0)));
-        assert_eq!(ssat(5).positive_sub(ssat(3)), Some(ssat(2)));
+        assert_eq!(stap(-5).positive_sub(stap(3)), None);
+        assert_eq!(stap(5).positive_sub(stap(-3)), None);
+        assert_eq!(stap(3).positive_sub(stap(5)), None);
+        assert_eq!(stap(3).positive_sub(stap(3)), Some(stap(0)));
+        assert_eq!(stap(5).positive_sub(stap(3)), Some(stap(2)));
     }
 
     #[test]
@@ -1077,145 +1072,144 @@ mod tests {
         use super::Denomination as D;
         let f = Amount::from_float_in;
         let sf = SignedAmount::from_float_in;
-        let sat = Amount::from_sat;
-        let ssat = SignedAmount::from_sat;
+        let tap = Amount::from_tap;
+        let stap = SignedAmount::from_tap;
 
-        assert_eq!(f(11.22, D::Bitcoin), Ok(sat(1122000000)));
-        assert_eq!(sf(-11.22, D::MilliBitcoin), Ok(ssat(-1122000)));
-        assert_eq!(f(11.22, D::Bit), Ok(sat(1122)));
-        assert_eq!(sf(-1000.0, D::MilliSatoshi), Ok(ssat(-1)));
-        assert_eq!(f(0.0001234, D::Bitcoin), Ok(sat(12340)));
-        assert_eq!(sf(-0.00012345, D::Bitcoin), Ok(ssat(-12345)));
+        assert_eq!(f(11.22, D::TPC), Ok(tap(1122000000)));
+        assert_eq!(sf(-11.22, D::MilliTPC), Ok(stap(-1122000)));
+        assert_eq!(sf(-1000.0, D::MilliTapyrus), Ok(stap(-1)));
+        assert_eq!(f(0.0001234, D::TPC), Ok(tap(12340)));
+        assert_eq!(sf(-0.00012345, D::TPC), Ok(stap(-12345)));
 
-        assert_eq!(f(-100.0, D::MilliSatoshi), Err(ParseAmountError::Negative));
-        assert_eq!(f(11.22, D::Satoshi), Err(ParseAmountError::TooPrecise));
+        assert_eq!(f(-100.0, D::MilliTapyrus), Err(ParseAmountError::Negative));
+        assert_eq!(f(11.22, D::Tapyrus), Err(ParseAmountError::TooPrecise));
         assert_eq!(
-            sf(-100.0, D::MilliSatoshi),
+            sf(-100.0, D::MilliTapyrus),
             Err(ParseAmountError::TooPrecise)
         );
         assert_eq!(
-            sf(-100.0, D::MilliSatoshi),
+            sf(-100.0, D::MilliTapyrus),
             Err(ParseAmountError::TooPrecise)
         );
         assert_eq!(
-            f(42.123456781, D::Bitcoin),
+            f(42.123456781, D::TPC),
             Err(ParseAmountError::TooPrecise)
         );
         assert_eq!(
-            sf(-184467440738.0, D::Bitcoin),
+            sf(-184467440738.0, D::TPC),
             Err(ParseAmountError::TooBig)
         );
         assert_eq!(
-            f(18446744073709551617.0, D::Satoshi),
+            f(18446744073709551617.0, D::Tapyrus),
             Err(ParseAmountError::TooBig)
         );
         assert_eq!(
             f(
-                SignedAmount::max_value().to_float_in(D::Satoshi) + 1.0,
-                D::Satoshi
+                SignedAmount::max_value().to_float_in(D::Tapyrus) + 1.0,
+                D::Tapyrus
             ),
             Err(ParseAmountError::TooBig)
         );
         assert_eq!(
             f(
-                Amount::max_value().to_float_in(D::Satoshi) + 1.0,
-                D::Satoshi
+                Amount::max_value().to_float_in(D::Tapyrus) + 1.0,
+                D::Tapyrus
             ),
             Err(ParseAmountError::TooBig)
         );
 
-        let btc = move |f| SignedAmount::from_btc(f).unwrap();
-        assert_eq!(btc(2.5).to_float_in(D::Bitcoin), 2.5);
-        assert_eq!(btc(-2.5).to_float_in(D::MilliBitcoin), -2500.0);
-        assert_eq!(btc(2.5).to_float_in(D::Satoshi), 250000000.0);
-        assert_eq!(btc(-2.5).to_float_in(D::MilliSatoshi), -250000000000.0);
+        let tpc = move |f| SignedAmount::from_tpc(f).unwrap();
+        assert_eq!(tpc(2.5).to_float_in(D::TPC), 2.5);
+        assert_eq!(tpc(-2.5).to_float_in(D::MilliTPC), -2500.0);
+        assert_eq!(tpc(2.5).to_float_in(D::Tapyrus), 250000000.0);
+        assert_eq!(tpc(-2.5).to_float_in(D::MilliTapyrus), -250000000000.0);
 
-        let btc = move |f| Amount::from_btc(f).unwrap();
-        assert_eq!(&btc(0.0012).to_float_in(D::Bitcoin).to_string(), "0.0012")
+        let tpc = move |f| Amount::from_tpc(f).unwrap();
+        assert_eq!(&tpc(0.0012).to_float_in(D::TPC).to_string(), "0.0012")
     }
 
     #[test]
     fn parsing() {
         use super::ParseAmountError as E;
-        let btc = Denomination::Bitcoin;
-        let sat = Denomination::Satoshi;
+        let tpc = Denomination::TPC;
+        let tap = Denomination::Tapyrus;
         let p = Amount::from_str_in;
         let sp = SignedAmount::from_str_in;
 
-        assert_eq!(p("x", btc), Err(E::InvalidCharacter('x')));
-        assert_eq!(p("-", btc), Err(E::InvalidFormat));
-        assert_eq!(sp("-", btc), Err(E::InvalidFormat));
-        assert_eq!(p("-1.0x", btc), Err(E::InvalidCharacter('x')));
-        assert_eq!(p("0.0 ", btc), Err(ParseAmountError::InvalidCharacter(' ')));
-        assert_eq!(p("0.000.000", btc), Err(E::InvalidFormat));
+        assert_eq!(p("x", tpc), Err(E::InvalidCharacter('x')));
+        assert_eq!(p("-", tpc), Err(E::InvalidFormat));
+        assert_eq!(sp("-", tpc), Err(E::InvalidFormat));
+        assert_eq!(p("-1.0x", tpc), Err(E::InvalidCharacter('x')));
+        assert_eq!(p("0.0 ", tpc), Err(ParseAmountError::InvalidCharacter(' ')));
+        assert_eq!(p("0.000.000", tpc), Err(E::InvalidFormat));
         let more_than_max = format!("1{}", Amount::max_value());
-        assert_eq!(p(&more_than_max, btc), Err(E::TooBig));
-        assert_eq!(p("0.000000042", btc), Err(E::TooPrecise));
+        assert_eq!(p(&more_than_max, tpc), Err(E::TooBig));
+        assert_eq!(p("0.000000042", tpc), Err(E::TooPrecise));
 
-        assert_eq!(p("1", btc), Ok(Amount::from_sat(1_000_000_00)));
-        assert_eq!(sp("-.5", btc), Ok(SignedAmount::from_sat(-500_000_00)));
-        assert_eq!(p("1.1", btc), Ok(Amount::from_sat(1_100_000_00)));
-        assert_eq!(p("100", sat), Ok(Amount::from_sat(100)));
-        assert_eq!(p("55", sat), Ok(Amount::from_sat(55)));
-        assert_eq!(p("5500000000000000000", sat), Ok(Amount::from_sat(5_500_000_000_000_000_000)));
+        assert_eq!(p("1", tpc), Ok(Amount::from_tap(1_000_000_00)));
+        assert_eq!(sp("-.5", tpc), Ok(SignedAmount::from_tap(-500_000_00)));
+        assert_eq!(p("1.1", tpc), Ok(Amount::from_tap(1_100_000_00)));
+        assert_eq!(p("100", tap), Ok(Amount::from_tap(100)));
+        assert_eq!(p("55", tap), Ok(Amount::from_tap(55)));
+        assert_eq!(p("5500000000000000000", tap), Ok(Amount::from_tap(5_500_000_000_000_000_000)));
         // Should this even pass?
-        assert_eq!(p("5500000000000000000.", sat), Ok(Amount::from_sat(5_500_000_000_000_000_000)));
+        assert_eq!(p("5500000000000000000.", tap), Ok(Amount::from_tap(5_500_000_000_000_000_000)));
         assert_eq!(
-            p("12345678901.12345678", btc),
-            Ok(Amount::from_sat(12_345_678_901__123_456_78))
+            p("12345678901.12345678", tpc),
+            Ok(Amount::from_tap(12_345_678_901__123_456_78))
         );
 
-        // make sure satoshi > i64::max_value() is checked.
-        let amount = Amount::from_sat(i64::max_value() as u64);
-        assert_eq!(Amount::from_str_in(&amount.to_string_in(sat), sat), Ok(amount));
-        assert_eq!(Amount::from_str_in(&(amount+Amount(1)).to_string_in(sat), sat), Err(E::TooBig));
+        // make sure tapyrus > i64::max_value() is checked.
+        let amount = Amount::from_tap(i64::max_value() as u64);
+        assert_eq!(Amount::from_str_in(&amount.to_string_in(tap), tap), Ok(amount));
+        assert_eq!(Amount::from_str_in(&(amount+Amount(1)).to_string_in(tap), tap), Err(E::TooBig));
 
-        assert_eq!(p("12.000", Denomination::MilliSatoshi), Err(E::TooPrecise));
+        assert_eq!(p("12.000", Denomination::MilliTapyrus), Err(E::TooPrecise));
         // exactly 50 chars.
-        assert_eq!(p("100000000000000.0000000000000000000000000000000000", Denomination::Bitcoin), Err(E::TooBig));
+        assert_eq!(p("100000000000000.0000000000000000000000000000000000", Denomination::TPC), Err(E::TooBig));
         // more than 50 chars.
-        assert_eq!(p("100000000000000.00000000000000000000000000000000000", Denomination::Bitcoin), Err(E::InputTooLarge));
+        assert_eq!(p("100000000000000.00000000000000000000000000000000000", Denomination::TPC), Err(E::InputTooLarge));
     }
 
     #[test]
     fn to_string() {
         use super::Denomination as D;
 
-        assert_eq!(Amount::ONE_BTC.to_string_in(D::Bitcoin), "1.00000000");
-        assert_eq!(Amount::ONE_BTC.to_string_in(D::Satoshi), "100000000");
-        assert_eq!(Amount::ONE_SAT.to_string_in(D::Bitcoin), "0.00000001");
+        assert_eq!(Amount::ONE_TPC.to_string_in(D::TPC), "1.00000000");
+        assert_eq!(Amount::ONE_TPC.to_string_in(D::Tapyrus), "100000000");
+        assert_eq!(Amount::ONE_TAP.to_string_in(D::TPC), "0.00000001");
         assert_eq!(
-            SignedAmount::from_sat(-42).to_string_in(D::Bitcoin),
+            SignedAmount::from_tap(-42).to_string_in(D::TPC),
             "-0.00000042"
         );
 
         assert_eq!(
-            Amount::ONE_BTC.to_string_with_denomination(D::Bitcoin),
-            "1.00000000 BTC"
+            Amount::ONE_TPC.to_string_with_denomination(D::TPC),
+            "1.00000000 TPC"
         );
         assert_eq!(
-            Amount::ONE_SAT.to_string_with_denomination(D::MilliSatoshi),
-            "1000 msat"
+            Amount::ONE_TAP.to_string_with_denomination(D::MilliTapyrus),
+            "1000 mtap"
         );
         assert_eq!(
-            SignedAmount::ONE_BTC.to_string_with_denomination(D::Satoshi),
-            "100000000 satoshi"
+            SignedAmount::ONE_TPC.to_string_with_denomination(D::Tapyrus),
+            "100000000 tapyrus"
         );
         assert_eq!(
-            Amount::ONE_SAT.to_string_with_denomination(D::Bitcoin),
-            "0.00000001 BTC"
+            Amount::ONE_TAP.to_string_with_denomination(D::TPC),
+            "0.00000001 TPC"
         );
         assert_eq!(
-            SignedAmount::from_sat(-42).to_string_with_denomination(D::Bitcoin),
-            "-0.00000042 BTC"
+            SignedAmount::from_tap(-42).to_string_with_denomination(D::TPC),
+            "-0.00000042 TPC"
         );
     }
 
     #[test]
     fn test_unsigned_signed_conversion() {
         use super::ParseAmountError as E;
-        let sa = SignedAmount::from_sat;
-        let ua = Amount::from_sat;
+        let sa = SignedAmount::from_tap;
+        let ua = Amount::from_tap;
 
         assert_eq!(Amount::max_value().to_signed(),  Err(E::TooBig));
         assert_eq!(ua(i64::max_value() as u64).to_signed(),  Ok(sa(i64::max_value())));
@@ -1238,65 +1232,57 @@ mod tests {
         let p = Amount::from_str;
         let sp = SignedAmount::from_str;
 
-        assert_eq!(p("x BTC"), Err(E::InvalidCharacter('x')));
-        assert_eq!(p("5 BTC BTC"), Err(E::InvalidFormat));
-        assert_eq!(p("5 5 BTC"), Err(E::InvalidFormat));
+        assert_eq!(p("x TPC"), Err(E::InvalidCharacter('x')));
+        assert_eq!(p("5 TPC TPC"), Err(E::InvalidFormat));
+        assert_eq!(p("5 5 TPC"), Err(E::InvalidFormat));
 
         assert_eq!(p("5 BCH"), Err(E::UnknownDenomination("BCH".to_owned())));
 
-        assert_eq!(p("-1 BTC"), Err(E::Negative));
-        assert_eq!(p("-0.0 BTC"), Err(E::Negative));
-        assert_eq!(p("0.123456789 BTC"), Err(E::TooPrecise));
-        assert_eq!(sp("-0.1 satoshi"), Err(E::TooPrecise));
-        assert_eq!(p("0.123456 mBTC"), Err(E::TooPrecise));
-        assert_eq!(sp("-1.001 bits"), Err(E::TooPrecise));
-        assert_eq!(sp("-200000000000 BTC"), Err(E::TooBig));
-        assert_eq!(p("18446744073709551616 sat"), Err(E::TooBig));
+        assert_eq!(p("-1 TPC"), Err(E::Negative));
+        assert_eq!(p("-0.0 TPC"), Err(E::Negative));
+        assert_eq!(p("0.123456789 TPC"), Err(E::TooPrecise));
+        assert_eq!(sp("-0.1 tapyrus"), Err(E::TooPrecise));
+        assert_eq!(p("0.123456 mTPC"), Err(E::TooPrecise));
+        assert_eq!(sp("-200000000000 TPC"), Err(E::TooBig));
+        assert_eq!(p("18446744073709551616 tapyrus"), Err(E::TooBig));
 
-        assert_eq!(sp("0 msat"), Err(E::TooPrecise));
-        assert_eq!(sp("-0 msat"), Err(E::TooPrecise));
-        assert_eq!(sp("000 msat"), Err(E::TooPrecise));
-        assert_eq!(sp("-000 msat"), Err(E::TooPrecise));
-        assert_eq!(p("0 msat"), Err(E::TooPrecise));
-        assert_eq!(p("-0 msat"), Err(E::TooPrecise));
-        assert_eq!(p("000 msat"), Err(E::TooPrecise));
-        assert_eq!(p("-000 msat"), Err(E::TooPrecise));
+        assert_eq!(sp("0 mtap"), Err(E::TooPrecise));
+        assert_eq!(sp("-0 mtap"), Err(E::TooPrecise));
+        assert_eq!(sp("000 mtap"), Err(E::TooPrecise));
+        assert_eq!(sp("-000 mtap"), Err(E::TooPrecise));
+        assert_eq!(p("0 mtap"), Err(E::TooPrecise));
+        assert_eq!(p("-0 mtap"), Err(E::TooPrecise));
+        assert_eq!(p("000 mtap"), Err(E::TooPrecise));
+        assert_eq!(p("-000 mtap"), Err(E::TooPrecise));
 
-        assert_eq!(p(".5 bits"), Ok(Amount::from_sat(50)));
-        assert_eq!(sp("-.5 bits"), Ok(SignedAmount::from_sat(-50)));
-        assert_eq!(p("0.00253583 BTC"), Ok(Amount::from_sat(253583)));
-        assert_eq!(sp("-5 satoshi"), Ok(SignedAmount::from_sat(-5)));
-        assert_eq!(p("0.10000000 BTC"), Ok(Amount::from_sat(100_000_00)));
-        assert_eq!(sp("-100 bits"), Ok(SignedAmount::from_sat(-10_000)));
+        assert_eq!(p("0.00253583 TPC"), Ok(Amount::from_tap(253583)));
+        assert_eq!(sp("-5 tapyrus"), Ok(SignedAmount::from_tap(-5)));
+        assert_eq!(p("0.10000000 TPC"), Ok(Amount::from_tap(100_000_00)));
     }
 
     #[test]
     fn to_from_string_in() {
         use super::Denomination as D;
         let ua_str = Amount::from_str_in;
-        let ua_sat = Amount::from_sat;
+        let ua_tap = Amount::from_tap;
         let sa_str = SignedAmount::from_str_in;
-        let sa_sat = SignedAmount::from_sat;
+        let sa_tap = SignedAmount::from_tap;
 
-        assert_eq!("0.50", Amount::from_sat(50).to_string_in(D::Bit));
-        assert_eq!("-0.50", SignedAmount::from_sat(-50).to_string_in(D::Bit));
-        assert_eq!("0.00253583", Amount::from_sat(253583).to_string_in(D::Bitcoin));
-        assert_eq!("-5", SignedAmount::from_sat(-5).to_string_in(D::Satoshi));
-        assert_eq!("0.10000000", Amount::from_sat(100_000_00).to_string_in(D::Bitcoin));
-        assert_eq!("-100.00", SignedAmount::from_sat(-10_000).to_string_in(D::Bit));
+        assert_eq!("0.00253583", Amount::from_tap(253583).to_string_in(D::TPC));
+        assert_eq!("-5", SignedAmount::from_tap(-5).to_string_in(D::Tapyrus));
+        assert_eq!("0.10000000", Amount::from_tap(100_000_00).to_string_in(D::TPC));
 
-        assert_eq!(ua_str(&ua_sat(0).to_string_in(D::Satoshi), D::Satoshi), Ok(ua_sat(0)));
-        assert_eq!(ua_str(&ua_sat(500).to_string_in(D::Bitcoin), D::Bitcoin), Ok(ua_sat(500)));
-        assert_eq!(ua_str(&ua_sat(21_000_000).to_string_in(D::Bit), D::Bit), Ok(ua_sat(21_000_000)));
-        assert_eq!(ua_str(&ua_sat(1).to_string_in(D::MicroBitcoin), D::MicroBitcoin), Ok(ua_sat(1)));
-        assert_eq!(ua_str(&ua_sat(1_000_000_000_000).to_string_in(D::MilliBitcoin), D::MilliBitcoin), Ok(ua_sat(1_000_000_000_000)));
-        assert_eq!(ua_str(&ua_sat(u64::max_value()).to_string_in(D::MilliBitcoin), D::MilliBitcoin),  Err(ParseAmountError::TooBig));
+        assert_eq!(ua_str(&ua_tap(0).to_string_in(D::Tapyrus), D::Tapyrus), Ok(ua_tap(0)));
+        assert_eq!(ua_str(&ua_tap(500).to_string_in(D::TPC), D::TPC), Ok(ua_tap(500)));
+        assert_eq!(ua_str(&ua_tap(1).to_string_in(D::MicroTPC), D::MicroTPC), Ok(ua_tap(1)));
+        assert_eq!(ua_str(&ua_tap(1_000_000_000_000).to_string_in(D::MilliTPC), D::MilliTPC), Ok(ua_tap(1_000_000_000_000)));
+        assert_eq!(ua_str(&ua_tap(u64::max_value()).to_string_in(D::MilliTPC), D::MilliTPC),  Err(ParseAmountError::TooBig));
 
-        assert_eq!(sa_str(&sa_sat(-1).to_string_in(D::MicroBitcoin), D::MicroBitcoin), Ok(sa_sat(-1)));
+        assert_eq!(sa_str(&sa_tap(-1).to_string_in(D::MicroTPC), D::MicroTPC), Ok(sa_tap(-1)));
 
-        assert_eq!(sa_str(&sa_sat(i64::max_value()).to_string_in(D::Satoshi), D::MicroBitcoin), Err(ParseAmountError::TooBig));
+        assert_eq!(sa_str(&sa_tap(i64::max_value()).to_string_in(D::Tapyrus), D::MicroTPC), Err(ParseAmountError::TooBig));
         // Test an overflow bug in `abs()`
-        assert_eq!(sa_str(&sa_sat(i64::min_value()).to_string_in(D::Satoshi), D::MicroBitcoin), Err(ParseAmountError::TooBig));
+        assert_eq!(sa_str(&sa_tap(i64::min_value()).to_string_in(D::Tapyrus), D::MicroTPC), Err(ParseAmountError::TooBig));
 
     }
 
@@ -1304,35 +1290,34 @@ mod tests {
     fn to_string_with_denomination_from_str_roundtrip() {
         use super::Denomination as D;
 
-        let amt = Amount::from_sat(42);
+        let amt = Amount::from_tap(42);
         let denom = Amount::to_string_with_denomination;
-        assert_eq!(Amount::from_str(&denom(amt, D::Bitcoin)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(amt, D::MilliBitcoin)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(amt, D::MicroBitcoin)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(amt, D::Bit)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(amt, D::Satoshi)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(amt, D::MilliSatoshi)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::TPC)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::MilliTPC)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::MicroTPC)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::Tapyrus)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::MilliTapyrus)), Ok(amt));
 
-        assert_eq!(Amount::from_str("42 satoshi BTC"), Err(ParseAmountError::InvalidFormat));
-        assert_eq!(SignedAmount::from_str("-42 satoshi BTC"), Err(ParseAmountError::InvalidFormat));
+        assert_eq!(Amount::from_str("42 tapyrus TPC"), Err(ParseAmountError::InvalidFormat));
+        assert_eq!(SignedAmount::from_str("-42 tapyrus TPC"), Err(ParseAmountError::InvalidFormat));
     }
 
     #[cfg(feature = "serde")]
     #[test]
-    fn serde_as_sat() {
+    fn serde_as_tap() {
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         struct T {
-            #[serde(with = "::util::amount::serde::as_sat")]
+            #[serde(with = "::util::amount::serde::as_tap")]
             pub amt: Amount,
-            #[serde(with = "::util::amount::serde::as_sat")]
+            #[serde(with = "::util::amount::serde::as_tap")]
             pub samt: SignedAmount,
         }
 
         serde_test::assert_tokens(
             &T {
-                amt: Amount::from_sat(123456789),
-                samt: SignedAmount::from_sat(-123456789),
+                amt: Amount::from_tap(123456789),
+                samt: SignedAmount::from_tap(-123456789),
             },
             &[
                 serde_test::Token::Struct { name: "T", len: 2 },
@@ -1347,20 +1332,20 @@ mod tests {
 
     #[cfg(feature = "serde")]
     #[test]
-    fn serde_as_btc() {
+    fn serde_as_tpc() {
         use serde_json;
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         struct T {
-            #[serde(with = "::util::amount::serde::as_btc")]
+            #[serde(with = "::util::amount::serde::as_tpc")]
             pub amt: Amount,
-            #[serde(with = "::util::amount::serde::as_btc")]
+            #[serde(with = "::util::amount::serde::as_tpc")]
             pub samt: SignedAmount,
         }
 
         let orig = T {
-            amt: Amount::from_sat(21_000_000__000_000_01),
-            samt: SignedAmount::from_sat(-21_000_000__000_000_01),
+            amt: Amount::from_tap(21_000_000__000_000_01),
+            samt: SignedAmount::from_tap(-21_000_000__000_000_01),
         };
 
         let json = "{\"amt\": 21000000.00000001, \
@@ -1387,20 +1372,20 @@ mod tests {
 
     #[cfg(feature = "serde")]
     #[test]
-    fn serde_as_btc_opt() {
+    fn serde_as_tpc_opt() {
         use serde_json;
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         struct T {
-            #[serde(default, with = "::util::amount::serde::as_btc::opt")]
+            #[serde(default, with = "::util::amount::serde::as_tpc::opt")]
             pub amt: Option<Amount>,
-            #[serde(default, with = "::util::amount::serde::as_btc::opt")]
+            #[serde(default, with = "::util::amount::serde::as_tpc::opt")]
             pub samt: Option<SignedAmount>,
         }
 
         let with = T {
-            amt: Some(Amount::from_sat(2__500_000_00)),
-            samt: Some(SignedAmount::from_sat(-2__500_000_00)),
+            amt: Some(Amount::from_tap(2__500_000_00)),
+            samt: Some(SignedAmount::from_tap(-2__500_000_00)),
         };
         let without = T {
             amt: None,
