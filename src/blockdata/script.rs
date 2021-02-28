@@ -138,6 +138,32 @@ impl convert::From<bitcoinconsensus::Error> for Error {
         }
     }
 }
+
+#[derive(PartialEq, Eq, Debug, Clone)]
+/// Error associated with multisig handling
+pub enum MultisigError {
+    /// script is not multisig
+    IsNotMultisig,
+    /// invalid script
+    InvalidScript,
+    /// script has an invalid required count
+    InvalidRequiredSigCount,
+    /// script has invalid public keys
+    InvalidPublicKey,
+}
+
+impl fmt::Display for MultisigError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let str = match *self {
+            MultisigError::IsNotMultisig => "script is not multisig",
+            MultisigError::InvalidScript => "invalid script",
+            MultisigError::InvalidRequiredSigCount => "script has an invalid required count",
+            MultisigError::InvalidPublicKey => "script has invalid public keys",
+        };
+        f.write_str(str)
+    }
+}
+
 /// Helper to encode an integer in script format
 fn build_scriptint(n: i64) -> Vec<u8> {
     if n == 0 { return vec![] }
@@ -363,6 +389,58 @@ impl Script {
         self.is_cp2pkh() || self.is_cp2sh()
     }
 
+    /// Check if a script pubkey is multisig script
+    pub fn is_multisig(&self) -> bool {
+        if self.0.len() < 4 || *self.0.last().unwrap() != opcodes::all::OP_CHECKMULTISIG.into_u8() {
+            return false;
+        }
+        let required_count = match opcodes::All::from(self.0[0]).classify() {
+            opcodes::Class::PushNum(i) => i,
+            _ => { return false }
+        };
+        let pubkey_count = match opcodes::All::from(self.0[self.0.len() - 2]).classify() {
+            opcodes::Class::PushNum(i) => i,
+            _ => { return false }
+        };
+        required_count <= pubkey_count
+    }
+
+    /// Return public keys for multisig script, and the number of signatures required
+    pub fn get_multisig_pubkeys(&self) -> Result<(i32, Vec<PublicKey>), MultisigError> {
+        if !self.is_multisig() {
+            return Err(MultisigError::IsNotMultisig);
+        }
+
+        let mut required = None;
+        let mut pubkeys = vec![];
+        for ins in self.instructions_minimal() {
+            if ins.is_err() {
+                return Err(MultisigError::InvalidScript);
+            }
+            match ins.ok().unwrap() {
+                Instruction::Op(op) => {
+                    if required.is_none() {
+                        required = match op.classify() {
+                            opcodes::Class::PushNum(i) => Some(i),
+                            _ => { return Err(MultisigError::InvalidRequiredSigCount) }
+                        };
+                    }
+                }
+                Instruction::PushBytes(bytes) => {
+                    match PublicKey::from_slice(&bytes) {
+                        Ok(key) => { pubkeys.push(key) },
+                        _ => { return Err(MultisigError::InvalidPublicKey) }
+                    }
+                }
+            }
+        }
+        if let Some(required) = required {
+            Ok((required, pubkeys))
+        } else {
+            Err(MultisigError::InvalidScript)
+        }
+    }
+
     /// Create new script with color identifier
     pub fn add_color(&self, color_id: ColorIdentifier) -> Result<Script, ColoredCoinError> {
         if !self.is_p2pkh() && !self.is_p2sh() {
@@ -492,6 +570,27 @@ impl Script {
             Some((color_id, Script::from(Vec::from(&self[35..]))))
         } else {
             None
+        }
+    }
+
+    /// Return type string.
+    pub fn type_string(&self) -> String {
+        if self.is_p2pk() {
+            "pubkey".to_string()
+        } else if self.is_p2pkh() {
+            "pubkeyhash".to_string()
+        } else if self.is_multisig() {
+            "multisig".to_string()
+        } else if self.is_p2sh() {
+            "scripthash".to_string()
+        } else if self.is_op_return() {
+            "nulldata".to_string()
+        } else if self.is_cp2pkh() {
+            "coloredpubkeyhash".to_string()
+        } else if self.is_cp2sh() {
+            "coloredscripthash".to_string()
+        } else {
+            "nonstandard".to_string()
         }
     }
 }
@@ -1277,6 +1376,67 @@ mod test {
         assert!(!hex_script!("a9147620a79e8657d066cff10e21228bf983cf546ac687").is_cp2sh());
         // invalid type
         assert!(!hex_script!("21c4ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bca9147620a79e8657d066cff10e21228bf983cf546ac687").is_cp2sh());
+    }
+
+    #[test]
+    fn script_multisig() {
+        let multisig = hex_script!("522102a5613bd857b7048924264d1e70e08fb2a7e6527d32b7ab1bb993ac59964ff39721021ac43c7ff740014c3b33737ede99c967e4764553d1b2b83db77c83b8715fa72d2102df2089105c77f266fa11a9d33f05c735234075f2e8780824c6b709415f9fb48553ae");
+        let invalid = hex_script!("542102a5613bd857b7048924264d1e70e08fb2a7e6527d32b7ab1bb993ac59964ff39721021ac43c7ff740014c3b33737ede99c967e4764553d1b2b83db77c83b8715fa72d2102df2089105c77f266fa11a9d33f05c735234075f2e8780824c6b709415f9fb48553ae");
+        let invalid_sig_count = hex_script!("752102a5613bd857b7048924264d1e70e08fb2a7e6527d32b7ab1bb993ac59964ff39721021ac43c7ff740014c3b33737ede99c967e4764553d1b2b83db77c83b8715fa72d2102df2089105c77f266fa11a9d33f05c735234075f2e8780824c6b709415f9fb48553ae");
+        let invalid_pubkey_count = hex_script!("522102a5613bd857b7048924264d1e70e08fb2a7e6527d32b7ab1bb993ac59964ff39721021ac43c7ff740014c3b33737ede99c967e4764553d1b2b83db77c83b8715fa72d2102df2089105c77f266fa11a9d33f05c735234075f2e8780824c6b709415f9fb48575ae");
+        let p2pkh = hex_script!("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac");
+        let p2sh = hex_script!("a9147620a79e8657d066cff10e21228bf983cf546ac687");
+
+        // multisig
+        assert!(multisig.is_multisig());
+        // invalid multisig(too many required keys)
+        assert!(!invalid.is_multisig());
+        // invalid multisig(invalid sig count)
+        assert!(!invalid_sig_count.is_multisig());
+        // invalid multisig(invalid pubkey count)
+        assert!(!invalid_pubkey_count.is_multisig());
+
+        // p2pkh
+        assert!(!p2pkh.is_multisig());
+        // p2sh
+        assert!(!p2sh.is_multisig());
+
+        let pubkeys = vec![
+            PublicKey::from_str("02a5613bd857b7048924264d1e70e08fb2a7e6527d32b7ab1bb993ac59964ff397").unwrap(),
+            PublicKey::from_str("021ac43c7ff740014c3b33737ede99c967e4764553d1b2b83db77c83b8715fa72d").unwrap(),
+            PublicKey::from_str("02df2089105c77f266fa11a9d33f05c735234075f2e8780824c6b709415f9fb485").unwrap(),
+        ];
+        assert_eq!(multisig.get_multisig_pubkeys(), Ok((2, pubkeys)));
+
+    }
+
+    #[test]
+    fn script_type_string() {
+        let p2pk = hex_script!("2102a5613bd857b7048924264d1e70e08fb2a7e6527d32b7ab1bb993ac59964ff397ac");
+        let p2pkh = hex_script!("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac");
+        let multisig = hex_script!("522102a5613bd857b7048924264d1e70e08fb2a7e6527d32b7ab1bb993ac59964ff39721021ac43c7ff740014c3b33737ede99c967e4764553d1b2b83db77c83b8715fa72d2102df2089105c77f266fa11a9d33f05c735234075f2e8780824c6b709415f9fb48553ae");
+        let p2sh = hex_script!("a9147620a79e8657d066cff10e21228bf983cf546ac687");
+        let op_return = hex_script!("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87");
+        let cp2pkh = hex_script!("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac");
+        let cp2sh = hex_script!("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bca9147620a79e8657d066cff10e21228bf983cf546ac687");
+        let non_standard = hex_script!("00");
+
+        // p2pk
+        assert_eq!(p2pk.type_string(), "pubkey");
+        // p2pkh
+        assert_eq!(p2pkh.type_string(), "pubkeyhash");
+        // multisig
+        assert_eq!(multisig.type_string(), "multisig");
+        // p2sh
+        assert_eq!(p2sh.type_string(), "scripthash");
+        // op-return
+        assert_eq!(op_return.type_string(), "nulldata");
+        // cp2pkh
+        assert_eq!(cp2pkh.type_string(), "coloredpubkeyhash");
+        // cp2sh
+        assert_eq!(cp2sh.type_string(), "coloredscripthash");
+        // non-standard
+        assert_eq!(non_standard.type_string(), "nonstandard");
     }
 
     #[test]
