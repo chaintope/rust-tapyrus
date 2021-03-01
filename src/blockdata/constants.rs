@@ -28,7 +28,7 @@ use network::constants::Network;
 
 /// The maximum allowable sequence number
 pub const MAX_SEQUENCE: u32 = 0xFFFFFFFF;
-/// How many satoshis are in "one bitcoin"
+/// How many tapyrus are in "one TPC"
 pub const COIN_VALUE: u64 = 100_000_000;
 /// The maximum allowed weight for a block, see BIP 141 (network rule)
 pub const MAX_BLOCK_WEIGHT: u32 = 4_000_000;
