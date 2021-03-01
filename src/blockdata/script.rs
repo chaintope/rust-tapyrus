@@ -146,10 +146,6 @@ pub enum MultisigError {
     IsNotMultisig,
     /// invalid script
     InvalidScript,
-    /// script has an invalid required count
-    InvalidRequiredSigCount,
-    /// script has invalid public keys
-    InvalidPublicKey,
 }
 
 impl fmt::Display for MultisigError {
@@ -157,8 +153,6 @@ impl fmt::Display for MultisigError {
         let str = match *self {
             MultisigError::IsNotMultisig => "script is not multisig",
             MultisigError::InvalidScript => "invalid script",
-            MultisigError::InvalidRequiredSigCount => "script has an invalid required count",
-            MultisigError::InvalidPublicKey => "script has invalid public keys",
         };
         f.write_str(str)
     }
@@ -422,14 +416,14 @@ impl Script {
                     if required.is_none() {
                         required = match op.classify() {
                             opcodes::Class::PushNum(i) => Some(i),
-                            _ => { return Err(MultisigError::InvalidRequiredSigCount) }
+                            _ => { return Err(MultisigError::IsNotMultisig) }
                         };
                     }
                 }
                 Instruction::PushBytes(bytes) => {
                     match PublicKey::from_slice(&bytes) {
                         Ok(key) => { pubkeys.push(key) },
-                        _ => { return Err(MultisigError::InvalidPublicKey) }
+                        _ => { return Err(MultisigError::IsNotMultisig) }
                     }
                 }
             }
@@ -1408,6 +1402,7 @@ mod test {
         ];
         assert_eq!(multisig.get_multisig_pubkeys(), Ok((2, pubkeys)));
 
+        assert_eq!(invalid.get_multisig_pubkeys(), Err(MultisigError::IsNotMultisig));
     }
 
     #[test]
