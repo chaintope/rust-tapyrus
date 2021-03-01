@@ -431,6 +431,39 @@ mod tests {
     }
 
     #[test]
+    fn test_address_type() {
+        let p2pkh = Address {
+            network: Prod,
+            payload: Payload::PubkeyHash(hex_pubkeyhash!("162c5ea71c0b23f5b9022ef047c4a86470a5b070")),
+        };
+        assert_eq!(format!("{}", p2pkh.address_type().unwrap()), "p2pkh");
+        assert_eq!(AddressType::from_str("p2pkh").unwrap(), AddressType::P2pkh);
+
+        let p2sh = Address {
+            network: Prod,
+            payload: Payload::ScriptHash(hex_scripthash!("162c5ea71c0b23f5b9022ef047c4a86470a5b070")),
+        };
+        assert_eq!(format!("{}", p2sh.address_type().unwrap()), "p2sh");
+        assert_eq!(AddressType::from_str("p2sh").unwrap(), AddressType::P2sh);
+
+        let color_id = ColorIdentifier::from_hex("c36db65fd59fd356f6729140571b5bcd6bb3b83492a16e1bf0a3884442fc3c8a0e").unwrap();
+
+        let cp2pkh = Address {
+            network: Prod,
+            payload: Payload::ColoredPubkeyHash(color_id.clone(), hex_pubkeyhash!("162c5ea71c0b23f5b9022ef047c4a86470a5b070")),
+        };
+        assert_eq!(format!("{}", cp2pkh.address_type().unwrap()), "cp2pkh");
+        assert_eq!(AddressType::from_str("cp2pkh").unwrap(), AddressType::Cp2pkh);
+
+        let cp2sh = Address {
+            network: Prod,
+            payload: Payload::ColoredScriptHash(color_id.clone(), hex_scripthash!("162c5ea71c0b23f5b9022ef047c4a86470a5b070")),
+        };
+        assert_eq!(format!("{}", cp2sh.address_type().unwrap()), "cp2sh");
+        assert_eq!(AddressType::from_str("cp2sh").unwrap(), AddressType::Cp2sh);
+    }
+
+    #[test]
     fn test_p2pkh_address_58() {
         let addr = Address {
             network: Prod,
