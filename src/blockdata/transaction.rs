@@ -203,7 +203,7 @@ impl Default for TxIn {
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TxOut {
-    /// The value of the output, in satoshis
+    /// The value of the output, in tapyrus
     pub value: u64,
     /// The script which must satisfy for the output to be spent
     pub script_pubkey: Script
