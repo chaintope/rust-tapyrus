@@ -26,6 +26,7 @@
 
 use std::default::Default;
 use std::{error, fmt, io};
+use std::str::FromStr;
 
 #[cfg(feature = "serde")] use serde;
 
@@ -239,6 +240,60 @@ pub fn read_uint(data: &[u8], size: usize) -> Result<usize, Error> {
 pub enum ColoredCoinError {
     /// original script is not based p2pkh and p2sh
     UnsuppotedScriptType,
+}
+
+
+/// The types of scripts
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum ScriptType {
+    /// pay-to-pubkey
+    P2pk,
+    /// pay-to-pubkey-hash
+    P2pkh,
+    /// pay-to-multisig
+    P2ms,
+    /// pay-to-script-hash
+    P2sh,
+    /// colored pay-to-pubkey-hash
+    Cp2pkh,
+    /// colored pay-to-script-hash
+    Cp2sh,
+    /// op_return script
+    Nulldata,
+    /// non-standard script
+    NonStandard,
+}
+
+impl fmt::Display for ScriptType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(match *self {
+            ScriptType::P2pk => "pubkey",
+            ScriptType::P2pkh => "pubkeyhash",
+            ScriptType::P2ms => "multisig",
+            ScriptType::P2sh => "scripthash",
+            ScriptType::Cp2pkh => "coloredpubkeyhash",
+            ScriptType::Cp2sh => "coloredscripthash",
+            ScriptType::Nulldata => "nulldata",
+            ScriptType::NonStandard => "nonstandard"
+        })
+    }
+}
+
+impl FromStr for ScriptType {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "pubkey" => Ok(ScriptType::P2pk),
+            "pubkeyhash" => Ok(ScriptType::P2pkh),
+            "multisig" => Ok(ScriptType::P2ms),
+            "scripthash" => Ok(ScriptType::P2sh),
+            "coloredpubkeyhash" => Ok(ScriptType::Cp2pkh),
+            "coloredscripthash" => Ok(ScriptType::Cp2sh),
+            "nulldata" => Ok(ScriptType::Nulldata),
+            "nonstandard" => Ok(ScriptType::NonStandard),
+            _ => Err(()),
+        }
+    }
 }
 
 impl Script {
@@ -567,24 +622,24 @@ impl Script {
         }
     }
 
-    /// Return type string.
-    pub fn type_string(&self) -> String {
+    /// Return script type.
+    pub fn script_type(&self) -> ScriptType {
         if self.is_p2pk() {
-            "pubkey".to_string()
+            ScriptType::P2pk
         } else if self.is_p2pkh() {
-            "pubkeyhash".to_string()
+            ScriptType::P2pkh
         } else if self.is_multisig() {
-            "multisig".to_string()
+            ScriptType::P2ms
         } else if self.is_p2sh() {
-            "scripthash".to_string()
+            ScriptType::P2sh
         } else if self.is_op_return() {
-            "nulldata".to_string()
+            ScriptType::Nulldata
         } else if self.is_cp2pkh() {
-            "coloredpubkeyhash".to_string()
+            ScriptType::Cp2pkh
         } else if self.is_cp2sh() {
-            "coloredscripthash".to_string()
+            ScriptType::Cp2sh
         } else {
-            "nonstandard".to_string()
+            ScriptType::NonStandard
         }
     }
 }
@@ -1406,7 +1461,7 @@ mod test {
     }
 
     #[test]
-    fn script_type_string() {
+    fn script_type() {
         let p2pk = hex_script!("2102a5613bd857b7048924264d1e70e08fb2a7e6527d32b7ab1bb993ac59964ff397ac");
         let p2pkh = hex_script!("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac");
         let multisig = hex_script!("522102a5613bd857b7048924264d1e70e08fb2a7e6527d32b7ab1bb993ac59964ff39721021ac43c7ff740014c3b33737ede99c967e4764553d1b2b83db77c83b8715fa72d2102df2089105c77f266fa11a9d33f05c735234075f2e8780824c6b709415f9fb48553ae");
@@ -1417,21 +1472,37 @@ mod test {
         let non_standard = hex_script!("00");
 
         // p2pk
-        assert_eq!(p2pk.type_string(), "pubkey");
+        assert_eq!(p2pk.script_type(), ScriptType::P2pk);
+        assert_eq!(format!("{}", p2pk.script_type()), "pubkey");
+        assert_eq!(ScriptType::from_str("pubkey"), Ok(ScriptType::P2pk));
         // p2pkh
-        assert_eq!(p2pkh.type_string(), "pubkeyhash");
+        assert_eq!(p2pkh.script_type(), ScriptType::P2pkh);
+        assert_eq!(format!("{}", p2pkh.script_type()), "pubkeyhash");
+        assert_eq!(ScriptType::from_str("pubkeyhash"), Ok(ScriptType::P2pkh));
         // multisig
-        assert_eq!(multisig.type_string(), "multisig");
+        assert_eq!(multisig.script_type(), ScriptType::P2ms);
+        assert_eq!(format!("{}", multisig.script_type()), "multisig");
+        assert_eq!(ScriptType::from_str("multisig"), Ok(ScriptType::P2ms));
         // p2sh
-        assert_eq!(p2sh.type_string(), "scripthash");
+        assert_eq!(p2sh.script_type(), ScriptType::P2sh);
+        assert_eq!(format!("{}", p2sh.script_type()), "scripthash");
+        assert_eq!(ScriptType::from_str("scripthash"), Ok(ScriptType::P2sh));
         // op-return
-        assert_eq!(op_return.type_string(), "nulldata");
+        assert_eq!(op_return.script_type(), ScriptType::Nulldata);
+        assert_eq!(format!("{}", op_return.script_type()), "nulldata");
+        assert_eq!(ScriptType::from_str("nulldata"), Ok(ScriptType::Nulldata));
         // cp2pkh
-        assert_eq!(cp2pkh.type_string(), "coloredpubkeyhash");
+        assert_eq!(cp2pkh.script_type(), ScriptType::Cp2pkh);
+        assert_eq!(format!("{}", cp2pkh.script_type()), "coloredpubkeyhash");
+        assert_eq!(ScriptType::from_str("coloredpubkeyhash"), Ok(ScriptType::Cp2pkh));
         // cp2sh
-        assert_eq!(cp2sh.type_string(), "coloredscripthash");
+        assert_eq!(cp2sh.script_type(), ScriptType::Cp2sh);
+        assert_eq!(format!("{}", cp2sh.script_type()), "coloredscripthash");
+        assert_eq!(ScriptType::from_str("coloredscripthash"), Ok(ScriptType::Cp2sh));
         // non-standard
-        assert_eq!(non_standard.type_string(), "nonstandard");
+        assert_eq!(non_standard.script_type(), ScriptType::NonStandard);
+        assert_eq!(format!("{}", non_standard.script_type()), "nonstandard");
+        assert_eq!(ScriptType::from_str("nonstandard"), Ok(ScriptType::NonStandard));
     }
 
     #[test]
