@@ -913,7 +913,6 @@ impl<'de> serde::Deserialize<'de> for Script {
         D: serde::Deserializer<'de>,
     {
         use std::fmt::Formatter;
-        use hashes::hex::FromHex;
 
         struct Visitor;
         impl<'de> serde::de::Visitor<'de> for Visitor {
@@ -1062,7 +1061,6 @@ impl<'de> serde::Deserialize<'de> for ColorIdentifier {
         D: serde::Deserializer<'de>,
     {
         use std::fmt::Formatter;
-        use hashes::hex::FromHex;
 
         struct Visitor;
         impl<'de> serde::de::Visitor<'de> for Visitor {
