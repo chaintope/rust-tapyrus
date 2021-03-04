@@ -1,4 +1,14 @@
 
+# 0.4.5
+- Change the coin unit as the followings:
+    - BTC -> TPC
+    - mBTC -> mTPC
+    - uBTC -> uTPC
+    - satoshi -> tapyrus
+    - msat(milli satoshi) -> mtap
+- Add utility methods for multisig scripts
+- Add feature for colored(CP2PKH, CP2SH) address
+
 # 0.4.4
 
 - Add `TPC` token type(0x00).
