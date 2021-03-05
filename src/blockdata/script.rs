@@ -35,8 +35,9 @@ use blockdata::opcodes;
 use blockdata::transaction::OutPoint;
 use consensus::{deserialize, encode, Decodable, Encodable};
 use consensus::encode::serialize_hex;
-
+use hashes::hex::FromHex;
 use hashes::{sha256, Hash};
+
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
 
@@ -912,7 +913,6 @@ impl<'de> serde::Deserialize<'de> for Script {
         D: serde::Deserializer<'de>,
     {
         use std::fmt::Formatter;
-        use hashes::hex::FromHex;
 
         struct Visitor;
         impl<'de> serde::de::Visitor<'de> for Visitor {
@@ -1032,6 +1032,17 @@ impl ColorIdentifier {
     pub fn is_default(&self) -> bool {
         self.token_type == TokenTypes::None
     }
+
+    /// Initialize ColorIdentifier from slice
+    pub fn from_slice(data: &[u8]) -> Result<Self, encode::Error> {
+        deserialize(data).map_err(|_| encode::Error::ParseFailed("invalid color identifier"))
+    }
+
+    /// Initialize ColorIdentifier from hex string
+    pub fn from_hex(hex: &str) -> Result<Self, encode::Error> {
+        let bytes = Vec::from_hex(hex).map_err(|_| encode::Error::ParseFailed("invalid color identifier"))?;
+        ColorIdentifier::from_slice(&bytes)
+    }
 }
 
 impl Default for ColorIdentifier {
@@ -1050,7 +1061,6 @@ impl<'de> serde::Deserialize<'de> for ColorIdentifier {
         D: serde::Deserializer<'de>,
     {
         use std::fmt::Formatter;
-        use hashes::hex::FromHex;
 
         struct Visitor;
         impl<'de> serde::de::Visitor<'de> for Visitor {
@@ -1538,6 +1548,15 @@ mod test {
         assert_eq!(color_id.token_type, TokenTypes::None);
         assert_eq!(color_id.is_colored(), false);
         assert_eq!(color_id.is_default(), true);
+    }
+
+    #[test]
+    fn color_from_slice_test() {
+        let color_id = ColorIdentifier::from_hex("c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46").unwrap();
+        assert_eq!(color_id.token_type, TokenTypes::Nft);
+
+        let color_id = ColorIdentifier::from_slice(&Vec::from_hex("c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46").unwrap()).unwrap();
+        assert_eq!(color_id.token_type, TokenTypes::Nft);
     }
 
     #[test]
