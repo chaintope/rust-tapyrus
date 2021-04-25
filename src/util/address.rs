@@ -342,50 +342,54 @@ impl FromStr for Address {
             return Err(Error::Base58(base58::Error::InvalidLength(s.len() * 11 / 15)));
         }
         let data = base58::from_check(s)?;
-        if data.len() != 21 && data.len() != 54 {
-            return Err(Error::Base58(base58::Error::InvalidLength(data.len())));
-        }
 
-        let (network, payload) = match data[0] {
-            0 => (
-                Network::Prod,
-                Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap()),
-            ),
-            5 => (
-                Network::Prod,
-                Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap()),
-            ),
-            111 => (
-                Network::Dev,
-                Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap()),
-            ),
-            196 => (
-                Network::Dev,
-                Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap()),
-            ),
-            1 => (
-                Network::Prod,
-                Payload::ColoredPubkeyHash(ColorIdentifier::from_slice(&data[1..34]).unwrap(), PubkeyHash::from_slice(&data[34..]).unwrap()),
-            ),
-            6 => (
-                Network::Prod,
-                Payload::ColoredScriptHash(ColorIdentifier::from_slice(&data[1..34]).unwrap(), ScriptHash::from_slice(&data[34..]).unwrap()),
-            ),
-            112 => (
-                Network::Dev,
-                Payload::ColoredPubkeyHash(ColorIdentifier::from_slice(&data[1..34]).unwrap(), PubkeyHash::from_slice(&data[34..]).unwrap()),
-            ),
-            197 => (
-                Network::Dev,
-                Payload::ColoredScriptHash(ColorIdentifier::from_slice(&data[1..34]).unwrap(), ScriptHash::from_slice(&data[34..]).unwrap()),
-            ),
-            x => return Err(Error::Base58(base58::Error::InvalidVersion(vec![x]))),
+        let (network, payload) = match data.len() {
+            21 => {
+                match data[0] {
+                    0 => (
+                        Network::Prod,
+                        Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap()),
+                    ),
+                    5 => (
+                        Network::Prod,
+                        Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap()),
+                    ),
+                    111 => (
+                        Network::Dev,
+                        Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap()),
+                    ),
+                    196 => (
+                        Network::Dev,
+                        Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap()),
+                    ),
+                    x => return Err(Error::Base58(base58::Error::InvalidVersion(vec![x]))),
+                }
+            }
+            54 => {
+                match data[0] {
+                    1 => (
+                        Network::Prod,
+                        Payload::ColoredPubkeyHash(ColorIdentifier::from_slice(&data[1..34]).unwrap(), PubkeyHash::from_slice(&data[34..]).unwrap()),
+                    ),
+                    6 => (
+                        Network::Prod,
+                        Payload::ColoredScriptHash(ColorIdentifier::from_slice(&data[1..34]).unwrap(), ScriptHash::from_slice(&data[34..]).unwrap()),
+                    ),
+                    112 => (
+                        Network::Dev,
+                        Payload::ColoredPubkeyHash(ColorIdentifier::from_slice(&data[1..34]).unwrap(), PubkeyHash::from_slice(&data[34..]).unwrap()),
+                    ),
+                    197 => (
+                        Network::Dev,
+                        Payload::ColoredScriptHash(ColorIdentifier::from_slice(&data[1..34]).unwrap(), ScriptHash::from_slice(&data[34..]).unwrap()),
+                    ),
+                    x => return Err(Error::Base58(base58::Error::InvalidVersion(vec![x]))),
+                }
+            }
+            _ => return Err(Error::Base58(base58::Error::InvalidLength(data.len())))
         };
 
-        Ok(Address {
-            network: network,
-            payload: payload,
-        })
+        Ok(Address { network, payload })
     }
 }
 
