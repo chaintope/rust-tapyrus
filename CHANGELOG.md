@@ -1,3 +1,10 @@
+# 0.4.6
+- Fix parsing to be appropriate for address length(#33)
+- Add network id constants(#34)
+  - NetworkId::PRODUCTION
+  - NetworkId::PARADIUM
+  - NetworkId::TESTNET
+  - NetworkId::REGTEST
 
 # 0.4.5
 - Change the coin unit as the followings:
