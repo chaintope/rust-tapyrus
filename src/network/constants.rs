@@ -72,6 +72,15 @@ impl NetworkId {
     pub fn magic(self) -> u32 {
         (33550335 + self.0).swap_bytes()
     }
+
+    /// for production environment.
+    pub const PRODUCTION: NetworkId = NetworkId(1);
+    /// for paradium environment.
+    pub const PARADIUM: NetworkId = NetworkId(101);
+    /// for public testnet environment.
+    pub const TESTNET: NetworkId = NetworkId(1939510133);
+    /// for regtest environment.
+    pub const REGTEST: NetworkId = NetworkId(1905960821);
 }
 
 impl From<u32> for NetworkId {
@@ -314,44 +323,44 @@ mod tests {
     fn serialize_test() {
         // Production
         assert_eq!(
-            serialize(&NetworkId::from(1).magic()),
+            serialize(&NetworkId::PRODUCTION.magic()),
             &[0x01, 0xff, 0xf0, 0x00]
         );
         // Public Testnet
         assert_eq!(
-            serialize(&NetworkId::from(1939510133).magic()),
+            serialize(&NetworkId::TESTNET.magic()),
             &[0x75, 0x9a, 0x83, 0x74]
         );
         // Regtest
         assert_eq!(
-            serialize(&NetworkId::from(1905960821).magic()),
+            serialize(&NetworkId::REGTEST.magic()),
             &[0x73, 0x9a, 0x97, 0x74]
         );
         // Paradium
         assert_eq!(
-            serialize(&NetworkId::from(101).magic()),
+            serialize(&NetworkId::PARADIUM.magic()),
             &[0x01, 0xff, 0xf0, 0x64]
         );
 
         // Production
         assert_eq!(
             deserialize(&[0x01, 0xff, 0xf0, 0x00]).ok(),
-            Some(NetworkId::from(1).magic())
+            Some(NetworkId::PRODUCTION.magic())
         );
         // Public Testnet
         assert_eq!(
             deserialize(&[0x75, 0x9a, 0x83, 0x74]).ok(),
-            Some(NetworkId::from(1939510133).magic())
+            Some(NetworkId::TESTNET.magic())
         );
         // Regtest
         assert_eq!(
             deserialize(&[0x73, 0x9a, 0x97, 0x74]).ok(),
-            Some(NetworkId::from(1905960821).magic())
+            Some(NetworkId::REGTEST.magic())
         );
         // Paradium
         assert_eq!(
             deserialize(&[0x01, 0xff, 0xf0, 0x64]).ok(),
-            Some(NetworkId::from(101).magic())
+            Some(NetworkId::PARADIUM.magic())
         );
     }
 
