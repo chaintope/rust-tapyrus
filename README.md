@@ -1,4 +1,4 @@
-[![Status](https://travis-ci.org/chaintope/rust-tapyrus.png?branch=master)](https://travis-ci.org/chaintope/rust-tapyrus)
+[![Build Status](https://github.com/chaintope/rust-tapyrus/actions/workflows/rust.yml/badge.svg?branch=master)](https://github.com/chaintope/rust-tapyrus/actions/workflows/rust.yml)
 [![Safety Dance](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
 
 # Rust Tapyrus Library
