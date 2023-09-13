@@ -21,7 +21,7 @@ jobs:
               DO_FUZZ: true
               DO_BENCH: true
               AS_DEPENDENCY: true
-          - rust: 1.37.0
+          - rust: 1.41.0
             env:
               AS_DEPENDENCY: true
               PIN_VERSIONS: true
