@@ -151,7 +151,7 @@ impl XField {
         match self {
             XField::None => 1,
             XField::AggregatePublicKey(_) => 35,
-            XField::MaxBlockSize(_) => 9,
+            XField::MaxBlockSize(_) => 5,
             XField::Unknown(_, _) => 0,
         }
     }
