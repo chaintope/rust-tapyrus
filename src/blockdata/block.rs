@@ -483,9 +483,41 @@ mod tests {
 
         let maxblocksize:u32 = 0x100;
         assert_eq!(decode, XField::MaxBlockSize(maxblocksize));
-
         let xfield = XField::from_str("0200010000");
         assert_eq!(xfield.unwrap(), XField::MaxBlockSize(maxblocksize));
+
+        // max u32
+        let max_size_bytes = Vec::from_hex("FFFFFFFF").unwrap();
+        let decoded_max:u32 = deserialize(&max_size_bytes).unwrap();
+        assert_eq!(XField::MaxBlockSize(u32::MAX).get_size(), 5);
+        assert_eq!(serialize(&decoded_max), max_size_bytes);
+
+        // zero
+        let zero_size_bytes = Vec::from_hex("00000000").unwrap();
+        let decoded_zero:u32 = deserialize(&zero_size_bytes).unwrap();
+        assert_eq!(XField::MaxBlockSize(0).get_size(), 5);
+        assert_eq!(serialize(&decoded_zero), zero_size_bytes);
+
+        // negative
+        let x:i32 = -1;
+        let hex_x = Vec::from_hex(&format!("{:08x}", x)).unwrap();
+        let decoded_x:u32 = deserialize(&hex_x).unwrap();
+        assert!(XField::from_str(&format!("{:08x}", decoded_x)).is_err());
+        assert!(XField::from_str(&format!("{:08x}", x)).is_err());
+
+        assert!(XField::from_str("pq").is_err());
+        assert!(XField::from_str("020001").is_err());
+    }
+
+    #[test]
+    #[should_panic]
+    fn xfield_max_block_size_panic_test() {
+
+        //larger than u32::MAX
+        let overflow_value:u64 = (u32::MAX as u64) + 1;
+        let overflow_bytes = Vec::from_hex(&format!("{:016x}", overflow_value)).unwrap();
+        assert!(deserialize::<u32>(&overflow_bytes).is_err());
+        assert!(XField::from_str(&format!("{:016x}", overflow_value)).is_err());
     }
 
     #[test]
