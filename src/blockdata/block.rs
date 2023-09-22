@@ -86,6 +86,14 @@ impl BlockHeader {
         }
     }
 
+    /// Return the max block size in this BlockHeader
+    pub fn max_block_size(&self) -> Option<u32> {
+        match self.xfield {
+            XField::MaxBlockSize(max_block_size) => Some(max_block_size),
+            _ => None,
+        }
+    }
+
     /// Computes a signature hash for this block.
     /// Tapyrus signer needs to sign this hash. The signature will be added to
     /// the block header as the proof field and submitted to the tapyrus node.
@@ -121,6 +129,8 @@ pub enum XField {
     None,
     /// Aggregate public key used to verify block proof.
     AggregatePublicKey(PublicKey),
+    /// Max block size to change the block size limit.
+    MaxBlockSize(u32),
     /// Unknown type
     Unknown(u8, Vec<u8>),
 }
@@ -131,6 +141,7 @@ impl XField {
         match self {
             XField::None => 0u8,
             XField::AggregatePublicKey(_) => 1u8,
+            XField::MaxBlockSize(_) => 2u8,
             XField::Unknown(x_type, _) => *x_type,
         }
     }
@@ -140,6 +151,7 @@ impl XField {
         match self {
             XField::None => 1,
             XField::AggregatePublicKey(_) => 35,
+            XField::MaxBlockSize(_) => 5,
             XField::Unknown(_, _) => 0,
         }
     }
@@ -217,6 +229,10 @@ impl Decodable for XField {
                     .map_err(|_| encode::Error::ParseFailed("aggregate public key"))?;
                 Ok(XField::AggregatePublicKey(pk))
             },
+            2 => {
+                let maxblocksize: u32 = Decodable::consensus_decode(&mut d)?;
+                Ok(XField::MaxBlockSize(maxblocksize))
+            },
             _ => {
                 let data: Vec<u8> = Decodable::consensus_decode(&mut d)?;
                 Ok(XField::Unknown(x_type, data))
@@ -233,6 +249,10 @@ impl Encodable for XField {
             XField::None => Ok(1),
             XField::AggregatePublicKey(pk) => {
                 let len = pk.to_bytes().consensus_encode(&mut s)?;
+                Ok(1 + len)
+            },
+            XField::MaxBlockSize(maxblocksize) => {
+                let len = maxblocksize.consensus_encode(&mut s)?;
                 Ok(1 + len)
             },
             XField::Unknown(_type, data) => {
@@ -456,6 +476,51 @@ mod tests {
     }
 
     #[test]
+    fn xfield_max_block_size_test() {
+        let bytes = Vec::from_hex("0200010000").unwrap();
+        let decode: XField = deserialize(&bytes).unwrap();
+        assert_eq!(serialize(&decode), bytes);
+
+        let maxblocksize:u32 = 0x100;
+        assert_eq!(decode, XField::MaxBlockSize(maxblocksize));
+        let xfield = XField::from_str("0200010000");
+        assert_eq!(xfield.unwrap(), XField::MaxBlockSize(maxblocksize));
+
+        // max u32
+        let max_size_bytes = Vec::from_hex("FFFFFFFF").unwrap();
+        let decoded_max:u32 = deserialize(&max_size_bytes).unwrap();
+        assert_eq!(XField::MaxBlockSize(u32::MAX).get_size(), 5);
+        assert_eq!(serialize(&decoded_max), max_size_bytes);
+
+        // zero
+        let zero_size_bytes = Vec::from_hex("00000000").unwrap();
+        let decoded_zero:u32 = deserialize(&zero_size_bytes).unwrap();
+        assert_eq!(XField::MaxBlockSize(0).get_size(), 5);
+        assert_eq!(serialize(&decoded_zero), zero_size_bytes);
+
+        // negative
+        let x:i32 = -1;
+        let hex_x = Vec::from_hex(&format!("{:08x}", x)).unwrap();
+        let decoded_x:u32 = deserialize(&hex_x).unwrap();
+        assert!(XField::from_str(&format!("{:08x}", decoded_x)).is_err());
+        assert!(XField::from_str(&format!("{:08x}", x)).is_err());
+
+        assert!(XField::from_str("pq").is_err());
+        assert!(XField::from_str("020001").is_err());
+    }
+
+    #[test]
+    #[should_panic]
+    fn xfield_max_block_size_panic_test() {
+
+        //larger than u32::MAX
+        let overflow_value:u64 = (u32::MAX as u64) + 1;
+        let overflow_bytes = Vec::from_hex(&format!("{:016x}", overflow_value)).unwrap();
+        assert!(deserialize::<u32>(&overflow_bytes).is_err());
+        assert!(XField::from_str(&format!("{:016x}", overflow_value)).is_err());
+    }
+
+    #[test]
     fn xfield_unsupported_type_test() {
         let bytes = Vec::from_hex("ff0101").unwrap();
         let decode: XField = deserialize(&bytes).unwrap();
@@ -475,6 +540,10 @@ mod tests {
         serde_round_trip!(decode);
 
         let xfield = Vec::from_hex("0121032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af").unwrap();
+        let decode: XField = deserialize(&xfield).unwrap();
+        serde_round_trip!(decode);
+
+        let xfield = Vec::from_hex("02000000ff").unwrap();
         let decode: XField = deserialize(&xfield).unwrap();
         serde_round_trip!(decode);
     }
