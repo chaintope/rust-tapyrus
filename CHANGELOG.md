@@ -1,3 +1,6 @@
+# 0.4.7
+- Add xfield type MaxBlockSize(0x02)
+
 # 0.4.6
 - Fix parsing to be appropriate for address length(#33)
 - Add network id constants(#34)
