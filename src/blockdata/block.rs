@@ -40,6 +40,8 @@ use util::key::PublicKey;
 use util::signature::Signature;
 use VarInt;
 
+use crate::XFieldHash;
+
 /// A block header, which contains all the block's information except
 /// the actual transactions
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -153,6 +155,16 @@ impl XField {
             XField::AggregatePublicKey(_) => 35,
             XField::MaxBlockSize(_) => 5,
             XField::Unknown(_, _) => 0,
+        }
+    }
+
+    /// Return hash of serialized XField for signing
+    pub fn signature_hash(&self) -> XFieldHash {
+        match self {
+            XField::None => XFieldHash::from_str("").unwrap(),
+            XField::AggregatePublicKey(_) => XFieldHash::hash(&serialize(self)),
+            XField::MaxBlockSize(_) => XFieldHash::hash(&serialize(self)),
+            XField::Unknown(_, _) => XFieldHash::from_str("").unwrap(),
         }
     }
 }
