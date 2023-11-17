@@ -32,6 +32,7 @@ use hashes::{Hash, HashEngine};
 use hashes::hex::FromHex;
 use hash_types::{Wtxid, BlockHash, BlockSigHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment, XFieldHash};
 use consensus::{serialize, encode, Decodable, Encodable};
+use consensus::encode::Error;
 use consensus::encode::serialize_hex;
 use blockdata::constants::WITNESS_SCALE_FACTOR;
 use blockdata::transaction::Transaction;
@@ -158,12 +159,12 @@ impl XField {
     }
 
     /// Return hash of serialized XField for signing
-    pub fn signature_hash(&self) -> XFieldHash {
+    pub fn signature_hash(&self) ->Result<XFieldHash, Error>  {
         match self {
-            XField::None => XFieldHash::from_str("").unwrap(),
-            XField::AggregatePublicKey(_) => XFieldHash::hash(&serialize(self)),
-            XField::MaxBlockSize(_) => XFieldHash::hash(&serialize(self)),
-            XField::Unknown(_, _) => XFieldHash::from_str("").unwrap(),
+            XField::None => Ok(XFieldHash::from_str("").unwrap()),
+            XField::AggregatePublicKey(_) => Ok(XFieldHash::hash(&serialize(self))),
+            XField::MaxBlockSize(_) => Ok(XFieldHash::hash(&serialize(self))),
+            XField::Unknown(i, _) => Err(Error::UnknownXField(*i)),
         }
     }
 }
@@ -619,28 +620,28 @@ mod tests {
     fn xfield_signature_hash_test_aggpubkey() {
         let xfield = XField::AggregatePublicKey(PublicKey::from_str("02459adb8a8f052be94874aef7d4c3d3ddb71fcdaa869b1d515a92d63cb29c2806").unwrap());
         assert_eq!(serialize(&xfield), Vec::<u8>::from_hex("012102459adb8a8f052be94874aef7d4c3d3ddb71fcdaa869b1d515a92d63cb29c2806").unwrap());
-        assert_eq!(xfield.signature_hash(), XFieldHash::from_hex("5eb6038f90ec3b530ebed8789afd4f3f49af83fa4b00f34238c93ce0327ff9ad").unwrap());
+        assert_eq!(xfield.signature_hash().unwrap(), XFieldHash::from_hex("5eb6038f90ec3b530ebed8789afd4f3f49af83fa4b00f34238c93ce0327ff9ad").unwrap());
     }
 
     #[test]
     fn xfield_signature_hash_test_maxblocksize() {
         let xfield = XField::MaxBlockSize(200000);
         assert_eq!(serialize(&xfield), Vec::<u8>::from_hex("02400d0300").unwrap());
-        assert_eq!(xfield.signature_hash(), XFieldHash::from_hex("b2a51fb82acc2125508f323fa9567340c32257997dfd4af4e70788031d5b1915").unwrap());
+        assert_eq!(xfield.signature_hash().unwrap(), XFieldHash::from_hex("b2a51fb82acc2125508f323fa9567340c32257997dfd4af4e70788031d5b1915").unwrap());
     }
 
     #[test]
     fn xfield_signature_hash_test_aggpubkey1() {
         let xfield = XField::AggregatePublicKey(PublicKey::from_str("0376c3265e7d81839c1b2312b95697d47cc5b3ab3369a92a5af52ef1c945792f50").unwrap());
         assert_eq!(serialize(&xfield), Vec::<u8>::from_hex("01210376c3265e7d81839c1b2312b95697d47cc5b3ab3369a92a5af52ef1c945792f50").unwrap());
-        assert_eq!(xfield.signature_hash(), XFieldHash::from_hex("e70d5478d63e19ab2d9aa059340785b810f82cc288e83752e726a0f9817fcc88").unwrap());
+        assert_eq!(xfield.signature_hash().unwrap(), XFieldHash::from_hex("e70d5478d63e19ab2d9aa059340785b810f82cc288e83752e726a0f9817fcc88").unwrap());
     }
 
     #[test]
     fn xfield_signature_hash_test_maxblocksize1() {
         let xfield = XField::MaxBlockSize(400000);
         assert_eq!(serialize(&xfield), Vec::<u8>::from_hex("02801a0600").unwrap());
-        assert_eq!(xfield.signature_hash(), XFieldHash::from_hex("7b5a43d2dae273d564ec0db616efe75a31725707fc3865124e3477684f5faec0").unwrap());
+        assert_eq!(xfield.signature_hash().unwrap(), XFieldHash::from_hex("7b5a43d2dae273d564ec0db616efe75a31725707fc3865124e3477684f5faec0").unwrap());
     }
 
     #[test]

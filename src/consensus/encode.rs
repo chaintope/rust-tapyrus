@@ -88,6 +88,8 @@ pub enum Error {
     UnrecognizedNetworkCommand(String),
     /// Invalid Inventory type
     UnknownInventoryType(u32),
+    /// Invalid Xfield
+    UnknownXField(u8),
 }
 
 impl fmt::Display for Error {
@@ -110,6 +112,7 @@ impl fmt::Display for Error {
             Error::UnrecognizedNetworkCommand(ref nwcmd) => write!(f,
                 "unrecognized network command: {}", nwcmd),
             Error::UnknownInventoryType(ref tp) => write!(f, "Unknown Inventory type: {}", tp),
+            Error::UnknownXField(ref tp) => write!(f, "Unknown Xfield. Xfield type: {}", tp)
         }
     }
 }
@@ -129,7 +132,8 @@ impl error::Error for Error {
             | Error::ParseFailed(..)
             | Error::UnsupportedSegwitFlag(..)
             | Error::UnrecognizedNetworkCommand(..)
-            | Error::UnknownInventoryType(..) => None,
+            | Error::UnknownInventoryType(..)
+            | Error::UnknownXField(_)=> None,
         }
     }
 
