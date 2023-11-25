@@ -400,7 +400,7 @@ mod tests {
     use std::str::FromStr;
 
     use blockdata::block::{Block, XField};
-    use consensus::encode::{deserialize, serialize};
+    use consensus::encode::{deserialize, serialize, Error};
     use util::key::PublicKey;
     use hash_types::{BlockSigHash, XFieldHash};
     use hashes::hex::FromHex;
@@ -652,9 +652,10 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn xfield_signature_hash_test_unknown() {
-        let xfield = XField::Unknown{0:3, 1:Vec::<u8>::from_hex("0x12345").unwrap()};
-        xfield.signature_hash();
+        let xfield = XField::Unknown{0:3, 1:Vec::<u8>::from_hex("012345").unwrap()};
+        let result = xfield.signature_hash();
+        
+        assert!(matches!(result, Err(Error::UnknownXField(3))));
     }
 }
