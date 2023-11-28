@@ -161,7 +161,7 @@ impl XField {
     /// Return hash of serialized XField for signing
     pub fn signature_hash(&self) ->Result<XFieldHash, Error>  {
         match self {
-            XField::None => Ok(XFieldHash::from_str("").unwrap()),
+            XField::None => Err(Error::XFieldNone),
             XField::AggregatePublicKey(_) => Ok(XFieldHash::hash(&serialize(self))),
             XField::MaxBlockSize(_) => Ok(XFieldHash::hash(&serialize(self))),
             XField::Unknown(i, _) => Err(Error::UnknownXField(*i)),
@@ -645,10 +645,11 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn xfield_signature_hash_test_none() {
         let xfield = XField::None;
-        xfield.signature_hash();
+        let result = xfield.signature_hash();
+
+        assert!(matches!(result, Err(Error::XFieldNone)));
     }
 
     #[test]

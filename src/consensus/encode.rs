@@ -90,6 +90,8 @@ pub enum Error {
     UnknownInventoryType(u32),
     /// Invalid Xfield
     UnknownXField(u8),
+    /// XField was None which is unexpected as a hash
+    XFieldNone,
 }
 
 impl fmt::Display for Error {
@@ -112,7 +114,8 @@ impl fmt::Display for Error {
             Error::UnrecognizedNetworkCommand(ref nwcmd) => write!(f,
                 "unrecognized network command: {}", nwcmd),
             Error::UnknownInventoryType(ref tp) => write!(f, "Unknown Inventory type: {}", tp),
-            Error::UnknownXField(ref tp) => write!(f, "Unknown Xfield. Xfield type: {}", tp)
+            Error::UnknownXField(ref tp) => write!(f, "Unknown Xfield. Xfield type: {}", tp),
+            Error::XFieldNone => write!(f, "Xfield type None cannot be hashed or signed"),
         }
     }
 }
@@ -133,7 +136,8 @@ impl error::Error for Error {
             | Error::UnsupportedSegwitFlag(..)
             | Error::UnrecognizedNetworkCommand(..)
             | Error::UnknownInventoryType(..)
-            | Error::UnknownXField(_)=> None,
+            | Error::UnknownXField(_)
+            | Error::XFieldNone => None,
         }
     }
 
