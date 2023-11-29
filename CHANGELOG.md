@@ -1,3 +1,6 @@
+# 0.4.8
+- Add signature_hash xfield (#36)
+
 # 0.4.7
 - Add xfield type MaxBlockSize(0x02)
 
