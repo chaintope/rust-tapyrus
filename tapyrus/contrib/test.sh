@@ -32,7 +32,7 @@ then
     cargo clippy --locked --example taproot-psbt --features=rand-std,bitcoinconsensus -- -D warnings
 
     # We should not have any duplicate dependencies. This catches mistakes made upgrading dependencies
-    # in one crate and not in another (e.g. upgrade bitcoin_hashes in bitcoin but not in secp).
+    # in one crate and not in another (e.g. upgrade bitcoin_hashes in tapyrus but not in secp).
     duplicate_dependencies=$(
         # Only show the actual duplicated deps, not their reverse tree, then
         # whitelist the 'syn' crate which is duplicated but it's not our fault.
@@ -134,8 +134,8 @@ if [ "$AS_DEPENDENCY" = true ]
 then
     cargo new dep_test 2> /dev/null # Mute warning about workspace, fixed below.
     cd dep_test
-    echo 'bitcoin = { path = "..", features = ["serde"] }\n\n' >> Cargo.toml
-    # Adding an empty workspace section excludes this crate from the rust-bitcoin workspace.
+    echo 'tapyrus = { path = "..", features = ["serde"] }\n\n' >> Cargo.toml
+    # Adding an empty workspace section excludes this crate from the rust-tapyrus workspace.
     echo '[workspace]\n\n' >> Cargo.toml
 
     cargo test --verbose

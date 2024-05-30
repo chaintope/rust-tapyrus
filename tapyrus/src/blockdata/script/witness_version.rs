@@ -69,8 +69,8 @@ impl WitnessVersion {
     /// Returns integer version number representation for a given [`WitnessVersion`] value.
     ///
     /// NB: this is not the same as an integer representation of the opcode signifying witness
-    /// version in bitcoin script. Thus, there is no function to directly convert witness version
-    /// into a byte since the conversion requires context (bitcoin script or just a version number).
+    /// version in tapyrus script. Thus, there is no function to directly convert witness version
+    /// into a byte since the conversion requires context (tapyrus script or just a version number).
     pub fn to_num(self) -> u8 { self as u8 }
 
     /// Converts this witness version to a GF32 field element.

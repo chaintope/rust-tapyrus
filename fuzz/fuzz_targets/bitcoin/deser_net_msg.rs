@@ -1,8 +1,8 @@
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
-    let _: Result<bitcoin::p2p::message::RawNetworkMessage, _> =
-        bitcoin::consensus::encode::deserialize(data);
+    let _: Result<tapyrus::p2p::message::RawNetworkMessage, _> =
+        tapyrus::consensus::encode::deserialize(data);
 }
 
 fn main() {

@@ -3,7 +3,7 @@
 //! The workflow we simulate is that of a setup using a watch-only online wallet (contains only
 //! public keys) and a cold-storage signing wallet (contains the private keys).
 //!
-//! You can verify the workflow using `bitcoind` and `bitcoin-cli`.
+//! You can verify the workflow using `bitcoind` and `tapyrus-cli`.
 //!
 //! ## Example Setup
 //!
@@ -11,9 +11,9 @@
 //!
 //!    `bitcoind -regtest -server -daemon -fallbackfee=0.0002 -rpcuser=admin -rpcpassword=pass -rpcallowip=127.0.0.1/0 -rpcbind=127.0.0.1 -blockfilterindex=1 -peerblockfilters=1`
 //!
-//! 2. Define a shell alias to `bitcoin-cli`, for example:
+//! 2. Define a shell alias to `tapyrus-cli`, for example:
 //!
-//!    `alias bt=bitcoin-cli -rpcuser=admin -rpcpassword=pass -rpcport=18443`
+//!    `alias bt=tapyrus-cli -rpcuser=admin -rpcpassword=pass -rpcport=18443`
 //!
 //! 3. Create (or load) a default wallet, for example:
 //!
@@ -33,12 +33,12 @@ use std::collections::BTreeMap;
 use std::fmt;
 use std::str::FromStr;
 
-use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, IntoDerivationPath, Xpriv, Xpub};
-use bitcoin::consensus::encode;
-use bitcoin::locktime::absolute;
-use bitcoin::psbt::{self, Input, Psbt, PsbtSighashType};
-use bitcoin::secp256k1::{Secp256k1, Signing, Verification};
-use bitcoin::{
+use tapyrus::bip32::{ChildNumber, DerivationPath, Fingerprint, IntoDerivationPath, Xpriv, Xpub};
+use tapyrus::consensus::encode;
+use tapyrus::locktime::absolute;
+use tapyrus::psbt::{self, Input, Psbt, PsbtSighashType};
+use tapyrus::secp256k1::{Secp256k1, Signing, Verification};
+use tapyrus::{
     transaction, Address, Amount, Network, OutPoint, PublicKey, ScriptBuf, Sequence, Transaction,
     TxIn, TxOut, Witness,
 };

@@ -421,7 +421,7 @@ impl DerivationPath {
     /// Concatenate `self` with `path` and return the resulting new path.
     ///
     /// ```
-    /// use bitcoin::bip32::{DerivationPath, ChildNumber};
+    /// use tapyrus::bip32::{DerivationPath, ChildNumber};
     /// use std::str::FromStr;
     ///
     /// let base = DerivationPath::from_str("m/42").unwrap();
@@ -445,7 +445,7 @@ impl DerivationPath {
     /// 0x80000000 is added to the hardened elements.
     ///
     /// ```
-    /// use bitcoin::bip32::DerivationPath;
+    /// use tapyrus::bip32::DerivationPath;
     /// use std::str::FromStr;
     ///
     /// let path = DerivationPath::from_str("m/84'/0'/0'/0/1").unwrap();

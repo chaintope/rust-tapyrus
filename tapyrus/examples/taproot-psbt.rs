@@ -1,6 +1,6 @@
 //! Example of taproot PSBT workflow
 
-// We use the alias `alias bt='bitcoin-cli -regtest'` for brevity.
+// We use the alias `alias bt='tapyrus-cli -regtest'` for brevity.
 
 // Step 0 - Wipe the `regtest` data directory to start from a clean slate.
 
@@ -10,8 +10,8 @@
 //          2.1) Run `bt -named createwallet wallet_name=benefactor blank=true` to create a blank wallet with the name "benefactor"
 //          2.2) Run `bt -named createwallet wallet_name=beneficiary blank=true` to create a blank wallet with the name "beneficiary"
 //          2.3) Create the two aliases:
-//                  alias bt-benefactor='bitcoin-cli -regtest -rpcwallet=benefactor'
-//                  alias bt-beneficiary='bitcoin-cli -regtest -rpcwallet=beneficiary'
+//                  alias bt-benefactor='tapyrus-cli -regtest -rpcwallet=benefactor'
+//                  alias bt-beneficiary='tapyrus-cli -regtest -rpcwallet=beneficiary'
 //
 //          2.4) Import the example descriptors:
 //                  bt-benefactor importdescriptors '[
@@ -78,16 +78,16 @@ const UTXO_3: P2trUtxo = P2trUtxo {
 use std::collections::BTreeMap;
 use std::str::FromStr;
 
-use bitcoin::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpriv, Xpub};
-use bitcoin::consensus::encode;
-use bitcoin::hashes::Hash;
-use bitcoin::key::{TapTweak, XOnlyPublicKey};
-use bitcoin::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
-use bitcoin::psbt::{self, Input, Output, Psbt, PsbtSighashType};
-use bitcoin::secp256k1::Secp256k1;
-use bitcoin::sighash::{self, SighashCache, TapSighash, TapSighashType};
-use bitcoin::taproot::{self, LeafVersion, TapLeafHash, TaprootBuilder, TaprootSpendInfo};
-use bitcoin::{
+use tapyrus::bip32::{ChildNumber, DerivationPath, Fingerprint, Xpriv, Xpub};
+use tapyrus::consensus::encode;
+use tapyrus::hashes::Hash;
+use tapyrus::key::{TapTweak, XOnlyPublicKey};
+use tapyrus::opcodes::all::{OP_CHECKSIG, OP_CLTV, OP_DROP};
+use tapyrus::psbt::{self, Input, Output, Psbt, PsbtSighashType};
+use tapyrus::secp256k1::Secp256k1;
+use tapyrus::sighash::{self, SighashCache, TapSighash, TapSighashType};
+use tapyrus::taproot::{self, LeafVersion, TapLeafHash, TaprootBuilder, TaprootSpendInfo};
+use tapyrus::{
     absolute, script, transaction, Address, Amount, Network, OutPoint, ScriptBuf, Transaction,
     TxIn, TxOut, Witness,
 };
@@ -235,7 +235,7 @@ fn generate_bip86_key_spend_tx(
         input: vec![TxIn {
             previous_output: OutPoint { txid: input_utxo.txid.parse()?, vout: input_utxo.vout },
             script_sig: ScriptBuf::new(),
-            sequence: bitcoin::Sequence(0xFFFFFFFF), // Ignore nSequence.
+            sequence: tapyrus::Sequence(0xFFFFFFFF), // Ignore nSequence.
             witness: Witness::default(),
         }],
         output: outputs,
@@ -427,7 +427,7 @@ impl BenefactorWallet {
             input: vec![TxIn {
                 previous_output: OutPoint { txid: tx.txid(), vout: 0 },
                 script_sig: ScriptBuf::new(),
-                sequence: bitcoin::Sequence(0xFFFFFFFD), // enable locktime and opt-in RBF
+                sequence: tapyrus::Sequence(0xFFFFFFFD), // enable locktime and opt-in RBF
                 witness: Witness::default(),
             }],
             output: vec![],
@@ -570,7 +570,7 @@ impl BenefactorWallet {
                 input: vec![TxIn {
                     previous_output: OutPoint { txid: tx.txid(), vout: 0 },
                     script_sig: ScriptBuf::new(),
-                    sequence: bitcoin::Sequence(0xFFFFFFFD), // enable locktime and opt-in RBF
+                    sequence: tapyrus::Sequence(0xFFFFFFFD), // enable locktime and opt-in RBF
                     witness: Witness::default(),
                 }],
                 output: vec![],

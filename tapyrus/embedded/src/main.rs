@@ -12,9 +12,9 @@ use core::panic::PanicInfo;
 
 use alloc_cortex_m::CortexMHeap;
 // use panic_halt as _;
-use bitcoin::{Address, Network, PrivateKey};
-use bitcoin::secp256k1::ffi::types::AlignedType;
-use bitcoin::secp256k1::Secp256k1;
+use tapyrus::{Address, Network, PrivateKey};
+use tapyrus::secp256k1::ffi::types::AlignedType;
+use tapyrus::secp256k1::Secp256k1;
 
 use cortex_m_rt::entry;
 use cortex_m_semihosting::{debug, hprintln};

@@ -51,10 +51,10 @@ impl PublicKey {
         }
     }
 
-    /// Returns bitcoin 160-bit hash of the public key
+    /// Returns tapyrus 160-bit hash of the public key
     pub fn pubkey_hash(&self) -> PubkeyHash { self.with_serialized(PubkeyHash::hash) }
 
-    /// Returns bitcoin 160-bit hash of the public key for witness program
+    /// Returns tapyrus 160-bit hash of the public key for witness program
     pub fn wpubkey_hash(&self) -> Option<WPubkeyHash> {
         if self.compressed {
             Some(WPubkeyHash::from_byte_array(
@@ -125,7 +125,7 @@ impl PublicKey {
     ///
     /// ```rust
     /// use std::str::FromStr;
-    /// use bitcoin::PublicKey;
+    /// use tapyrus::PublicKey;
     ///
     /// let pk = |s| PublicKey::from_str(s).unwrap();
     ///
@@ -524,8 +524,8 @@ pub type TweakedKeyPair = TweakedKeypair;
 /// # Examples
 /// ```
 /// # #[cfg(feature = "rand-std")] {
-/// # use bitcoin::key::{Keypair, TweakedKeypair, TweakedPublicKey};
-/// # use bitcoin::secp256k1::{rand, Secp256k1};
+/// # use tapyrus::key::{Keypair, TweakedKeypair, TweakedPublicKey};
+/// # use tapyrus::secp256k1::{rand, Secp256k1};
 /// # let secp = Secp256k1::new();
 /// # let keypair = TweakedKeypair::dangerous_assume_tweaked(Keypair::new(&secp, &mut rand::thread_rng()));
 /// // There are various conversion methods available to get a tweaked pubkey from a tweaked keypair.

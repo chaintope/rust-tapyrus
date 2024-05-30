@@ -132,8 +132,8 @@ jobs:
           targets: thumbv7m-none-eabi
       - name: Install src
         run: rustup component add rust-src
-      - name: Run bitcoin/embedded
-        run: cd bitcoin/embedded && cargo run --target thumbv7m-none-eabi
+      - name: Run tapyrus/embedded
+        run: cd tapyrus/embedded && cargo run --target thumbv7m-none-eabi
       - name: Run hashes/embedded no alloc
         run: cd hashes/embedded && cargo run --target thumbv7m-none-eabi
       - name: Run hashes/embedded with alloc

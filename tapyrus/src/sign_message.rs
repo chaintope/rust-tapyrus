@@ -226,7 +226,7 @@ mod tests {
         use crate::{Address, AddressType, Network};
 
         let secp = secp256k1::Secp256k1::new();
-        let message = "rust-bitcoin MessageSignature test";
+        let message = "rust-tapyrus MessageSignature test";
         let msg_hash = super::signed_msg_hash(message);
         let msg = secp256k1::Message::from_digest(msg_hash.to_byte_array());
         let privkey = secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng());
@@ -266,7 +266,7 @@ mod tests {
         let message = "a different message from what was signed";
         let msg_hash = super::signed_msg_hash(message);
 
-        // Signature of msg = "rust-bitcoin MessageSignature test"
+        // Signature of msg = "rust-tapyrus MessageSignature test"
         // Signed with pk "UuOGDsfLPr4HIMKQX0ipjJeRaj1geCq3yPUF2COP5ME="
         let signature_base64 = "IAM2qX24tYx/bdBTIgVLhD8QEAjrPlJpmjB4nZHdRYGIBa4DmVulAcwjPnWe6Q5iEwXH6F0pUCJP/ZeHPWS1h1o=";
         let pubkey_base64 = "A1FTfMEntPpAty3qkEo0q2Dc1FEycI10a3jmwEFy+Qr6";

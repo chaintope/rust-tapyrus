@@ -5,10 +5,10 @@ use std::net::{IpAddr, Ipv4Addr, Shutdown, SocketAddr, TcpStream};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, process};
 
-use bitcoin::consensus::{encode, Decodable};
-use bitcoin::p2p::{self, address, message, message_network};
-use bitcoin::secp256k1;
-use bitcoin::secp256k1::rand::Rng;
+use tapyrus::consensus::{encode, Decodable};
+use tapyrus::p2p::{self, address, message, message_network};
+use tapyrus::secp256k1;
+use tapyrus::secp256k1::rand::Rng;
 
 fn main() {
     // This example establishes a connection to a Bitcoin node, sends the intial
@@ -29,7 +29,7 @@ fn main() {
     let version_message = build_version_message(address);
 
     let first_message =
-        message::RawNetworkMessage::new(bitcoin::Network::Bitcoin.magic(), version_message);
+        message::RawNetworkMessage::new(tapyrus::Network::Bitcoin.magic(), version_message);
 
     if let Ok(mut stream) = TcpStream::connect(address) {
         // Send the message
@@ -47,7 +47,7 @@ fn main() {
                     println!("Received version message: {:?}", reply.payload());
 
                     let second_message = message::RawNetworkMessage::new(
-                        bitcoin::Network::Bitcoin.magic(),
+                        tapyrus::Network::Bitcoin.magic(),
                         message::NetworkMessage::Verack,
                     );
 

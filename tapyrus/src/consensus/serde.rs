@@ -469,8 +469,8 @@ impl<E: fmt::Debug, I: Iterator<Item = Result<u8, E>>> io::Read for IterReader<E
 /// To (de)serialize a field using consensus encoding you can write e.g.:
 ///
 /// ```
-/// use bitcoin::Transaction;
-/// use bitcoin::consensus;
+/// use tapyrus::Transaction;
+/// use tapyrus::consensus;
 /// use serde_derive::{Serialize, Deserialize};
 ///
 /// #[derive(Serialize, Deserialize)]

@@ -36,7 +36,7 @@
   - Add a verify function to `PublicKey` [#1911](https://github.com/rust-bitcoin/rust-bitcoin/pull/1911)
   - Add method `Script::count_sigops` [#1890](https://github.com/rust-bitcoin/rust-bitcoin/pull/1890)
   - Implement `From<PublicKey> for XOnlyPublicKey` [#1901](https://github.com/rust-bitcoin/rust-bitcoin/pull/1901)
-  - Implement `From<secp256k1::PublicKey> for bitcoin::PublicKey` [#1949](https://github.com/rust-bitcoin/rust-bitcoin/pull/1949)
+  - Implement `From<secp256k1::PublicKey> for tapyrus::PublicKey` [#1949](https://github.com/rust-bitcoin/rust-bitcoin/pull/1949)
   - Add `DerivationPath::to_u32_vec` [#1946](https://github.com/rust-bitcoin/rust-bitcoin/pull/1946)
   - Use `Target` as type for `pow_limit` [#2107](https://github.com/rust-bitcoin/rust-bitcoin/pull/2107)
   - Add `Witness::p2wpkh` constructor [#2084](https://github.com/rust-bitcoin/rust-bitcoin/pull/2084)

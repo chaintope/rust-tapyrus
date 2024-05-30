@@ -42,7 +42,7 @@ macro_rules! all_opcodes {
     ($($op:ident => $val:expr, $doc:expr);*) => {
         /// Enables wildcard imports to bring into scope all opcodes and nothing else.
         ///
-        /// The `all` module is provided so one can use a wildcard import `use bitcoin::opcodes::all::*` to
+        /// The `all` module is provided so one can use a wildcard import `use tapyrus::opcodes::all::*` to
         /// get all the `OP_FOO` opcodes without getting other types defined in `opcodes` (e.g. `Opcode`, `Class`).
         ///
         /// This module is guaranteed to never contain anything except opcode constants and all opcode
@@ -252,14 +252,14 @@ all_opcodes! {
     OP_HASH160 => 0xa9, "Pop the top stack item and push its RIPEMD(SHA256) hash.";
     OP_HASH256 => 0xaa, "Pop the top stack item and push its SHA256(SHA256) hash.";
     OP_CODESEPARATOR => 0xab, "Ignore this and everything preceding when deciding what to sign when signature-checking.";
-    OP_CHECKSIG => 0xac, "<https://en.bitcoin.it/wiki/OP_CHECKSIG> pushing 1/0 for success/failure.";
-    OP_CHECKSIGVERIFY => 0xad, "<https://en.bitcoin.it/wiki/OP_CHECKSIG> returning success/failure.";
+    OP_CHECKSIG => 0xac, "<https://en.tapyrus.it/wiki/OP_CHECKSIG> pushing 1/0 for success/failure.";
+    OP_CHECKSIGVERIFY => 0xad, "<https://en.tapyrus.it/wiki/OP_CHECKSIG> returning success/failure.";
     OP_CHECKMULTISIG => 0xae, "Pop N, N pubkeys, M, M signatures, a dummy (due to bug in reference code), \
                       and verify that all M signatures are valid. Push 1 for 'all valid', 0 otherwise.";
     OP_CHECKMULTISIGVERIFY => 0xaf, "Like the above but return success/failure.";
     OP_NOP1 => 0xb0, "Does nothing.";
-    OP_CLTV => 0xb1, "<https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki>";
-    OP_CSV => 0xb2, "<https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki>";
+    OP_CLTV => 0xb1, "<https://github.com/tapyrus/bips/blob/master/bip-0065.mediawiki>";
+    OP_CSV => 0xb2, "<https://github.com/tapyrus/bips/blob/master/bip-0112.mediawiki>";
     OP_NOP4 => 0xb3, "Does nothing.";
     OP_NOP5 => 0xb4, "Does nothing.";
     OP_NOP6 => 0xb5, "Does nothing.";

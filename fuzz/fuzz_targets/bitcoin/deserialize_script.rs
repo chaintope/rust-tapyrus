@@ -1,7 +1,7 @@
-use bitcoin::address::Address;
-use bitcoin::blockdata::script;
-use bitcoin::consensus::encode;
-use bitcoin::Network;
+use tapyrus::address::Address;
+use tapyrus::blockdata::script;
+use tapyrus::consensus::encode;
+use tapyrus::Network;
 use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {

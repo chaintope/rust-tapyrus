@@ -2,7 +2,7 @@
 //!
 //! For remaining types see: ./serde_opcodes.rs
 //!
-//! If you find a type defined in `rust-bitcoin` that implements `Serialize` and does _not_ have a
+//! If you find a type defined in `rust-tapyrus` that implements `Serialize` and does _not_ have a
 //! regression test please add it.
 //!
 //! Types/tests were found using, and are ordered by, the output of: `git grep -l Serialize`.
@@ -27,17 +27,17 @@ use std::convert::TryFrom;
 use std::str::FromStr;
 
 use bincode::serialize;
-use bitcoin::bip32::{ChildNumber, KeySource, Xpriv, Xpub};
-use bitcoin::blockdata::locktime::{absolute, relative};
-use bitcoin::blockdata::witness::Witness;
-use bitcoin::consensus::encode::deserialize;
-use bitcoin::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
-use bitcoin::hex::FromHex;
-use bitcoin::psbt::raw::{self, Key, Pair, ProprietaryKey};
-use bitcoin::psbt::{Input, Output, Psbt, PsbtSighashType};
-use bitcoin::sighash::{EcdsaSighashType, TapSighashType};
-use bitcoin::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
-use bitcoin::{
+use tapyrus::bip32::{ChildNumber, KeySource, Xpriv, Xpub};
+use tapyrus::blockdata::locktime::{absolute, relative};
+use tapyrus::blockdata::witness::Witness;
+use tapyrus::consensus::encode::deserialize;
+use tapyrus::hashes::{hash160, ripemd160, sha256, sha256d, Hash};
+use tapyrus::hex::FromHex;
+use tapyrus::psbt::raw::{self, Key, Pair, ProprietaryKey};
+use tapyrus::psbt::{Input, Output, Psbt, PsbtSighashType};
+use tapyrus::sighash::{EcdsaSighashType, TapSighashType};
+use tapyrus::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
+use tapyrus::{
     ecdsa, transaction, Address, Amount, Block, Network, OutPoint, PrivateKey, PublicKey,
     ScriptBuf, Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
 };

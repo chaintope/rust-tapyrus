@@ -55,7 +55,7 @@ mod newtypes {
     use hashes::{sha256d, hash_newtype};
 
     hash_newtype! {
-        /// A bitcoin transaction hash/transaction ID.
+        /// A tapyrus transaction hash/transaction ID.
         ///
         /// For compatibility with the existing Bitcoin infrastructure and historical
         /// and current versions of the Bitcoin Core software itself, this and
@@ -64,9 +64,9 @@ mod newtypes {
         /// See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
         pub struct Txid(sha256d::Hash); 
 
-        /// A bitcoin witness transaction ID.
+        /// A tapyrus witness transaction ID.
         pub struct Wtxid(sha256d::Hash);
-        /// A bitcoin block hash.
+        /// A tapyrus block hash.
         pub struct BlockHash(sha256d::Hash);
 
         /// A hash of the Merkle tree branch or root for transactions

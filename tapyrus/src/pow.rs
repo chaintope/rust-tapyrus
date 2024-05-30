@@ -263,7 +263,7 @@ do_impl!(Target);
 /// This is used to encode a target into the block header. Satoshi made this part of consensus code
 /// in the original version of Bitcoin, likely copying an idea from OpenSSL.
 ///
-/// OpenSSL's bignum (BN) type has an encoding, which is even called "compact" as in bitcoin, which
+/// OpenSSL's bignum (BN) type has an encoding, which is even called "compact" as in tapyrus, which
 /// is exactly this format.
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

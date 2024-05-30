@@ -1,4 +1,4 @@
-# .gitignore for rust-bitcoin repository workspace.
+# .gitignore for rust-tapyrus repository workspace.
 
 # Lock files
 Cargo.lock

@@ -1,14 +1,14 @@
-extern crate bitcoin;
+extern crate tapyrus;
 
 use std::str::FromStr;
 use std::{env, process};
 
-use bitcoin::address::Address;
-use bitcoin::bip32::{ChildNumber, DerivationPath, Xpriv, Xpub};
-use bitcoin::hex::FromHex;
-use bitcoin::secp256k1::ffi::types::AlignedType;
-use bitcoin::secp256k1::Secp256k1;
-use bitcoin::PublicKey;
+use tapyrus::address::Address;
+use tapyrus::bip32::{ChildNumber, DerivationPath, Xpriv, Xpub};
+use tapyrus::hex::FromHex;
+use tapyrus::secp256k1::ffi::types::AlignedType;
+use tapyrus::secp256k1::Secp256k1;
+use tapyrus::PublicKey;
 
 fn main() {
     // This example derives root xprv from a 32-byte seed,
@@ -28,7 +28,7 @@ fn main() {
     println!("Seed: {}", seed_hex);
 
     // default network as mainnet
-    let network = bitcoin::Network::Bitcoin;
+    let network = tapyrus::Network::Bitcoin;
     println!("Network: {:?}", network);
 
     let seed = Vec::from_hex(seed_hex).unwrap();

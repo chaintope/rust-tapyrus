@@ -8,8 +8,8 @@
 //!
 //! ```rust
 //! # #[cfg(feature = "rand-std")] {
-//! use bitcoin::{Address, PublicKey, Network};
-//! use bitcoin::secp256k1::{rand, Secp256k1};
+//! use tapyrus::{Address, PublicKey, Network};
+//! use tapyrus::secp256k1::{rand, Secp256k1};
 //!
 //! // Generate random key pair.
 //! let s = Secp256k1::new();
@@ -23,7 +23,7 @@
 //! # Note: creating a new address requires the rand-std feature flag
 //!
 //! ```toml
-//! bitcoin = { version = "...", features = ["rand-std"] }
+//! tapyrus = { version = "...", features = ["rand-std"] }
 //! ```
 
 use core::convert::{TryFrom, TryInto};
@@ -334,8 +334,8 @@ struct AddressInner {
 ///
 /// ```rust
 /// use std::str::FromStr;
-/// use bitcoin::{Address, Network};
-/// use bitcoin::address::{NetworkUnchecked, NetworkChecked};
+/// use tapyrus::{Address, Network};
+/// use tapyrus::address::{NetworkUnchecked, NetworkChecked};
 ///
 /// // variant 1
 /// let address: Address<NetworkUnchecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse().unwrap();
@@ -359,7 +359,7 @@ struct AddressInner {
 ///
 /// ```
 /// # use std::str::FromStr;
-/// # use bitcoin::address::{Address, NetworkChecked};
+/// # use tapyrus::address::{Address, NetworkChecked};
 /// let address: Address<NetworkChecked> = Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM")
 ///                .unwrap().assume_checked();
 /// assert_eq!(address.to_string(), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
@@ -367,7 +367,7 @@ struct AddressInner {
 ///
 /// ```ignore
 /// # use std::str::FromStr;
-/// # use bitcoin::address::{Address, NetworkChecked};
+/// # use tapyrus::address::{Address, NetworkChecked};
 /// let address: Address<NetworkUnchecked> = Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM")
 ///                .unwrap();
 /// let s = address.to_string(); // does not compile
@@ -379,7 +379,7 @@ struct AddressInner {
 ///
 /// ```
 /// # use std::str::FromStr;
-/// # use bitcoin::address::{Address, NetworkUnchecked};
+/// # use tapyrus::address::{Address, NetworkUnchecked};
 /// let address: Address<NetworkUnchecked> = Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM")
 ///                .unwrap();
 /// assert_eq!(format!("{:?}", address), "Address<NetworkUnchecked>(132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM)");
@@ -387,7 +387,7 @@ struct AddressInner {
 ///
 /// ```
 /// # use std::str::FromStr;
-/// # use bitcoin::address::{Address, NetworkChecked};
+/// # use tapyrus::address::{Address, NetworkChecked};
 /// let address: Address<NetworkChecked> = Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM")
 ///                .unwrap().assume_checked();
 /// assert_eq!(format!("{:?}", address), "132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM");
@@ -611,7 +611,7 @@ impl Address {
     /// Generates a script pubkey spending to this address.
     pub fn script_pubkey(&self) -> ScriptBuf { self.payload().script_pubkey() }
 
-    /// Creates a URI string *bitcoin:address* optimized to be encoded in QR codes.
+    /// Creates a URI string *tapyrus:address* optimized to be encoded in QR codes.
     ///
     /// If the address is bech32, the address becomes uppercase.
     /// If the address is base58, the address is left mixed case.
@@ -619,7 +619,7 @@ impl Address {
     /// Quoting BIP 173 "inside QR codes uppercase SHOULD be used, as those permit the use of
     /// alphanumeric mode, which is 45% more compact than the normal byte mode."
     ///
-    /// Note however that despite BIP21 explicitly stating that the `bitcoin:` prefix should be
+    /// Note however that despite BIP21 explicitly stating that the `tapyrus:` prefix should be
     /// parsed as case-insensitive many wallets got this wrong and don't parse correctly.
     /// [See compatibility table.](https://github.com/btcpayserver/btcpayserver/issues/2110)
     ///
@@ -627,7 +627,7 @@ impl Address {
     /// ```
     /// # use core::fmt::Write;
     /// # const ADDRESS: &str = "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4";
-    /// # let address = ADDRESS.parse::<bitcoin::Address<_>>().unwrap().assume_checked();
+    /// # let address = ADDRESS.parse::<tapyrus::Address<_>>().unwrap().assume_checked();
     /// # let mut writer = String::new();
     /// # // magic trick to make error handling look better
     /// # (|| -> Result<(), core::fmt::Error> {
@@ -638,7 +638,7 @@ impl Address {
     /// # })().unwrap();
     /// # assert_eq!(writer, ADDRESS);
     /// ```
-    pub fn to_qr_uri(&self) -> String { format!("bitcoin:{:#}", self) }
+    pub fn to_qr_uri(&self) -> String { format!("tapyrus:{:#}", self) }
 
     /// Returns true if the given pubkey is directly related to the address payload.
     ///
@@ -685,8 +685,8 @@ impl Address<NetworkUnchecked> {
     /// network a simple comparison is not enough anymore. Instead this function can be used.
     ///
     /// ```rust
-    /// use bitcoin::{Address, Network};
-    /// use bitcoin::address::NetworkUnchecked;
+    /// use tapyrus::{Address, Network};
+    /// use tapyrus::address::NetworkUnchecked;
     ///
     /// let address: Address<NetworkUnchecked> = "2N83imGV3gPwBzKJQvWJ7cRUY2SpUyU6A5e".parse().unwrap();
     /// assert!(address.is_valid_for_network(Network::Testnet));
@@ -1142,7 +1142,7 @@ mod tests {
         {
             let addr =
                 Address::from_str(el).unwrap().require_network(Network::Bitcoin).expect("mainnet");
-            assert_eq!(addr.to_qr_uri(), format!("bitcoin:{}", el));
+            assert_eq!(addr.to_qr_uri(), format!("tapyrus:{}", el));
         }
 
         for el in [
@@ -1152,7 +1152,7 @@ mod tests {
         .iter()
         {
             let addr = Address::from_str(el).unwrap().assume_checked();
-            assert_eq!(addr.to_qr_uri(), format!("bitcoin:{}", el.to_ascii_uppercase()));
+            assert_eq!(addr.to_qr_uri(), format!("tapyrus:{}", el.to_ascii_uppercase()));
         }
     }
 

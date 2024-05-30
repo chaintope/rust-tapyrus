@@ -20,7 +20,7 @@ use crate::prelude::*;
 /// # Examples
 /// ```
 /// # use core::str::FromStr;
-/// # use bitcoin::Amount;
+/// # use tapyrus::Amount;
 ///
 /// assert_eq!(Amount::from_str("1 BTC").unwrap(), Amount::from_sat(100_000_000));
 /// assert_eq!(Amount::from_str("1 cBTC").unwrap(), Amount::from_sat(1_000_000));
@@ -502,7 +502,7 @@ impl Amount {
     pub const ZERO: Amount = Amount(0);
     /// Exactly one satoshi.
     pub const ONE_SAT: Amount = Amount(1);
-    /// Exactly one bitcoin.
+    /// Exactly one tapyrus.
     pub const ONE_BTC: Amount = Self::from_int_btc(1);
     /// The maximum value allowed as an amount. Useful for sanity checking.
     pub const MAX_MONEY: Amount = Self::from_int_btc(21_000_000);
@@ -538,7 +538,7 @@ impl Amount {
     /// ## Panics
     ///
     /// The function panics if the argument multiplied by the number of sats
-    /// per bitcoin overflows a u64 type.
+    /// per tapyrus overflows a u64 type.
     pub const fn from_int_btc(btc: u64) -> Amount {
         // TODO replace whith unwrap() when available in const context.
         match btc.checked_mul(100_000_000) {
@@ -591,7 +591,7 @@ impl Amount {
     ///
     /// # Examples
     /// ```
-    /// # use bitcoin::{Amount, Denomination};
+    /// # use tapyrus::{Amount, Denomination};
     /// let amount = Amount::from_sat(100_000);
     /// assert_eq!(amount.to_btc(), amount.to_float_in(Denomination::Bitcoin))
     /// ```
@@ -881,7 +881,7 @@ impl SignedAmount {
     pub const ZERO: SignedAmount = SignedAmount(0);
     /// Exactly one satoshi.
     pub const ONE_SAT: SignedAmount = SignedAmount(1);
-    /// Exactly one bitcoin.
+    /// Exactly one tapyrus.
     pub const ONE_BTC: SignedAmount = SignedAmount(100_000_000);
     /// The maximum value allowed as an amount. Useful for sanity checking.
     pub const MAX_MONEY: SignedAmount = SignedAmount(21_000_000 * 100_000_000);
@@ -1232,12 +1232,12 @@ pub mod serde {
     //!
     //! ```rust,ignore
     //! use serde::{Serialize, Deserialize};
-    //! use bitcoin::Amount;
+    //! use tapyrus::Amount;
     //!
     //! #[derive(Serialize, Deserialize)]
     //! # #[serde(crate = "actual_serde")]
     //! pub struct HasAmount {
-    //!     #[serde(with = "bitcoin::amount::serde::as_btc")]
+    //!     #[serde(with = "tapyrus::amount::serde::as_btc")]
     //!     pub amount: Amount,
     //! }
     //! ```
@@ -1709,7 +1709,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
+    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per tapyrus.
     fn parsing() {
         use super::ParseAmountError as E;
         let btc = Denomination::Bitcoin;
@@ -1994,7 +1994,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
+    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per tapyrus.
     fn from_str() {
         use super::ParseAmountError as E;
 
@@ -2036,7 +2036,7 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
+    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per tapyrus.
     fn to_from_string_in() {
         use super::Denomination as D;
         let ua_str = Amount::from_str_in;
@@ -2175,7 +2175,7 @@ mod tests {
 
     #[cfg(feature = "serde")]
     #[test]
-    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
+    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per tapyrus.
     fn serde_as_btc() {
         use serde_json;
 
@@ -2211,7 +2211,7 @@ mod tests {
 
     #[cfg(feature = "serde")]
     #[test]
-    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
+    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per tapyrus.
     fn serde_as_btc_opt() {
         use serde_json;
 
@@ -2253,7 +2253,7 @@ mod tests {
 
     #[cfg(feature = "serde")]
     #[test]
-    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per bitcoin.
+    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per tapyrus.
     fn serde_as_sat_opt() {
         use serde_json;
 

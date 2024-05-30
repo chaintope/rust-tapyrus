@@ -209,7 +209,7 @@ Our code is public domain so by all means fork it and go wild :)
 
 Release notes are done per crate, see:
 
-- [bitcoin CHANGELOG](bitcoin/CHANGELOG.md)
+- [bitcoin CHANGELOG](tapyrus/CHANGELOG.md)
 - [hashes CHANGELOG](hashes/CHANGELOG.md)
 - [internals CHANGELOG](internals/CHANGELOG.md)
 

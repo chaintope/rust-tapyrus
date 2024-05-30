@@ -75,8 +75,8 @@ impl OutPoint {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::constants::genesis_block;
-    /// use bitcoin::Network;
+    /// use tapyrus::constants::genesis_block;
+    /// use tapyrus::Network;
     ///
     /// let block = genesis_block(Network::Bitcoin);
     /// let tx = &block.txdata[0];
@@ -1552,7 +1552,7 @@ mod tests {
         // will also fail. But these will show you where the failure is so I'll leave them in.
         assert_eq!(realtx.version, Version::ONE);
         assert_eq!(realtx.input.len(), 1);
-        // In particular this one is easy to get backward -- in bitcoin hashes are encoded
+        // In particular this one is easy to get backward -- in tapyrus hashes are encoded
         // as little-endian 256-bit numbers rather than as data strings.
         assert_eq!(
             format!("{:x}", realtx.input[0].previous_output.txid),
@@ -1592,7 +1592,7 @@ mod tests {
         // will also fail. But these will show you where the failure is so I'll leave them in.
         assert_eq!(realtx.version, Version::TWO);
         assert_eq!(realtx.input.len(), 1);
-        // In particular this one is easy to get backward -- in bitcoin hashes are encoded
+        // In particular this one is easy to get backward -- in tapyrus hashes are encoded
         // as little-endian 256-bit numbers rather than as data strings.
         assert_eq!(
             format!("{:x}", realtx.input[0].previous_output.txid),

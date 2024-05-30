@@ -9,8 +9,8 @@
 //! # Example: encoding a network's magic bytes
 //!
 //! ```rust
-//! use bitcoin::Network;
-//! use bitcoin::consensus::encode::serialize;
+//! use tapyrus::Network;
+//! use tapyrus::consensus::encode::serialize;
 //!
 //! let network = Network::Bitcoin;
 //! let bytes = serialize(&network.magic());
@@ -54,8 +54,8 @@ impl Network {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::p2p::Magic;
-    /// use bitcoin::Network;
+    /// use tapyrus::p2p::Magic;
+    /// use tapyrus::Network;
     /// use std::convert::TryFrom;
     ///
     /// assert_eq!(Ok(Network::Bitcoin), Network::try_from(Magic::from_bytes([0xF9, 0xBE, 0xB4, 0xD9])));
@@ -69,8 +69,8 @@ impl Network {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::p2p::Magic;
-    /// use bitcoin::Network;
+    /// use tapyrus::p2p::Magic;
+    /// use tapyrus::Network;
     ///
     /// let network = Network::Bitcoin;
     /// assert_eq!(network.magic(), Magic::from_bytes([0xF9, 0xBE, 0xB4, 0xD9]));
@@ -80,7 +80,7 @@ impl Network {
     /// Converts a `Network` to its equivalent `bitcoind -chain` argument name.
     ///
     /// ```bash
-    /// $ bitcoin-23.0/bin/bitcoind --help | grep -C 3 '\-chain=<chain>'
+    /// $ tapyrus-23.0/bin/bitcoind --help | grep -C 3 '\-chain=<chain>'
     /// Chain selection options:
     ///
     /// -chain=<chain>
@@ -98,7 +98,7 @@ impl Network {
     /// Converts a `bitcoind -chain` argument name to its equivalent `Network`.
     ///
     /// ```bash
-    /// $ bitcoin-23.0/bin/bitcoind --help | grep -C 3 '\-chain=<chain>'
+    /// $ tapyrus-23.0/bin/bitcoind --help | grep -C 3 '\-chain=<chain>'
     /// Chain selection options:
     ///
     /// -chain=<chain>
@@ -122,8 +122,8 @@ impl Network {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::Network;
-    /// use bitcoin::blockdata::constants::ChainHash;
+    /// use tapyrus::Network;
+    /// use tapyrus::blockdata::constants::ChainHash;
     ///
     /// let network = Network::Bitcoin;
     /// assert_eq!(network.chain_hash(), ChainHash::BITCOIN);
@@ -135,8 +135,8 @@ impl Network {
     /// # Examples
     ///
     /// ```rust
-    /// use bitcoin::Network;
-    /// use bitcoin::blockdata::constants::ChainHash;
+    /// use tapyrus::Network;
+    /// use tapyrus::blockdata::constants::ChainHash;
     /// use std::convert::TryFrom;
     ///
     /// assert_eq!(Ok(Network::Bitcoin), Network::try_from(ChainHash::BITCOIN));
@@ -175,7 +175,7 @@ pub mod as_core_arg {
                 Network::from_core_arg(s).map_err(|_| {
                     E::invalid_value(
                         serde::de::Unexpected::Str(s),
-                        &"bitcoin network encoded as a string (either main, test, signet or regtest)",
+                        &"tapyrus network encoded as a string (either main, test, signet or regtest)",
                     )
                 })
             }
@@ -183,7 +183,7 @@ pub mod as_core_arg {
             fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
                 write!(
                     formatter,
-                    "bitcoin network encoded as a string (either main, test, signet or regtest)"
+                    "tapyrus network encoded as a string (either main, test, signet or regtest)"
                 )
             }
         }
@@ -216,7 +216,7 @@ impl FromStr for Network {
         use Network::*;
 
         let network = match s {
-            "bitcoin" => Bitcoin,
+            "tapyrus" => Bitcoin,
             "testnet" => Testnet,
             "signet" => Signet,
             "regtest" => Regtest,
@@ -231,7 +231,7 @@ impl fmt::Display for Network {
         use Network::*;
 
         let s = match *self {
-            Bitcoin => "bitcoin",
+            Bitcoin => "tapyrus",
             Testnet => "testnet",
             Signet => "signet",
             Regtest => "regtest",
@@ -292,12 +292,12 @@ mod tests {
 
     #[test]
     fn string_test() {
-        assert_eq!(Network::Bitcoin.to_string(), "bitcoin");
+        assert_eq!(Network::Bitcoin.to_string(), "tapyrus");
         assert_eq!(Network::Testnet.to_string(), "testnet");
         assert_eq!(Network::Regtest.to_string(), "regtest");
         assert_eq!(Network::Signet.to_string(), "signet");
 
-        assert_eq!("bitcoin".parse::<Network>().unwrap(), Network::Bitcoin);
+        assert_eq!("tapyrus".parse::<Network>().unwrap(), Network::Bitcoin);
         assert_eq!("testnet".parse::<Network>().unwrap(), Network::Testnet);
         assert_eq!("regtest".parse::<Network>().unwrap(), Network::Regtest);
         assert_eq!("signet".parse::<Network>().unwrap(), Network::Signet);

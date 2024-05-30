@@ -175,8 +175,8 @@ impl Transaction {
 /// Wrapped error from `bitcoinconsensus`.
 // We do this for two reasons:
 // 1. We don't want the error to be part of the public API because we do not want to expose the
-//    unusual versioning used in `bitcoinconsensus` to users of `rust-bitcoin`.
-// 2. We want to implement `std::error::Error` if the "std" feature is enabled in `rust-bitcoin` but
+//    unusual versioning used in `bitcoinconsensus` to users of `rust-tapyrus`.
+// 2. We want to implement `std::error::Error` if the "std" feature is enabled in `rust-tapyrus` but
 //    not in `bitcoinconsensus`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]

@@ -3,7 +3,7 @@
 //! # Rust Bitcoin Internal
 //!
 //! This crate is only meant to be used internally by crates in the
-//! [rust-bitcoin](https://github.com/rust-bitcoin) ecosystem.
+//! [rust-tapyrus](https://github.com/rust-bitcoin) ecosystem.
 //!
 
 #![no_std]

@@ -80,7 +80,7 @@ impl From<witness_program::Error> for Error {
     fn from(e: witness_program::Error) -> Error { Error::WitnessProgram(e) }
 }
 
-/// Address type is either invalid or not supported in rust-bitcoin.
+/// Address type is either invalid or not supported in rust-tapyrus.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct UnknownAddressTypeError(pub String);

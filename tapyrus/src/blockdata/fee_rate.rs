@@ -98,7 +98,7 @@ impl FeeRate {
     /// # Examples
     ///
     /// ```
-    /// # use bitcoin::{absolute, transaction, FeeRate, Transaction};
+    /// # use tapyrus::{absolute, transaction, FeeRate, Transaction};
     /// # // Dummy transaction.
     /// # let tx = Transaction { version: transaction::Version::ONE, lock_time: absolute::LockTime::ZERO, input: vec![], output: vec![] };
     ///
