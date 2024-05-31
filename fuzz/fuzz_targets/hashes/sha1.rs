@@ -1,5 +1,5 @@
-use tapyrus::hashes::{sha1, Hash, HashEngine};
 use honggfuzz::fuzz;
+use tapyrus::hashes::{sha1, Hash, HashEngine};
 
 fn do_test(data: &[u8]) {
     let mut engine = sha1::Hash::engine();

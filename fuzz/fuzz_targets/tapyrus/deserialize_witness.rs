@@ -1,6 +1,6 @@
+use honggfuzz::fuzz;
 use tapyrus::blockdata::witness::Witness;
 use tapyrus::consensus::{deserialize, serialize};
-use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
     let w: Result<Witness, _> = deserialize(data);

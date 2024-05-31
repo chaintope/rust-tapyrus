@@ -3,8 +3,8 @@
 
 #![cfg(feature = "serde")]
 
-extern crate tapyrus;
 extern crate serde_json;
+extern crate tapyrus;
 
 macro_rules! test_opcodes {
     ($($op:ident),* $(,)+) => {

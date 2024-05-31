@@ -1,8 +1,8 @@
+use honggfuzz::fuzz;
 use tapyrus::address::Address;
 use tapyrus::blockdata::script;
 use tapyrus::consensus::encode;
 use tapyrus::Network;
-use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
     let s: Result<script::ScriptBuf, _> = encode::deserialize(data);

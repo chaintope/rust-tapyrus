@@ -1,8 +1,8 @@
 use std::str::FromStr;
 
+use honggfuzz::fuzz;
 use tapyrus::blockdata::transaction::OutPoint;
 use tapyrus::consensus::encode;
-use honggfuzz::fuzz;
 
 fn do_test(data: &[u8]) {
     let lowercase: Vec<u8> = data

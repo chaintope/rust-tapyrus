@@ -1,5 +1,5 @@
-use tapyrus::hashes::{ripemd160, Hash, HashEngine};
 use honggfuzz::fuzz;
+use tapyrus::hashes::{ripemd160, Hash, HashEngine};
 
 fn do_test(data: &[u8]) {
     let mut engine = ripemd160::Hash::engine();

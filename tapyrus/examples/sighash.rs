@@ -1,6 +1,6 @@
+use hex_lit::hex;
 use tapyrus::hashes::Hash;
 use tapyrus::{consensus, ecdsa, sighash, Amount, PublicKey, Script, ScriptBuf, Transaction};
-use hex_lit::hex;
 
 //These are real blockchain transactions examples of computing sighash for:
 // - P2WPKH
