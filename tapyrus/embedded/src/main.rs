@@ -4,7 +4,7 @@
 #![no_main]
 
 extern crate alloc;
-extern crate bitcoin;
+extern crate tapyrus;
 
 use alloc::string::ToString;
 use alloc::vec;

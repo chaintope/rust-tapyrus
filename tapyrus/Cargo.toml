@@ -33,10 +33,10 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-internals = { package = "bitcoin-internals", version = "0.2.0" }
+internals = { package = "tapyrus-internals", path = "../internals" }
 hex = { package = "hex-conservative", version = "0.1.1", default-features = false }
 bech32 = { version = "0.10.0-beta", default-features = false }
-hashes = { package = "bitcoin_hashes", version = "0.13.0", default-features = false }
+hashes = { package = "tapyrus_hashes", path = "../hashes", default-features = false }
 secp256k1 = { version = "0.28.0", default-features = false, features = ["hashes"] }
 hex_lit = "0.1.1"
 

@@ -15,7 +15,7 @@ cortex-m-rt = "0.6.10"
 cortex-m-semihosting = "0.3.3"
 panic-halt = "0.2.0"
 alloc-cortex-m = "0.4.1"
-bitcoin = { path="../", default-features = false, features = ["no-std", "secp-lowmemory"] }
+tapyrus = { path="../", default-features = false, features = ["no-std", "secp-lowmemory"] }
 
 
 [[bin]]
@@ -28,8 +28,8 @@ codegen-units = 1 # better optimizations
 debug = true # symbols are nice and they don't increase the size on Flash
 lto = true # better optimizations
 
-[patch.crates-io.bitcoin_hashes]
+[patch.crates-io.tapyrus_hashes]
 path = "../../hashes"
 
-[patch.crates-io.bitcoin-internals]
+[patch.crates-io.tapyrus-internals]
 path = "../../internals"

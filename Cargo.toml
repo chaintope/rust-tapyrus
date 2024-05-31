@@ -4,8 +4,8 @@ members = ["tapyrus", "hashes", "internals", "fuzz"]
 [patch.crates-io.tapyrus]
 path = "tapyrus"
 
-[patch.crates-io.bitcoin_hashes]
+[patch.crates-io.tapyrus_hashes]
 path = "hashes"
 
-[patch.crates-io.bitcoin-internals]
+[patch.crates-io.tapyrus-internals]
 path = "internals"

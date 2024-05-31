@@ -3,13 +3,13 @@
 #![no_main]
 
 #[macro_use]
-extern crate bitcoin_hashes;
+extern crate tapyrus_hashes;
 
 #[cfg(feature = "alloc")] extern crate alloc;
 #[cfg(feature = "alloc")] use alloc_cortex_m::CortexMHeap;
 #[cfg(feature = "alloc")] use alloc::string::ToString;
 
-use bitcoin_hashes::{sha256, Hash, HashEngine};
+use tapyrus_hashes::{sha256, Hash, HashEngine};
 use core2::io::Write;
 use core::str::FromStr;
 use cortex_m_rt::entry;

@@ -1,4 +1,4 @@
-extern crate bitcoin;
+extern crate tapyrus;
 
 use std::io::{BufReader, Write};
 use std::net::{IpAddr, Ipv4Addr, Shutdown, SocketAddr, TcpStream};

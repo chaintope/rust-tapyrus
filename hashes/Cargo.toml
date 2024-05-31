@@ -1,11 +1,11 @@
 [package]
-name = "bitcoin_hashes"
+name = "tapyrus_hashes"
 version = "0.13.0"
 authors = ["Andrew Poelstra <apoelstra@wpsoftware.net>"]
-license = "CC0-1.0"
-repository = "https://github.com/rust-bitcoin/rust-bitcoin"
-documentation = "https://docs.rs/bitcoin_hashes/"
-description = "Hash functions used by the rust-bitcoin eccosystem"
+license = "MIT"
+homepage = "https://github.com/chaintope/rust-tapyrus/"
+repository = "https://github.com/chaintope/rust-tapyrus/"
+description = "Hash functions used by the rust-tapyrus eccosystem"
 categories = ["algorithms"]
 keywords = [ "crypto", "bitcoin", "hash", "digest" ]
 readme = "README.md"

@@ -8,7 +8,7 @@ edition = "2018"
 [workspace]
 members = ["."]
 
-[dependencies.bitcoin_hashes]
+[dependencies.tapyrus_hashes]
 path = "../.."
 features = ['schemars', 'serde']
 
@@ -19,5 +19,5 @@ schemars = "0.8.3"
 serde_test = "1.0"
 serde_json = "1.0"
 
-[patch.crates-io.bitcoin-internals]
+[patch.crates-io.tapyrus-internals]
 path = "../../../internals"

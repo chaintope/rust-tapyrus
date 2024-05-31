@@ -216,7 +216,7 @@ impl FromStr for Network {
         use Network::*;
 
         let network = match s {
-            "tapyrus" => Bitcoin,
+            "bitcoin" => Bitcoin,
             "testnet" => Testnet,
             "signet" => Signet,
             "regtest" => Regtest,
@@ -231,7 +231,7 @@ impl fmt::Display for Network {
         use Network::*;
 
         let s = match *self {
-            Bitcoin => "tapyrus",
+            Bitcoin => "bitcoin",
             Testnet => "testnet",
             Signet => "signet",
             Regtest => "regtest",
@@ -292,12 +292,12 @@ mod tests {
 
     #[test]
     fn string_test() {
-        assert_eq!(Network::Bitcoin.to_string(), "tapyrus");
+        assert_eq!(Network::Bitcoin.to_string(), "bitcoin");
         assert_eq!(Network::Testnet.to_string(), "testnet");
         assert_eq!(Network::Regtest.to_string(), "regtest");
         assert_eq!(Network::Signet.to_string(), "signet");
 
-        assert_eq!("tapyrus".parse::<Network>().unwrap(), Network::Bitcoin);
+        assert_eq!("bitcoin".parse::<Network>().unwrap(), Network::Bitcoin);
         assert_eq!("testnet".parse::<Network>().unwrap(), Network::Testnet);
         assert_eq!("regtest".parse::<Network>().unwrap(), Network::Regtest);
         assert_eq!("signet".parse::<Network>().unwrap(), Network::Signet);
