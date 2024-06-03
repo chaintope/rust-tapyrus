@@ -6,7 +6,7 @@
 set -ex
 
 main () {
-    for crate in "internals" "hashes" "bitcoin"; do
+    for crate in "internals" "hashes" "tapyrus"; do
         if release_changes $crate; then
             echo "$crate has changes implying this is a release PR, checking if we can publish ..."
 
@@ -36,11 +36,11 @@ release_changes() {
 publish_dry_run() {
     local crate=$1
     if [ "$crate" == "hashes" ]; then
-        cargo publish -p "bitcoin_hashes" --dry-run
+        cargo publish -p "tapyrus_hashes" --dry-run
     elif [ "$crate" == "internals" ]; then
-        cargo publish -p "bitcoin-internals" --dry-run
-    elif [ "$crate" == "bitcoin" ]; then
-        cargo publish -p "bitcoin" --dry-run
+        cargo publish -p "tapyrus-internals" --dry-run
+    elif [ "$crate" == "tapyrus" ]; then
+        cargo publish -p "tapyrus" --dry-run
     fi
 }
 

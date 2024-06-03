@@ -21,7 +21,7 @@ cargo-fuzz = true
 
 [dependencies]
 honggfuzz = { version = "0.5.55", default-features = false }
-bitcoin = { version = "0.31.1", features = [ "serde" ] }
+tapyrus = { version = "0.5.0", features = [ "serde" ] }
 
 serde = { version = "1.0.103", features = [ "derive" ] }
 serde_json = "1.0"
