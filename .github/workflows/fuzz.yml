@@ -4,6 +4,7 @@ name: Fuzz
 on:
   push:
     branches:
+      - update_on_bitcoin_0.31.x
       - master
       - 'test-ci/**'
   pull_request:

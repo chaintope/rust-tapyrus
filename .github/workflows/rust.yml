@@ -2,6 +2,7 @@ on:
   push:
     branches:
       - master
+      - update_on_bitcoin_0.31.x
       - 'test-ci/**'
   pull_request:
 
