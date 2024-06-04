@@ -32,16 +32,16 @@ then
     cargo clippy --locked --example taproot-psbt --features=rand-std,bitcoinconsensus -- -D warnings
 
     # We should not have any duplicate dependencies. This catches mistakes made upgrading dependencies
-    # in one crate and not in another (e.g. upgrade bitcoin_hashes in tapyrus but not in secp).
+    # in one crate and not in another (e.g. upgrade tapyrus_hashes in tapyrus but not in secp).
     duplicate_dependencies=$(
         # Only show the actual duplicated deps, not their reverse tree, then
         # whitelist the 'syn' crate which is duplicated but it's not our fault.
         #
-        # Whitelist `bitcoin_hashes` while we release it and until secp v0.28.0 comes out.
+        # Whitelist `tapyrus_hashes` while we release it and until secp v0.28.0 comes out.
         cargo tree  --target=all --all-features --duplicates \
             | grep '^[0-9A-Za-z]' \
             | grep -v 'syn' \
-            | grep -v 'bitcoin_hashes' \
+            | grep -v 'tapyrus_hashes' \
             | wc -l
                           )
     if [ "$duplicate_dependencies" -ne 0 ]; then
