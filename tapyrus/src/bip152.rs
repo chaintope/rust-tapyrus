@@ -158,7 +158,7 @@ pub struct HeaderAndShortIds {
     pub prefilled_txs: Vec<PrefilledTransaction>,
 }
 impl_consensus_encoding!(HeaderAndShortIds, header, nonce, short_ids, prefilled_txs);
-
+    
 impl HeaderAndShortIds {
     /// Create a new [HeaderAndShortIds] from a full block.
     ///
@@ -405,6 +405,7 @@ mod test {
                 merkle_root: TxMerkleNode::hash(&[1]),
                 im_merkle_root: TxMerkleNode::hash(&[1]),
                 time: 2,
+                aggregated_public_key: Some(PublicKey::generator()),
                 proof: Some(Signature::default()),
             },
             txdata: vec![dummy_tx(&[2]), dummy_tx(&[3]), dummy_tx(&[4])],

@@ -8,6 +8,7 @@
 //!
 
 use core::default::Default;
+use std::str::FromStr;
 
 use hashes::{sha256d, Hash};
 use hex_lit::hex;
@@ -23,6 +24,7 @@ use crate::crypto::schnorr::Signature;
 use crate::internal_macros::impl_bytes_newtype;
 use crate::network::Network;
 use crate::Amount;
+use crate::crypto::key::PublicKey;
 
 #[deprecated(since = "0.31.0", note = "Use Weight::MAX_BLOCK instead")]
 /// The maximum allowed weight for a block, see BIP 141 (network rule).
@@ -91,6 +93,9 @@ pub fn genesis_block(network: Network) -> Block {
     let txdata = vec![bitcoin_genesis_tx()];
     let hash: sha256d::Hash = txdata[0].txid().into();
     let merkle_root = hash.into();
+    let public_key =
+        PublicKey::from_str("032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af")
+            .unwrap();
     match network {
         Network::Bitcoin => Block {
             header: block::Header {
@@ -99,6 +104,7 @@ pub fn genesis_block(network: Network) -> Block {
                 merkle_root,
                 im_merkle_root: txdata[0].ntxid().into(),
                 time: 1231006505,
+                aggregated_public_key: Some(public_key),
                 proof: Some(Signature::default()),
             },
             txdata,
@@ -110,6 +116,7 @@ pub fn genesis_block(network: Network) -> Block {
                 merkle_root,
                 im_merkle_root: txdata[0].ntxid().into(),
                 time: 1296688602,
+                aggregated_public_key: Some(public_key),
                 proof: Some(Signature::default()),
             },
             txdata,
@@ -121,6 +128,7 @@ pub fn genesis_block(network: Network) -> Block {
                 merkle_root,
                 im_merkle_root: txdata[0].ntxid().into(),
                 time: 1598918400,
+                aggregated_public_key: Some(public_key),
                 proof: Some(Signature::default()),
             },
             txdata,
@@ -132,6 +140,7 @@ pub fn genesis_block(network: Network) -> Block {
                 merkle_root,
                 im_merkle_root: txdata[0].ntxid().into(),
                 time: 1296688602,
+                aggregated_public_key: Some(public_key),
                 proof: Some(Signature::default()),
             },
             txdata,
@@ -145,6 +154,7 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root,
                     im_merkle_root: txdata[0].ntxid().into(),
                     time: 1562925929,
+                    aggregated_public_key: Some(public_key),
                     proof: Some(Signature::default()),
                 },
                 txdata,
@@ -254,7 +264,7 @@ mod test {
         assert_eq!(gen.header.time, 1231006505);
         assert_eq!(
             gen.header.block_hash().to_string(),
-            "3c8890361aca183ecb0059ae78e4e57dc514a689588aa7cb97fdc3a6601d08a4"
+            "1c184bf287b15f641f8b063aab2af4123519d227e8681463b91d675192f6279c"
         );
     }
 
@@ -271,7 +281,7 @@ mod test {
         assert_eq!(gen.header.time, 1296688602);
         assert_eq!(
             gen.header.block_hash().to_string(),
-            "2f90e0d9843be35112f9830d6e86bf2ef4dd92836979ac4aae1a6f41e0797588"
+            "13530b95110ac11ae2d22d82acc5ad00a3510bb340c9667309cb811c2883cdc5"
         );
     }
 
@@ -288,7 +298,7 @@ mod test {
         assert_eq!(gen.header.time, 1598918400);
         assert_eq!(
             gen.header.block_hash().to_string(),
-            "00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6"
+            "27136d27aba81a18449dfdeca2d0c2a973dfc0cdf0a2527b4860ed1f816145d4".to_string()
         );
     }
 
