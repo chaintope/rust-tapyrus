@@ -17,24 +17,28 @@
 //! use tapyrus::{Block, MerkleBlock};
 //!
 //! // Get the proof from a bitcoind by running in the terminal:
-//! // $ TXID="5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2"
+//! // $ TXID="57e1df6a71dcf4fc9535f4d23b15fef372613dfa0ad9b80b6fcd00bf50ce123c"
 //! // $ tapyrus-cli gettxoutproof [\"$TXID\"]
-//! let mb_bytes = Vec::from_hex("01000000ba8b9cda965dd8e536670f9ddec10e53aab14b20bacad27b913719\
-//!     4667ed377d3b500c1622d911c3a5b0ab10ca0e2ac89c9460cb33a5914c00000200000002252bf9d75c4f481e\
-//!     bb6278d708257d1f12beb6dd30301d26c623f789b2ba6fc0e2d32adb5f8ca820731dff234a84e78ec30bce4e\
-//!     c69dbd562d0b2b8266bf4e5a0105").unwrap();
+//! let mb_bytes = Vec::from_hex("0100000096574bdcf9fca26560e5ddf07812c8e64841cb56e6453bf689277e\
+//!     47e0de40d4acd63fe13a8e957e37396beb969a3c54169ba154085ac6933d92c048b8ac01d139b453897c252f\
+//!     18b1258327ff99e923acabe1ce5c8340d19e1098445c1b8cb7a7b57c62004020fd9cd7dc16bedcba8925e358\
+//!     485db06b915c97b3ebfffde128ff5739a01955d21db9f1f4a92f94c77433f01d4b94247902724d70a342a90b\
+//!     5f44d7d0ee70880900000005b5c5945cc9908afb0a0cb2910b6623857e46d04df470e5a1ab482d2b7a119bc9\
+//!     02bff69aa3707c3317d35beb0f9bbfbca793bdf57869ec16b142880489fa025b431bbc09b76450aa05184574\
+//!     7dafb19876528d23814abef113fd032765be4d721ba6f4b8499fec71f8950a0e4fd22c9b623fb8c14106fec0\
+//!     37f498f3f628bc04f541d68b460a5247b1e1ecacff7b66aaa11b66c0ede3d0c58a835d6ca100c4d6022f0f").unwrap();
 //! let mb: MerkleBlock = tapyrus::consensus::deserialize(&mb_bytes).unwrap();
 //!
 //! // Authenticate and extract matched transaction ids
 //! let mut matches: Vec<Txid> = vec![];
 //! let mut index: Vec<u32> = vec![];
 //! assert!(mb.extract_matches(&mut matches, &mut index).is_ok());
-//! assert_eq!(1, matches.len());
+//! assert_eq!(2, matches.len());
 //! assert_eq!(
-//!     "5a4ebf66822b0b2d56bd9dc64ece0bc38ee7844a23ff1d7320a88c5fdb2ad3e2".parse::<Txid>().unwrap(),
+//!     "5b02fa89048842b116ec6978f5bd93a7bcbf9b0feb5bd317337c70a39af6bf02".parse::<Txid>().unwrap(),
 //!     matches[0]
 //! );
-//! assert_eq!(1, index.len());
+//! assert_eq!(2, index.len());
 //! assert_eq!(1, index[0]);
 //! ```
 
@@ -123,7 +127,7 @@ impl MerkleBlock {
         let matches: Vec<bool> = block_txids.iter().map(match_txids).collect();
 
         let pmt = PartialMerkleTree::from_txids(block_txids, &matches);
-        MerkleBlock { header: *header, txn: pmt }
+        MerkleBlock { header: header.clone(), txn: pmt }
     }
 
     /// Extract the matching txid's represented by this partial merkle tree
@@ -681,8 +685,6 @@ mod tests {
 
     #[test]
     fn merkleblock_serialization() {
-        // Got it by running the rpc call
-        // `gettxoutproof '["220ebc64e21abece964927322cba69180ed853bb187fbc6923bac7d010b9d87a"]'`
         let mb_hex = include_str!("../../tests/data/merkle_block.hex");
 
         let mb: MerkleBlock = deserialize(&hex!(mb_hex)).unwrap();
@@ -701,9 +703,10 @@ mod tests {
     fn merkleblock_construct_from_txids_found() {
         let block = get_block_13b8a();
 
+        // These txids are not `Immutable Txid`.
         let txids: Vec<Txid> = [
-            "74d681e0e03bafa802c8aa084379aa98d9fcd632ddc2ed9782b586ec87451f20",
-            "f9fc751cb7dc372406a9f8d738d5e6f8f63bab71986a39cf36ee70ee17036d07",
+            "d6c400a16c5d838ac5d0e3edc0661ba1aa667bffacece1b147520a468bd641f5",
+            "5b02fa89048842b116ec6978f5bd93a7bcbf9b0feb5bd317337c70a39af6bf02",
         ]
         .iter()
         .map(|hex| hex.parse::<Txid>().unwrap())
@@ -719,7 +722,6 @@ mod tests {
 
         let mut matches: Vec<Txid> = vec![];
         let mut index: Vec<u32> = vec![];
-
         assert_eq!(
             merkle_block.txn.extract_matches(&mut matches, &mut index).unwrap(),
             block.header.merkle_root
@@ -771,11 +773,11 @@ mod tests {
         }
     }
 
-    /// Returns a real block (0000000000013b8ab2cd513b0261a14096412195a72a0c4827d229dcc7e0f7af)
+    /// Returns a real block in Testnet(3ec84be4559f8ada97bd934b9772ad25ecb8c1762df758c324a19f1cf28749be)
     /// with 9 txs.
     fn get_block_13b8a() -> Block {
         use hex::FromHex;
-        let block_hex = include_str!("../../tests/data/block_13b8a.hex");
+        let block_hex = include_str!("../../tests/data/block_3ec84b_hex");
         deserialize(&Vec::from_hex(block_hex).unwrap()).unwrap()
     }
 

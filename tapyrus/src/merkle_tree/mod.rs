@@ -110,22 +110,22 @@ where
 #[cfg(test)]
 mod tests {
     use hashes::sha256d;
+    use hex::test_hex_unwrap as hex;
 
     use super::*;
-    use hex::test_hex_unwrap as hex;
     use crate::blockdata::block::Block;
     use crate::consensus::encode::deserialize;
 
     #[test]
     fn both_merkle_root_functions_return_the_same_result() {
-        // testnet block 0ad80d57a3fec290b939d03d87f8e072e60c0ca436323d95116dda5278ff94f9
-        let block_hex = include_str!("../../tests/data/testnet_block_0ad80d57a3fec290b939d03d87f8e072e60c0ca436323d95116dda5278ff94f9_hex");
+        // testnet block 3ec84be4559f8ada97bd934b9772ad25ecb8c1762df758c324a19f1cf28749be
+        let block_hex = include_str!("../../tests/data/block_3ec84b_hex");
         let block: Block = deserialize(&hex!(block_hex)).expect("Failed to deserialize block");
         assert!(block.check_merkle_root()); // Sanity check.
 
         let hashes_iter = block.txdata.iter().map(|obj| obj.txid().to_raw_hash());
 
-        let mut hashes_array: [sha256d::Hash; 25] = [Hash::all_zeros(); 25];
+        let mut hashes_array: [sha256d::Hash; 9] = [Hash::all_zeros(); 9];
         for (i, hash) in hashes_iter.clone().enumerate() {
             hashes_array[i] = hash;
         }

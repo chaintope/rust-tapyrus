@@ -16,12 +16,12 @@ use internals::write_err;
 pub use secp256k1::rand;
 pub use secp256k1::{self, constants, Keypair, Parity, Secp256k1, Verification, XOnlyPublicKey};
 
+use crate::consensus::{encode, Decodable, Encodable};
 use crate::crypto::ecdsa;
 use crate::network::Network;
 use crate::prelude::*;
 use crate::taproot::{TapNodeHash, TapTweakHash};
 use crate::{base58, io};
-use crate::consensus::{encode, Decodable, Encodable};
 
 /// A Bitcoin ECDSA public key
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -444,7 +444,6 @@ impl Encodable for PublicKey {
         self.to_bytes().consensus_encode(&mut s)
     }
 }
-
 
 #[cfg(feature = "serde")]
 #[allow(clippy::collapsible_else_if)] // Aids readability.
@@ -1146,17 +1145,9 @@ mod tests {
         )
         .unwrap();
         let mut s = Vec::new();
-        // let mut s = String::new();
-        pk.consensus_encode(&mut s);
-        let encoded = s
-            .iter()
-            .map(|x| format!("{:02x}", x))
-            .collect::<Vec<String>>()
-            .join("");
-        assert_eq!(
-            "21032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af",
-            encoded
-        );
+        let _ = pk.consensus_encode(&mut s);
+        let encoded = s.iter().map(|x| format!("{:02x}", x)).collect::<Vec<String>>().join("");
+        assert_eq!("21032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af", encoded);
 
         let decoded = PublicKey::consensus_decode(&mut &s[..]).unwrap();
         assert_eq!(decoded, pk);

@@ -158,7 +158,7 @@ pub struct HeaderAndShortIds {
     pub prefilled_txs: Vec<PrefilledTransaction>,
 }
 impl_consensus_encoding!(HeaderAndShortIds, header, nonce, short_ids, prefilled_txs);
-    
+
 impl HeaderAndShortIds {
     /// Create a new [HeaderAndShortIds] from a full block.
     ///
@@ -232,7 +232,7 @@ impl HeaderAndShortIds {
         }
 
         Ok(HeaderAndShortIds {
-            header: block.header,
+            header: block.header.clone(),
             nonce,
             // Provide coinbase prefilled.
             prefilled_txs: prefilled,
@@ -376,12 +376,10 @@ mod test {
     use crate::blockdata::locktime::absolute;
     use crate::blockdata::transaction;
     use crate::consensus::encode::{deserialize, serialize};
+    use crate::crypto::key::PublicKey;
     use crate::crypto::schnorr::Signature;
     use crate::hash_types::TxMerkleNode;
-    use crate::{
-        Amount, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid,
-        Witness,
-    };
+    use crate::{Amount, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid, Witness};
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
         Transaction {
@@ -405,7 +403,7 @@ mod test {
                 merkle_root: TxMerkleNode::hash(&[1]),
                 im_merkle_root: TxMerkleNode::hash(&[1]),
                 time: 2,
-                aggregated_public_key: Some(PublicKey::generator()),
+                xfield: block::XField::AggregatePublicKey(PublicKey::generator()),
                 proof: Some(Signature::default()),
             },
             txdata: vec![dummy_tx(&[2]), dummy_tx(&[3]), dummy_tx(&[4])],

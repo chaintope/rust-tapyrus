@@ -490,11 +490,11 @@ impl<V: NetworkValidation> Address<V> {
             Network::Testnet | Network::Signet | Network::Regtest => PUBKEY_ADDRESS_PREFIX_TEST,
         };
         let p2sh_prefix = match self.network() {
-            Network::Bitcoin | Network::Paradium  => SCRIPT_ADDRESS_PREFIX_MAIN,
+            Network::Bitcoin | Network::Paradium => SCRIPT_ADDRESS_PREFIX_MAIN,
             Network::Testnet | Network::Signet | Network::Regtest => SCRIPT_ADDRESS_PREFIX_TEST,
         };
         let hrp = match self.network() {
-            Network::Bitcoin | Network::Paradium  => hrp::BC,
+            Network::Bitcoin | Network::Paradium => hrp::BC,
             Network::Testnet | Network::Signet => hrp::TB,
             Network::Regtest => hrp::BCRT,
         };

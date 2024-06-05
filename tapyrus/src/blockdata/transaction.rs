@@ -700,7 +700,7 @@ impl Transaction {
         Wtxid::from_engine(enc)
     }
 
-    /// Computes an "immutable TXID".  The double SHA256 taken from a transaction 
+    /// Computes an "immutable TXID".  The double SHA256 taken from a transaction
     /// after stripping it of all input scripts including their length prefixes.
     pub fn malfix_txid(&self) -> sha256d::Hash {
         let mut enc = sha256d::Hash::engine();
@@ -1781,11 +1781,20 @@ mod tests {
              111825061110d38b3d5b849dd24323d1f5559d88ac00000000"
         );
         let tx: Transaction = deserialize(&hex_tx).unwrap();
-        assert_eq!(format!("{:x}", tx.txid()), "efaf069367948e9e4c99ca04cf885f41cd8dce6b9dddd310c9034f5e65396323");
-        assert_eq!(format!("{:x}", tx.ntxid()), "c12d06b287c4d95968071733c9e0ab33d93e2c354bc77a56dc6119913732a5dc");
-        assert_eq!(format!("{:x}", tx.malfix_txid()), "18ab15aaa859c9030f8c449fa074a90eb04b02fc2aca5de0ebbe851e6886efd0");
+        assert_eq!(
+            format!("{:x}", tx.txid()),
+            "efaf069367948e9e4c99ca04cf885f41cd8dce6b9dddd310c9034f5e65396323"
+        );
+        assert_eq!(
+            format!("{:x}", tx.ntxid()),
+            "c12d06b287c4d95968071733c9e0ab33d93e2c354bc77a56dc6119913732a5dc"
+        );
+        assert_eq!(
+            format!("{:x}", tx.malfix_txid()),
+            "18ab15aaa859c9030f8c449fa074a90eb04b02fc2aca5de0ebbe851e6886efd0"
+        );
     }
-    
+
     #[test]
     #[cfg(feature = "serde")]
     fn txn_encode_decode() {

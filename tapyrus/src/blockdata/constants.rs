@@ -14,17 +14,17 @@ use hashes::{sha256d, Hash};
 use hex_lit::hex;
 use internals::impl_array_newtype;
 
-use crate::blockdata::block::{self, Block};
+use crate::blockdata::block::{self, Block, XField};
 use crate::blockdata::locktime::absolute;
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::script;
 use crate::blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
 use crate::blockdata::witness::Witness;
+use crate::crypto::key::PublicKey;
 use crate::crypto::schnorr::Signature;
 use crate::internal_macros::impl_bytes_newtype;
 use crate::network::Network;
 use crate::Amount;
-use crate::crypto::key::PublicKey;
 
 #[deprecated(since = "0.31.0", note = "Use Weight::MAX_BLOCK instead")]
 /// The maximum allowed weight for a block, see BIP 141 (network rule).
@@ -104,7 +104,7 @@ pub fn genesis_block(network: Network) -> Block {
                 merkle_root,
                 im_merkle_root: txdata[0].ntxid().into(),
                 time: 1231006505,
-                aggregated_public_key: Some(public_key),
+                xfield: XField::AggregatePublicKey(public_key),
                 proof: Some(Signature::default()),
             },
             txdata,
@@ -116,7 +116,7 @@ pub fn genesis_block(network: Network) -> Block {
                 merkle_root,
                 im_merkle_root: txdata[0].ntxid().into(),
                 time: 1296688602,
-                aggregated_public_key: Some(public_key),
+                xfield: XField::AggregatePublicKey(public_key),
                 proof: Some(Signature::default()),
             },
             txdata,
@@ -128,7 +128,7 @@ pub fn genesis_block(network: Network) -> Block {
                 merkle_root,
                 im_merkle_root: txdata[0].ntxid().into(),
                 time: 1598918400,
-                aggregated_public_key: Some(public_key),
+                xfield: XField::AggregatePublicKey(public_key),
                 proof: Some(Signature::default()),
             },
             txdata,
@@ -140,7 +140,7 @@ pub fn genesis_block(network: Network) -> Block {
                 merkle_root,
                 im_merkle_root: txdata[0].ntxid().into(),
                 time: 1296688602,
-                aggregated_public_key: Some(public_key),
+                xfield: XField::AggregatePublicKey(public_key),
                 proof: Some(Signature::default()),
             },
             txdata,
@@ -154,7 +154,7 @@ pub fn genesis_block(network: Network) -> Block {
                     merkle_root,
                     im_merkle_root: txdata[0].ntxid().into(),
                     time: 1562925929,
-                    aggregated_public_key: Some(public_key),
+                    xfield: XField::AggregatePublicKey(public_key),
                     proof: Some(Signature::default()),
                 },
                 txdata,
@@ -193,8 +193,8 @@ impl ChainHash {
     ]);
     /// `ChainHash` for paradium.
     pub const PARADIUM: Self = Self([
-        78, 211, 5, 161, 211, 211, 27, 104, 188, 53, 3, 225, 191, 239, 71, 184,13, 111, 154, 223,
-        143, 185, 20, 76, 57, 231, 161, 17, 182, 77, 190, 120
+        78, 211, 5, 161, 211, 211, 27, 104, 188, 53, 3, 225, 191, 239, 71, 184, 13, 111, 154, 223,
+        143, 185, 20, 76, 57, 231, 161, 17, 182, 77, 190, 120,
     ]);
 
     /// Returns the hash of the `network` genesis block for use as a chain hash.
@@ -298,7 +298,7 @@ mod test {
         assert_eq!(gen.header.time, 1598918400);
         assert_eq!(
             gen.header.block_hash().to_string(),
-            "27136d27aba81a18449dfdeca2d0c2a973dfc0cdf0a2527b4860ed1f816145d4".to_string()
+            "abbaa74c35c0467802e1dfd8a20150ea7c0ac529feb245933702832d112c6b16".to_string()
         );
     }
 
@@ -308,11 +308,15 @@ mod test {
         let gen = genesis_block(Network::Paradium);
         assert_eq!(gen.header.version, block::Version::ONE,);
         assert_eq!(gen.header.prev_blockhash, Hash::all_zeros());
-        assert_eq!(gen.header.merkle_root.to_string(),
-                  "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");
+        assert_eq!(
+            gen.header.merkle_root.to_string(),
+            "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
+        );
         assert_eq!(gen.header.time, 1562925929);
-        assert_eq!(gen.header.block_hash().to_string(),
-                   "78be4db611a1e7394c14b98fdf9a6f0db847efbfe10335bc681bd3d3a105d34e");
+        assert_eq!(
+            gen.header.block_hash().to_string(),
+            "78be4db611a1e7394c14b98fdf9a6f0db847efbfe10335bc681bd3d3a105d34e"
+        );
     }
 
     // The *_chain_hash tests are sanity/regression tests, they verify that the const byte array

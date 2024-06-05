@@ -859,7 +859,10 @@ macro_rules! impl_option {
     ($type: ty) => {
         impl Encodable for Option<$type> {
             #[inline]
-            fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+            fn consensus_encode<W: io::Write + ?Sized>(
+                &self,
+                w: &mut W,
+            ) -> Result<usize, io::Error> {
                 let mut len = 0;
                 match self {
                     Some(c) => {
@@ -1298,11 +1301,9 @@ mod tests {
 
         let some: Option<schnorr::Signature> = Some(Default::default());
         let expected = vec![
-            64,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0,
+            64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0,
         ];
         assert_eq!(expected, serialize(&some));
     }
