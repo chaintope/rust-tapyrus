@@ -521,11 +521,11 @@ impl Amount {
 
     /// The maximum value of an [Amount].
     #[deprecated(since = "0.31.0", note = "Use Self::MAX instead")]
-    pub const fn max_value() -> Amount { Amount(u64::max_value()) }
+    pub const fn max_value() -> Amount { Amount(u64::MAX) }
 
     /// The minimum value of an [Amount].
     #[deprecated(since = "0.31.0", note = "Use Self::MIN instead")]
-    pub const fn min_value() -> Amount { Amount(u64::min_value()) }
+    pub const fn min_value() -> Amount { Amount(u64::MIN) }
 
     /// Convert from a value expressing bitcoins to an [Amount].
     pub fn from_btc(btc: f64) -> Result<Amount, ParseAmountError> {
@@ -899,11 +899,11 @@ impl SignedAmount {
 
     /// The maximum value of an [SignedAmount].
     #[deprecated(since = "0.31.0", note = "Use Self::MAX instead")]
-    pub const fn max_value() -> SignedAmount { SignedAmount(i64::max_value()) }
+    pub const fn max_value() -> SignedAmount { SignedAmount(i64::MAX) }
 
     /// The minimum value of an [SignedAmount].
     #[deprecated(since = "0.31.0", note = "Use Self::MIN instead")]
-    pub const fn min_value() -> SignedAmount { SignedAmount(i64::min_value()) }
+    pub const fn min_value() -> SignedAmount { SignedAmount(i64::MIN) }
 
     /// Convert from a value expressing bitcoins to an [SignedAmount].
     pub fn from_btc(btc: f64) -> Result<SignedAmount, ParseAmountError> {
