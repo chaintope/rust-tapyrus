@@ -548,6 +548,7 @@ impl Amount {
                 #[allow(unconditional_panic)]
                 // disabling this lint until panic!() can be used.
                 #[allow(clippy::let_unit_value)]
+                #[allow(clippy::out_of_bounds_indexing)]
                 let _int_overflow_converting_btc_to_sats = [(); 0][1];
                 Amount(0)
             }
