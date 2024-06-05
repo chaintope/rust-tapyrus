@@ -68,6 +68,8 @@ mod newtypes {
         pub struct Wtxid(sha256d::Hash);
         /// A tapyrus block hash.
         pub struct BlockHash(sha256d::Hash);
+        /// A hash of the block for sigining.
+        pub struct BlockSigHash(sha256d::Hash);
 
         /// A hash of the Merkle tree branch or root for transactions
         pub struct TxMerkleNode(sha256d::Hash);
@@ -85,7 +87,7 @@ mod newtypes {
     impl_hashencode!(Txid);
     impl_hashencode!(Wtxid);
     impl_hashencode!(BlockHash);
-
+    impl_hashencode!(BlockSigHash);
     impl_hashencode!(TxMerkleNode);
     impl_hashencode!(WitnessMerkleNode);
 

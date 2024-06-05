@@ -18,11 +18,11 @@ use super::Weight;
 use crate::blockdata::script;
 use crate::blockdata::transaction::Transaction;
 use crate::consensus::encode::serialize_hex;
-use crate::consensus::{encode, Decodable, Encodable};
+use crate::consensus::{encode, serialize, Decodable, Encodable};
 use crate::crypto::key::PublicKey;
 use crate::crypto::schnorr::Signature;
 pub use crate::hash_types::BlockHash;
-use crate::hash_types::{TxMerkleNode, WitnessCommitment, WitnessMerkleNode, Wtxid};
+use crate::hash_types::{BlockSigHash, TxMerkleNode, WitnessCommitment, WitnessMerkleNode, Wtxid};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::prelude::*;
 use crate::{crypto, io, merkle_tree, VarInt};
@@ -67,6 +67,22 @@ impl Header {
         let mut engine = BlockHash::engine();
         self.consensus_encode(&mut engine).expect("engines don't error");
         BlockHash::from_engine(engine)
+    }
+
+    /// Return the Aggregate public key in this BlockHeader
+    pub fn aggregated_public_key(&self) -> Option<PublicKey> {
+        match self.xfield {
+            XField::AggregatePublicKey(pk) => Some(pk),
+            _ => None,
+        }
+    }
+
+    /// Computes a signature hash for this block.
+    /// Tapyrus signer needs to sign this hash. The signature will be added to
+    /// the block header as the proof field and submitted to the tapyrus node.
+    pub fn signature_hash(&self) -> BlockSigHash {
+        let block = HeaderWithoutProof::from(self);
+        BlockSigHash::hash(&serialize(&block))
     }
 }
 
@@ -178,15 +194,37 @@ impl Decodable for Version {
     }
 }
 
-impl Header {
-    /// Return the Aggregate public key in this BlockHeader
-    pub fn aggregated_public_key(&self) -> Option<PublicKey> {
-        match self.xfield {
-            XField::AggregatePublicKey(pk) => Some(pk),
-            _ => None,
+struct HeaderWithoutProof {
+    version: Version,
+    prev_blockhash: BlockHash,
+    merkle_root: TxMerkleNode,
+    im_merkle_root: TxMerkleNode,
+    time: u32,
+    xfield: XField,
+}
+
+impl HeaderWithoutProof {
+    fn from(header: &Header) -> Self {
+        Self {
+            version: header.version,
+            prev_blockhash: header.prev_blockhash,
+            merkle_root: header.merkle_root,
+            im_merkle_root: header.im_merkle_root,
+            time: header.time,
+            xfield: header.xfield.clone(),
         }
     }
 }
+
+impl_consensus_encoding!(
+    HeaderWithoutProof,
+    version,
+    prev_blockhash,
+    merkle_root,
+    im_merkle_root,
+    time,
+    xfield
+);
 
 /// An extra field that allows the block header to hold arbitrary data.
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]
@@ -608,6 +646,8 @@ mod tests {
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
+    use crate::crypto::key::PublicKey;
+    use crate::hash_types::BlockSigHash;
 
     #[test]
     #[ignore]
@@ -754,6 +794,20 @@ mod tests {
         assert!(real_decode.check_witness_commitment());
 
         assert_eq!(serialize(&real_decode), segwit_block);
+    }
+
+    #[test]
+    fn signature_hash_test() {
+        let block = hex!("010000000000000000000000000000000000000000000000000000000000000000000000c1457ff3e5c527e69858108edf0ff1f49eea9c58d8d37300a164b3b4f8c8c7cef1a2e72770d547feae29f2dd40123a97c580d44fd4493de072416d53331997617b96f05d00403a4c09253c7b583e5260074380c9b99b895f938e37799d326ded984fb707e91fa4df2e0524a4ccf5fe224945b4fb94784b411a760eb730d95402d3383dd7ffdc01010000000100000000000000000000000000000000000000000000000000000000000000000000000022210366262690cbdf648132ce0c088962c6361112582364ede120f3780ab73438fc4bffffffff0100f2052a010000002776a9226d70757956774d32596a454d755a4b72687463526b614a787062715447417346484688ac00000000");
+        let decode: Result<Block, _> = deserialize(&block);
+        assert!(decode.is_ok());
+        assert_eq!(
+            decode.unwrap().header.signature_hash(),
+            BlockSigHash::from_str(
+                "3d856f50e0718f72bab6516c1ab020ce3390ebc97490b6d2bad4054dc7a40a93"
+            )
+            .unwrap()
+        );
     }
 
     #[test]
