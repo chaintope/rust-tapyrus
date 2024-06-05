@@ -214,6 +214,7 @@ impl HeaderWithoutProof {
             xfield: header.xfield.clone(),
         }
     }
+    
 }
 
 impl_consensus_encoding!(
