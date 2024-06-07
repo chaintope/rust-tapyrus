@@ -282,12 +282,12 @@ mod tests {
         assert_eq!(serialize(&Network::Bitcoin.magic()), &[0x01, 0xff, 0xf0, 0x00]);
         assert_eq!(serialize(&Network::Testnet.magic()), &[0x75, 0x9a, 0x83, 0x74]);
         assert_eq!(serialize(&Network::Signet.magic()), &[0x0a, 0x03, 0xcf, 0x40]);
-        assert_eq!(serialize(&Network::Regtest.magic()), &[0xfa, 0xbf, 0xb5, 0xda]);
+        assert_eq!(serialize(&Network::Regtest.magic()), &[0x73, 0x9a, 0x97, 0x74]);
 
         assert_eq!(deserialize(&[0x01, 0xff, 0xf0, 0x00]).ok(), Some(Network::Bitcoin.magic()));
         assert_eq!(deserialize(&[0x75, 0x9a, 0x83, 0x74]).ok(), Some(Network::Testnet.magic()));
         assert_eq!(deserialize(&[0x0a, 0x03, 0xcf, 0x40]).ok(), Some(Network::Signet.magic()));
-        assert_eq!(deserialize(&[0xfa, 0xbf, 0xb5, 0xda]).ok(), Some(Network::Regtest.magic()));
+        assert_eq!(deserialize(&[0x73, 0x9a, 0x97, 0x74]).ok(), Some(Network::Regtest.magic()));
     }
 
     #[test]
