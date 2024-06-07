@@ -106,6 +106,7 @@ pub fn genesis_block(network: Network) -> Block {
                 merkle_root,
                 im_merkle_root: txdata[0].ntxid(),
                 time: 1231006505,
+                proof: block::Signature { signature: script::Script::new() },
             },
             txdata,
         },
@@ -116,6 +117,7 @@ pub fn genesis_block(network: Network) -> Block {
                 merkle_root,
                 im_merkle_root: txdata[0].ntxid(),
                 time: 1296688602,
+                proof: block::Signature { signature: script::Script::new() },
             },
             txdata,
         },
@@ -126,6 +128,7 @@ pub fn genesis_block(network: Network) -> Block {
                 merkle_root,
                 im_merkle_root: txdata[0].ntxid(),
                 time: 1598918400,
+                proof: block::Signature { signature: script::Script::new() },
             },
             txdata,
         },
@@ -136,6 +139,7 @@ pub fn genesis_block(network: Network) -> Block {
                 merkle_root,
                 im_merkle_root: txdata[0].ntxid(),
                 time: 1296688602,
+                proof: block::Signature { signature: script::Script::new() },
             },
             txdata,
         },
@@ -236,7 +240,7 @@ mod test {
         assert_eq!(gen.header.time, 1231006505);
         assert_eq!(
             gen.header.block_hash().to_string(),
-            "dc874a17458b716cba6475cc544d2c076de8013423fea31339f97cbff0a482c5"
+            "3c8890361aca183ecb0059ae78e4e57dc514a689588aa7cb97fdc3a6601d08a4"
         );
     }
 
@@ -252,7 +256,7 @@ mod test {
         assert_eq!(gen.header.time, 1296688602);
         assert_eq!(
             gen.header.block_hash().to_string(),
-            "55048953473761fc3238039605faadf988aa5ecd2d756792ee022355009313e5"
+            "2f90e0d9843be35112f9830d6e86bf2ef4dd92836979ac4aae1a6f41e0797588"
         );
     }
 
