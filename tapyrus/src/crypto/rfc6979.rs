@@ -78,7 +78,7 @@ impl RFC6979 {
     }
 
     pub fn generate(&mut self) -> [u8; 32] {
-        // RVC6979 3.2.h.
+        // RFC6979 3.2.h.
         let zero = [0u8; 1];
         if self.retry {
             let mut hmac = HmacEngine::<SHA256>::new(&self.k[..]);
