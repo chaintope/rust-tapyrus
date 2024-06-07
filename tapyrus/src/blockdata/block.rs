@@ -16,6 +16,7 @@ use super::Weight;
 use crate::blockdata::script;
 use crate::blockdata::transaction::Transaction;
 use crate::consensus::{encode, Decodable, Encodable};
+use crate::crypto::schnorr::Signature;
 pub use crate::hash_types::BlockHash;
 use crate::hash_types::{TxMerkleNode, WitnessCommitment, WitnessMerkleNode, Wtxid};
 use crate::internal_macros::impl_consensus_encoding;
@@ -33,7 +34,7 @@ use crate::{io, merkle_tree, VarInt};
 /// ### Bitcoin Core References
 ///
 /// * [CBlockHeader definition](https://github.com/bitcoin/bitcoin/blob/345457b542b6a980ccfbc868af0970a6f91d1b82/src/primitives/block.h#L20)
-#[derive(PartialEq, Eq, Clone, PartialOrd, Ord, Hash)]
+#[derive(Copy, PartialEq, Eq, Clone, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Header {
@@ -48,7 +49,7 @@ pub struct Header {
     /// The timestamp of the block, as claimed by the miner.
     pub time: u32,
     /// Collection holds a signature for block hash which is consisted of block header without Proof.
-    pub proof: Signature,
+    pub proof: Option<Signature>,
 }
 
 impl_consensus_encoding!(Header, version, prev_blockhash, merkle_root, im_merkle_root, time, proof);
@@ -183,31 +184,6 @@ impl Encodable for Version {
 impl Decodable for Version {
     fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         Decodable::consensus_decode(r).map(Version)
-    }
-}
-
-/// A signature, which holds a Schnorr signature as blockdata::script::Script.
-#[derive(PartialEq, Eq, Clone, Debug)]
-pub struct Signature {
-    /// Schnorr Signature for block header hash. Formatted as DER encoding.
-    pub signature: script::Script,
-}
-
-impl Decodable for Signature {
-    #[inline]
-    fn consensus_decode<D: io::Read>(d: D) -> Result<Self, encode::Error> {
-        let script: script::Script = Decodable::consensus_decode(d)?;
-        Ok(Signature { signature: script })
-    }
-}
-
-impl Encodable for Signature {
-    #[inline]
-    fn consensus_encode<S: io::Write>(
-        &self,
-        mut s: S,
-    ) -> Result<usize, encode::Error> {
-        self.signature.consensus_encode(&mut s)
     }
 }
 

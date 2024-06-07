@@ -19,6 +19,7 @@ use crate::blockdata::opcodes::all::*;
 use crate::blockdata::script;
 use crate::blockdata::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
 use crate::blockdata::witness::Witness;
+use crate::crypto::schnorr::Signature;
 use crate::internal_macros::impl_bytes_newtype;
 use crate::network::Network;
 use crate::pow::CompactTarget;
@@ -104,9 +105,9 @@ pub fn genesis_block(network: Network) -> Block {
                 version: block::Version::ONE,
                 prev_blockhash: Hash::all_zeros(),
                 merkle_root,
-                im_merkle_root: txdata[0].ntxid(),
+                im_merkle_root: txdata[0].ntxid().into(),
                 time: 1231006505,
-                proof: block::Signature { signature: script::Script::new() },
+                proof: Some(Signature::default()),
             },
             txdata,
         },
@@ -115,9 +116,9 @@ pub fn genesis_block(network: Network) -> Block {
                 version: block::Version::ONE,
                 prev_blockhash: Hash::all_zeros(),
                 merkle_root,
-                im_merkle_root: txdata[0].ntxid(),
+                im_merkle_root: txdata[0].ntxid().into(),
                 time: 1296688602,
-                proof: block::Signature { signature: script::Script::new() },
+                proof: Some(Signature::default()),
             },
             txdata,
         },
@@ -126,9 +127,9 @@ pub fn genesis_block(network: Network) -> Block {
                 version: block::Version::ONE,
                 prev_blockhash: Hash::all_zeros(),
                 merkle_root,
-                im_merkle_root: txdata[0].ntxid(),
+                im_merkle_root: txdata[0].ntxid().into(),
                 time: 1598918400,
-                proof: block::Signature { signature: script::Script::new() },
+                proof: Some(Signature::default()),
             },
             txdata,
         },
@@ -137,9 +138,9 @@ pub fn genesis_block(network: Network) -> Block {
                 version: block::Version::ONE,
                 prev_blockhash: Hash::all_zeros(),
                 merkle_root,
-                im_merkle_root: txdata[0].ntxid(),
+                im_merkle_root: txdata[0].ntxid().into(),
                 time: 1296688602,
-                proof: block::Signature { signature: script::Script::new() },
+                proof: Some(Signature::default()),
             },
             txdata,
         },

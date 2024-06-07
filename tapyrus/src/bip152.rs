@@ -376,6 +376,7 @@ mod test {
     use crate::blockdata::locktime::absolute;
     use crate::blockdata::transaction;
     use crate::consensus::encode::{deserialize, serialize};
+    use crate::crypto::schnorr::Signature;
     use crate::hash_types::TxMerkleNode;
     use crate::{
         Amount, CompactTarget, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid,
@@ -402,9 +403,9 @@ mod test {
                 version: block::Version::ONE,
                 prev_blockhash: BlockHash::hash(&[0]),
                 merkle_root: TxMerkleNode::hash(&[1]),
+                im_merkle_root: TxMerkleNode::hash(&[1]),
                 time: 2,
-                bits: CompactTarget::from_consensus(3),
-                nonce: 4,
+                proof: Some(Signature::default()),
             },
             txdata: vec![dummy_tx(&[2]), dummy_tx(&[3]), dummy_tx(&[4])],
         }
