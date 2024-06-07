@@ -206,6 +206,14 @@ impl PublicKey {
     ) -> Result<(), Error> {
         Ok(secp.verify_ecdsa(msg, &sig.sig, &self.inner)?)
     }
+
+    /// Returns generator point of secp256k1 as PublicKey
+    pub fn generator() -> PublicKey {
+        let mut combined = vec![0x04];
+        combined.extend_from_slice(&secp256k1::constants::GENERATOR_X);
+        combined.extend_from_slice(&secp256k1::constants::GENERATOR_Y);
+        PublicKey::from_slice(&combined).unwrap()
+    }
 }
 
 impl From<secp256k1::PublicKey> for PublicKey {
@@ -1099,5 +1107,16 @@ mod tests {
         let res = PublicKey::from_str(s);
         assert!(res.is_err());
         assert_eq!(res.unwrap_err(), Error::InvalidHexLength(8));
+    }
+
+    #[test]
+    fn test_generator() {
+        let g = PublicKey::generator();
+
+        let mut expected: Vec<u8> = Vec::with_capacity(65);
+        expected.extend(&[4]);
+        expected.extend(&secp256k1::constants::GENERATOR_X);
+        expected.extend(&secp256k1::constants::GENERATOR_Y);
+        assert_eq!(&expected[..], &g.inner.serialize_uncompressed()[..]);
     }
 }

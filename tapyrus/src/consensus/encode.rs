@@ -24,6 +24,7 @@ use internals::write_err;
 use crate::bip152::{PrefilledTransaction, ShortId};
 use crate::blockdata::block;
 use crate::blockdata::transaction::{Transaction, TxIn, TxOut};
+use crate::crypto::schnorr;
 use crate::hash_types::{BlockHash, FilterHash, FilterHeader, TxMerkleNode};
 use crate::io::{self, Cursor, Read};
 #[cfg(feature = "std")]
@@ -849,6 +850,44 @@ impl Decodable for TapLeafHash {
     }
 }
 
+// option
+macro_rules! impl_option {
+    ($type: ty) => {
+        impl Encodable for Option<$type> {
+            #[inline]
+            fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+                let mut len = 0;
+                match self {
+                    Some(c) => {
+                        len += VarInt(serialize(c).len() as u64).consensus_encode(w)?;
+                        len += c.consensus_encode(w)?;
+                    }
+                    None => {
+                        len += VarInt(0).consensus_encode(w)?;
+                    }
+                }
+                Ok(len)
+            }
+        }
+
+        impl Decodable for Option<$type> {
+            #[inline]
+            fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, Error> {
+                let len = VarInt::consensus_decode(r)?.0;
+                if len == 0 {
+                    return Ok(None);
+                }
+                let ret = Decodable::consensus_decode(r)?;
+                if len != serialize(&ret).len() as u64 {
+                    return Err(Error::ParseFailed("Invalid length"));
+                }
+                Ok(Some(ret))
+            }
+        }
+    };
+}
+impl_option!(schnorr::Signature);
+
 #[cfg(test)]
 mod tests {
     use core::fmt;
@@ -1246,5 +1285,21 @@ mod tests {
                 data
             );
         }
+    }
+
+    #[test]
+    fn serialize_option_test() {
+        let none: Option<schnorr::Signature> = None;
+        assert_eq!(vec![0], serialize(&none));
+
+        let some: Option<schnorr::Signature> = Some(Default::default());
+        let expected = vec![
+            64,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0,
+        ];
+        assert_eq!(expected, serialize(&some));
     }
 }

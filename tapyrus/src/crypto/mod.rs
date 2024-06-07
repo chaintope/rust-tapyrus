@@ -10,3 +10,9 @@ pub mod key;
 pub mod sighash;
 // Contents re-exported in `tapyrus::taproot`.
 pub(crate) mod taproot;
+pub mod schnorr;
+mod prime;
+mod rfc6979;
+
+#[cfg(test)]
+mod test_helpers;
