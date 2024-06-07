@@ -166,7 +166,6 @@ impl Default for Signature {
 }
 
 impl_consensus_encoding!(Signature, r_x, sigma);
-// serde_struct_impl!(Signature, r_x, sigma);
 
 /// Signature error
 #[derive(Debug)]
