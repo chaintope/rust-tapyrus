@@ -205,9 +205,9 @@ pub struct Magic([u8; 4]);
 
 impl Magic {
     /// Bitcoin mainnet network magic bytes.
-    pub const BITCOIN: Self = Self([0xF9, 0xBE, 0xB4, 0xD9]);
+    pub const BITCOIN: Self = Self([0x01, 0xFF, 0xF0, 0x00]);
     /// Bitcoin testnet network magic bytes.
-    pub const TESTNET: Self = Self([0x0B, 0x11, 0x09, 0x07]);
+    pub const TESTNET: Self = Self([0x75, 0x9A, 0x83, 0x74]);
     /// Bitcoin signet network magic bytes.
     pub const SIGNET: Self = Self([0x0A, 0x03, 0xCF, 0x40]);
     /// Bitcoin regtest network magic bytes.
