@@ -105,7 +105,6 @@ pub fn genesis_block(network: Network) -> Block {
                 prev_blockhash: Hash::all_zeros(),
                 merkle_root,
                 time: 1231006505,
-                bits: CompactTarget::from_consensus(0x1d00ffff),
             },
             txdata,
         },
@@ -115,7 +114,6 @@ pub fn genesis_block(network: Network) -> Block {
                 prev_blockhash: Hash::all_zeros(),
                 merkle_root,
                 time: 1296688602,
-                bits: CompactTarget::from_consensus(0x1d00ffff),
             },
             txdata,
         },
@@ -125,7 +123,6 @@ pub fn genesis_block(network: Network) -> Block {
                 prev_blockhash: Hash::all_zeros(),
                 merkle_root,
                 time: 1598918400,
-                bits: CompactTarget::from_consensus(0x1e0377ae),
             },
             txdata,
         },
@@ -135,7 +132,6 @@ pub fn genesis_block(network: Network) -> Block {
                 prev_blockhash: Hash::all_zeros(),
                 merkle_root,
                 time: 1296688602,
-                bits: CompactTarget::from_consensus(0x207fffff),
             },
             txdata,
         },
@@ -234,10 +230,9 @@ mod test {
         );
 
         assert_eq!(gen.header.time, 1231006505);
-        assert_eq!(gen.header.bits, CompactTarget::from_consensus(0x1d00ffff));
         assert_eq!(
             gen.header.block_hash().to_string(),
-            "7ecab242f07335c577581d5b41ebb39deb3f48520914821217d028d67d04544c"
+            "1110d8340980a8bb80ab76ada1cfcfb7284cf64839755d22ac7a880b2ead3055"
         );
     }
 
@@ -251,10 +246,9 @@ mod test {
             "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
         );
         assert_eq!(gen.header.time, 1296688602);
-        assert_eq!(gen.header.bits, CompactTarget::from_consensus(0x1d00ffff));
         assert_eq!(
             gen.header.block_hash().to_string(),
-            "032936746d64457d0b62c865d7ff386b1322262948a1a901b057c0513755a881"
+            "f6d39d1c39f9b368d1b09c2eed6219c54b2be5bdbff9071b70c81926415d2c31"
         );
     }
 
@@ -268,7 +262,6 @@ mod test {
             "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
         );
         assert_eq!(gen.header.time, 1598918400);
-        assert_eq!(gen.header.bits, CompactTarget::from_consensus(0x1e0377ae));
         assert_eq!(
             gen.header.block_hash().to_string(),
             "00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6"
