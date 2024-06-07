@@ -7,7 +7,6 @@
 //!
 
 use crate::network::Network;
-use crate::pow::Target;
 
 /// Parameters that influence chain consensus.
 #[non_exhaustive]

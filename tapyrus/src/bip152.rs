@@ -379,7 +379,7 @@ mod test {
     use crate::crypto::schnorr::Signature;
     use crate::hash_types::TxMerkleNode;
     use crate::{
-        Amount, CompactTarget, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid,
+        Amount, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid,
         Witness,
     };
 

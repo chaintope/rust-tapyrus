@@ -112,7 +112,6 @@ pub mod hash_types;
 pub mod merkle_tree;
 pub mod network;
 pub mod policy;
-pub mod pow;
 pub mod psbt;
 pub mod sign_message;
 pub mod string;
@@ -156,7 +155,6 @@ pub use crate::hash_types::{
 };
 pub use crate::merkle_tree::MerkleBlock;
 pub use crate::network::Network;
-pub use crate::pow::{CompactTarget, Target, Work};
 pub use crate::psbt::Psbt;
 pub use crate::sighash::{EcdsaSighashType, TapSighashType};
 pub use crate::taproot::{

@@ -20,7 +20,6 @@ use crate::crypto::schnorr::Signature;
 pub use crate::hash_types::BlockHash;
 use crate::hash_types::{TxMerkleNode, WitnessCommitment, WitnessMerkleNode, Wtxid};
 use crate::internal_macros::impl_consensus_encoding;
-use crate::pow::{CompactTarget, Target, Work};
 use crate::prelude::*;
 use crate::{io, merkle_tree, VarInt};
 
@@ -65,32 +64,6 @@ impl Header {
         self.consensus_encode(&mut engine).expect("engines don't error");
         BlockHash::from_engine(engine)
     }
-
-    /// Computes the target (range [0, T] inclusive) that a blockhash must land in to be valid.
-    pub fn target(&self) -> Target { Target::ZERO }
-
-    /// Computes the popular "difficulty" measure for mining.
-    pub fn difficulty(&self) -> u128 { self.target().difficulty() }
-
-    /// Computes the popular "difficulty" measure for mining and returns a float value of f64.
-    pub fn difficulty_float(&self) -> f64 { self.target().difficulty_float() }
-
-    /// Checks that the proof-of-work for the block is valid, returning the block hash.
-    pub fn validate_pow(&self, required_target: Target) -> Result<BlockHash, ValidationError> {
-        let target = self.target();
-        if target != required_target {
-            return Err(ValidationError::BadTarget);
-        }
-        let block_hash = self.block_hash();
-        if target.is_met_by(block_hash) {
-            Ok(block_hash)
-        } else {
-            Err(ValidationError::BadProofOfWork)
-        }
-    }
-
-    /// Returns the total work of the block.
-    pub fn work(&self) -> Work { self.target().to_work() }
 }
 
 impl fmt::Debug for Header {
@@ -495,7 +468,6 @@ mod tests {
 
         let prevhash = hex!("4ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000");
         let merkle = hex!("bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914c");
-        let work = Work::from(0x100010001_u128);
 
         let decode: Result<Block, _> = deserialize(&some_block);
         let bad_decode: Result<Block, _> = deserialize(&cutoff_block);
@@ -509,13 +481,6 @@ mod tests {
         assert_eq!(real_decode.header.im_merkle_root, real_decode.immutable_merkle_root().unwrap());
         assert_eq!(serialize(&real_decode.header.merkle_root), merkle);
         assert_eq!(real_decode.header.time, 1231965655);
-        assert_eq!(real_decode.header.work(), work);
-        assert_eq!(
-            real_decode.header.validate_pow(real_decode.header.target()).unwrap(),
-            real_decode.block_hash()
-        );
-        assert_eq!(real_decode.header.difficulty(), 1);
-        assert_eq!(real_decode.header.difficulty_float(), 1.0);
         // [test] TODO: check the transaction data
 
         assert_eq!(real_decode.total_size(), some_block.len());
@@ -540,7 +505,6 @@ mod tests {
 
         let prevhash = hex!("2aa2f2ca794ccbd40c16e2f3333f6b8b683f9e7179b2c4d74906000000000000");
         let merkle = hex!("10bc26e70a2f672ad420a6153dd0c28b40a6002c55531bfc99bf8994a8e8f67e");
-        let work = Work::from(0x257c3becdacc64_u64);
 
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
@@ -550,13 +514,6 @@ mod tests {
         assert_eq!(real_decode.header.merkle_root, real_decode.compute_merkle_root().unwrap());
         assert_eq!(real_decode.header.im_merkle_root, real_decode.immutable_merkle_root().unwrap());
         assert_eq!(real_decode.header.time, 1472004949);
-        assert_eq!(real_decode.header.work(), work);
-        assert_eq!(
-            real_decode.header.validate_pow(real_decode.header.target()).unwrap(),
-            real_decode.block_hash()
-        );
-        assert_eq!(real_decode.header.difficulty(), 2456598);
-        assert_eq!(real_decode.header.difficulty_float(), 2456598.4399242126);
         // [test] TODO: check the transaction data
 
         assert_eq!(real_decode.total_size(), segwit_block.len());
@@ -581,31 +538,6 @@ mod tests {
         assert!(decode2.is_ok());
         let real_decode2 = decode2.unwrap();
         assert_eq!(real_decode2.header.version, Version(-2147483648));
-    }
-
-    #[test]
-    fn validate_pow_test() {
-        let some_header = hex!("010000004ddccd549d28f385ab457e98d1b11ce80bfea2c5ab93015ade4973e400000000bf4473e53794beae34e64fccc471dace6ae544180816f89591894e0f417a914cd74d6e49ffff001d323b3a7b");
-        let some_header: Header =
-            deserialize(&some_header).expect("Can't deserialize correct block header");
-        assert_eq!(
-            some_header.validate_pow(some_header.target()).unwrap(),
-            some_header.block_hash()
-        );
-
-        // test with zero target
-        match some_header.validate_pow(Target::ZERO) {
-            Err(ValidationError::BadTarget) => (),
-            _ => panic!("unexpected result from validate_pow"),
-        }
-
-        // test with modified header
-        let mut invalid_header: Header = some_header;
-        invalid_header.version.0 += 1;
-        match invalid_header.validate_pow(invalid_header.target()) {
-            Err(ValidationError::BadProofOfWork) => (),
-            _ => panic!("unexpected result from validate_pow"),
-        }
     }
 
     #[test]

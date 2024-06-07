@@ -22,15 +22,7 @@ use crate::blockdata::witness::Witness;
 use crate::crypto::schnorr::Signature;
 use crate::internal_macros::impl_bytes_newtype;
 use crate::network::Network;
-use crate::pow::CompactTarget;
 use crate::Amount;
-
-/// How many seconds between blocks we expect on average.
-pub const TARGET_BLOCK_SPACING: u32 = 600;
-/// How many blocks between diffchanges.
-pub const DIFFCHANGE_INTERVAL: u32 = 2016;
-/// How much time on average should occur between diffchanges.
-pub const DIFFCHANGE_TIMESPAN: u32 = 14 * 24 * 3600;
 
 #[deprecated(since = "0.31.0", note = "Use Weight::MAX_BLOCK instead")]
 /// The maximum allowed weight for a block, see BIP 141 (network rule).
