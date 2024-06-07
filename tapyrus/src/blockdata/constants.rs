@@ -106,7 +106,6 @@ pub fn genesis_block(network: Network) -> Block {
                 merkle_root,
                 time: 1231006505,
                 bits: CompactTarget::from_consensus(0x1d00ffff),
-                nonce: 2083236893,
             },
             txdata,
         },
@@ -117,7 +116,6 @@ pub fn genesis_block(network: Network) -> Block {
                 merkle_root,
                 time: 1296688602,
                 bits: CompactTarget::from_consensus(0x1d00ffff),
-                nonce: 414098458,
             },
             txdata,
         },
@@ -128,7 +126,6 @@ pub fn genesis_block(network: Network) -> Block {
                 merkle_root,
                 time: 1598918400,
                 bits: CompactTarget::from_consensus(0x1e0377ae),
-                nonce: 52613770,
             },
             txdata,
         },
@@ -139,7 +136,6 @@ pub fn genesis_block(network: Network) -> Block {
                 merkle_root,
                 time: 1296688602,
                 bits: CompactTarget::from_consensus(0x207fffff),
-                nonce: 2,
             },
             txdata,
         },
@@ -239,10 +235,9 @@ mod test {
 
         assert_eq!(gen.header.time, 1231006505);
         assert_eq!(gen.header.bits, CompactTarget::from_consensus(0x1d00ffff));
-        assert_eq!(gen.header.nonce, 2083236893);
         assert_eq!(
             gen.header.block_hash().to_string(),
-            "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
+            "7ecab242f07335c577581d5b41ebb39deb3f48520914821217d028d67d04544c"
         );
     }
 
@@ -257,10 +252,9 @@ mod test {
         );
         assert_eq!(gen.header.time, 1296688602);
         assert_eq!(gen.header.bits, CompactTarget::from_consensus(0x1d00ffff));
-        assert_eq!(gen.header.nonce, 414098458);
         assert_eq!(
             gen.header.block_hash().to_string(),
-            "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"
+            "032936746d64457d0b62c865d7ff386b1322262948a1a901b057c0513755a881"
         );
     }
 
@@ -275,7 +269,6 @@ mod test {
         );
         assert_eq!(gen.header.time, 1598918400);
         assert_eq!(gen.header.bits, CompactTarget::from_consensus(0x1e0377ae));
-        assert_eq!(gen.header.nonce, 52613770);
         assert_eq!(
             gen.header.block_hash().to_string(),
             "00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6"
