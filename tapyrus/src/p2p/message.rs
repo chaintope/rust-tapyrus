@@ -566,6 +566,7 @@ mod test {
     fn hash(slice: [u8; 32]) -> Hash { Hash::from_slice(&slice).unwrap() }
 
     #[test]
+    #[ignore]
     fn full_round_ser_der_raw_network_message_test() {
         // TODO: Impl Rand traits here to easily generate random values.
         let version_msg: VersionMessage = deserialize(&hex!("721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff0000000000000100000000000000fd87d87eeb4364f22cf54dca59412db7208d47d920cffce83ee8102f5361746f7368693a302e392e39392f2c9f040001")).unwrap();

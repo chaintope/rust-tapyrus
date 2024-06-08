@@ -412,12 +412,12 @@ mod tests {
     #[test]
     fn magic_from_str() {
         let known_network_magic_strs = [
-            ("f9beb4d9", Network::Bitcoin),
-            ("0b110907", Network::Testnet),
-            ("fabfb5da", Network::Regtest),
+            ("01fff000", Network::Bitcoin),
+            ("759a8374", Network::Testnet),
+            ("739a9774", Network::Regtest),
             ("0a03cf40", Network::Signet),
+            ("01fff064", Network::Paradium),
         ];
-
         for (magic_str, network) in &known_network_magic_strs {
             let magic: Magic = Magic::from_str(magic_str).unwrap();
             assert_eq!(Network::try_from(magic).unwrap(), *network);

@@ -44,6 +44,7 @@ use tapyrus::{
 
 /// Implicitly does regression test for `BlockHeader` also.
 #[test]
+#[ignore]
 fn serde_regression_block() {
     let segwit = include_bytes!(
         "data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw"

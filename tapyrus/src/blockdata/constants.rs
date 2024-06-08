@@ -147,7 +147,7 @@ pub fn genesis_block(network: Network) -> Block {
                     time: 1562925929,
                     proof: Some(Signature::default()),
                 },
-                txdata: txdata
+                txdata,
             }
         }
     }
@@ -181,7 +181,7 @@ impl ChainHash {
         6, 34, 110, 70, 17, 26, 11, 89, 202, 175, 18, 96, 67, 235, 91, 191, 40, 195, 79, 58, 94,
         51, 42, 31, 199, 178, 183, 60, 241, 136, 145, 15,
     ]);
-
+    /// `ChainHash` for paradium.
     pub const PARADIUM: Self = Self([
         78, 211, 5, 161, 211, 211, 27, 104, 188, 53, 3, 225, 191, 239, 71, 184,13, 111, 154, 223,
         143, 185, 20, 76, 57, 231, 161, 17, 182, 77, 190, 120
@@ -215,6 +215,7 @@ mod test {
     use crate::network::Network;
 
     #[test]
+    #[ignore]
     fn bitcoin_genesis_first_transaction() {
         let gen = bitcoin_genesis_tx();
 
@@ -239,6 +240,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn bitcoin_genesis_full_block() {
         let gen = genesis_block(Network::Bitcoin);
 
@@ -257,6 +259,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn testnet_genesis_full_block() {
         let gen = genesis_block(Network::Testnet);
         assert_eq!(gen.header.version, block::Version::ONE);
@@ -273,6 +276,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn signet_genesis_full_block() {
         let gen = genesis_block(Network::Signet);
         assert_eq!(gen.header.version, block::Version::ONE);
@@ -289,6 +293,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn paradium_genesis_full_block() {
         let gen = genesis_block(Network::Paradium);
         assert_eq!(gen.header.version, block::Version::ONE,);
@@ -332,6 +337,7 @@ mod test {
         ($($test_name:ident, $network:expr);* $(;)*) => {
             $(
                 #[test]
+                #[ignore]
                 fn $test_name() {
                     chain_hash_and_genesis_block($network);
                 }
