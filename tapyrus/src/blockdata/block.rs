@@ -266,7 +266,7 @@ impl Block {
     }
 
     pub fn immutable_merkle_root(&self) -> Option<TxMerkleNode> {
-        let hashes = self.txdata.iter().map(|obj| obj.maltxid());
+        let hashes = self.txdata.iter().map(|obj| obj.malfix_txid());
         merkle_tree::calculate_root(hashes).map(|h| h.into())
     }
 

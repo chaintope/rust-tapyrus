@@ -702,7 +702,7 @@ impl Transaction {
 
     /// Computes an "immutable TXID".  The double SHA256 taken from a transaction 
     /// after stripping it of all input scripts including their length prefixes.
-    pub fn maltxid(&self) -> sha256d::Hash {
+    pub fn malfix_txid(&self) -> sha256d::Hash {
         let mut enc = sha256d::Hash::engine();
         self.version.consensus_encode(&mut enc).unwrap();
         VarInt(self.input.len() as u64).consensus_encode(&mut enc).unwrap();
@@ -1772,7 +1772,7 @@ mod tests {
     }
 
     #[test]
-    fn test_maltxid() {
+    fn test_malfix_txid() {
         // Paradium genesis block
         let hex_tx = hex!(
             "0100000001000000000000000000000000000000000000000000000000000000\
@@ -1783,7 +1783,7 @@ mod tests {
         let tx: Transaction = deserialize(&hex_tx).unwrap();
         assert_eq!(format!("{:x}", tx.txid()), "efaf069367948e9e4c99ca04cf885f41cd8dce6b9dddd310c9034f5e65396323");
         assert_eq!(format!("{:x}", tx.ntxid()), "c12d06b287c4d95968071733c9e0ab33d93e2c354bc77a56dc6119913732a5dc");
-        assert_eq!(format!("{:x}", tx.maltxid()), "18ab15aaa859c9030f8c449fa074a90eb04b02fc2aca5de0ebbe851e6886efd0");
+        assert_eq!(format!("{:x}", tx.malfix_txid()), "18ab15aaa859c9030f8c449fa074a90eb04b02fc2aca5de0ebbe851e6886efd0");
     }
     
     #[test]
