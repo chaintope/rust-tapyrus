@@ -700,6 +700,21 @@ impl Transaction {
         Wtxid::from_engine(enc)
     }
 
+    /// Computes an "immutable TXID".  The double SHA256 taken from a transaction 
+    /// after stripping it of all input scripts including their length prefixes.
+    pub fn maltxid(&self) -> sha256d::Hash {
+        let mut enc = sha256d::Hash::engine();
+        self.version.consensus_encode(&mut enc).unwrap();
+        VarInt(self.input.len() as u64).consensus_encode(&mut enc).unwrap();
+        for input in &self.input {
+            input.previous_output.consensus_encode(&mut enc).unwrap();
+            input.sequence.consensus_encode(&mut enc).unwrap();
+        }
+        self.output.consensus_encode(&mut enc).unwrap();
+        self.lock_time.consensus_encode(&mut enc).unwrap();
+        sha256d::Hash::from_engine(enc)
+    }
+
     /// Returns the weight of this transaction, as defined by BIP-141.
     ///
     /// > Transaction weight is defined as Base transaction size * 3 + Total transaction size (ie.
