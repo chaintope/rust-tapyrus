@@ -212,6 +212,8 @@ impl Magic {
     pub const SIGNET: Self = Self([0x0A, 0x03, 0xCF, 0x40]);
     /// Bitcoin regtest network magic bytes.
     pub const REGTEST: Self = Self([0x73, 0x9A, 0x97, 0x74]);
+    /// Paradium network magic bytes.
+    pub const PARADIUM: Self = Self([0x01, 0xff, 0xf0, 0x64]);
 
     /// Create network magic from bytes.
     pub fn from_bytes(bytes: [u8; 4]) -> Magic { Magic(bytes) }
@@ -239,6 +241,7 @@ impl From<Network> for Magic {
             Network::Testnet => Magic::TESTNET,
             Network::Signet => Magic::SIGNET,
             Network::Regtest => Magic::REGTEST,
+            Network::Paradium => Magic::PARADIUM,
         }
     }
 }
@@ -253,6 +256,7 @@ impl TryFrom<Magic> for Network {
             Magic::TESTNET => Ok(Network::Testnet),
             Magic::SIGNET => Ok(Network::Signet),
             Magic::REGTEST => Ok(Network::Regtest),
+            Magic::PARADIUM => Ok(Network::Paradium),
             _ => Err(UnknownMagicError(magic)),
         }
     }

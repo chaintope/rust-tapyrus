@@ -678,7 +678,7 @@ impl Xpriv {
     pub fn encode(&self) -> [u8; 78] {
         let mut ret = [0; 78];
         ret[0..4].copy_from_slice(&match self.network {
-            Network::Bitcoin => VERSION_BYTES_MAINNET_PRIVATE,
+            Network::Bitcoin | Network::Paradium => VERSION_BYTES_MAINNET_PRIVATE,
             Network::Testnet | Network::Signet | Network::Regtest => VERSION_BYTES_TESTNETS_PRIVATE,
         });
         ret[4] = self.depth;
@@ -810,7 +810,7 @@ impl Xpub {
     pub fn encode(&self) -> [u8; 78] {
         let mut ret = [0; 78];
         ret[0..4].copy_from_slice(&match self.network {
-            Network::Bitcoin => VERSION_BYTES_MAINNET_PUBLIC,
+            Network::Bitcoin | Network::Paradium => VERSION_BYTES_MAINNET_PUBLIC,
             Network::Testnet | Network::Signet | Network::Regtest => VERSION_BYTES_TESTNETS_PUBLIC,
         });
         ret[4] = self.depth;

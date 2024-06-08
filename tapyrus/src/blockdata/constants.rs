@@ -136,6 +136,20 @@ pub fn genesis_block(network: Network) -> Block {
             },
             txdata,
         },
+        Network::Paradium => {
+            let txdata = vec![bitcoin_genesis_tx()];
+            Block {
+                header: block::Header {
+                    version: block::Version::ONE,
+                    prev_blockhash: Hash::all_zeros(),
+                    merkle_root,
+                    im_merkle_root: txdata[0].ntxid().into(),
+                    time: 1562925929,
+                    proof: Some(Signature::default()),
+                },
+                txdata: txdata
+            }
+        }
     }
 }
 
@@ -168,12 +182,17 @@ impl ChainHash {
         51, 42, 31, 199, 178, 183, 60, 241, 136, 145, 15,
     ]);
 
+    pub const PARADIUM: Self = Self([
+        78, 211, 5, 161, 211, 211, 27, 104, 188, 53, 3, 225, 191, 239, 71, 184,13, 111, 154, 223,
+        143, 185, 20, 76, 57, 231, 161, 17, 182, 77, 190, 120
+    ]);
+
     /// Returns the hash of the `network` genesis block for use as a chain hash.
     ///
     /// See [BOLT 0](https://github.com/lightning/bolts/blob/ffeece3dab1c52efdb9b53ae476539320fa44938/00-introduction.md#chain_hash)
     /// for specification.
     pub const fn using_genesis_block(network: Network) -> Self {
-        let hashes = [Self::BITCOIN, Self::TESTNET, Self::SIGNET, Self::REGTEST];
+        let hashes = [Self::BITCOIN, Self::TESTNET, Self::SIGNET, Self::REGTEST, Self::PARADIUM];
         hashes[network as usize]
     }
 
@@ -269,6 +288,18 @@ mod test {
         );
     }
 
+    #[test]
+    fn paradium_genesis_full_block() {
+        let gen = genesis_block(Network::Paradium);
+        assert_eq!(gen.header.version, block::Version::ONE,);
+        assert_eq!(gen.header.prev_blockhash, Hash::all_zeros());
+        assert_eq!(gen.header.merkle_root.to_string(),
+                  "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b");
+        assert_eq!(gen.header.time, 1562925929);
+        assert_eq!(gen.header.block_hash().to_string(),
+                   "78be4db611a1e7394c14b98fdf9a6f0db847efbfe10335bc681bd3d3a105d34e");
+    }
+
     // The *_chain_hash tests are sanity/regression tests, they verify that the const byte array
     // representing the genesis block is the same as that created by hashing the genesis block.
     fn chain_hash_and_genesis_block(network: Network) {
@@ -292,6 +323,7 @@ mod test {
             Network::Testnet => {},
             Network::Signet => {},
             Network::Regtest => {},
+            Network::Paradium => {}
             _ => panic!("Update ChainHash::using_genesis_block and chain_hash_genesis_block with new variants"),
         }
     }
@@ -312,6 +344,7 @@ mod test {
         testnet_chain_hash_genesis_block, Network::Testnet;
         signet_chain_hash_genesis_block, Network::Signet;
         regtest_chain_hash_genesis_block, Network::Regtest;
+        paradium_chain_hash_genesis_block, Network::Paradium;
     }
 
     // Test vector taken from: https://github.com/lightning/bolts/blob/master/00-introduction.md
