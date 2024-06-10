@@ -208,7 +208,7 @@ fn serde_regression_opcodes() {
         OP_NOP10,
         OP_CHECKSIGADD,
         OP_RETURN_187,
-        OP_RETURN_188,
+        OP_COLOR,
         OP_RETURN_189,
         OP_RETURN_190,
         OP_RETURN_191,

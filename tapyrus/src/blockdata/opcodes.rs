@@ -267,10 +267,10 @@ all_opcodes! {
     OP_NOP8 => 0xb7, "Does nothing.";
     OP_NOP9 => 0xb8, "Does nothing.";
     OP_NOP10 => 0xb9, "Does nothing.";
-    // Every other opcode acts as OP_RETURN
     OP_CHECKSIGADD => 0xba, "OP_CHECKSIGADD post tapscript.";
     OP_RETURN_187 => 0xbb, "Synonym for OP_RETURN.";
-    OP_RETURN_188 => 0xbc, "Synonym for OP_RETURN.";
+    OP_COLOR => 0xbc, "Pop the top stack item and interpreted as a COLOR identifier.";
+    // Every other opcode acts as OP_RETURN
     OP_RETURN_189 => 0xbd, "Synonym for OP_RETURN.";
     OP_RETURN_190 => 0xbe, "Synonym for OP_RETURN.";
     OP_RETURN_191 => 0xbf, "Synonym for OP_RETURN.";
@@ -370,7 +370,7 @@ impl Opcode {
             | (OP_MUL, ctx) | (OP_DIV, ctx) | (OP_MOD, ctx)
             | (OP_LSHIFT, ctx) | (OP_RSHIFT, ctx) if ctx == ClassifyContext::Legacy => Class::IllegalOp,
 
-            // 87 opcodes of SuccessOp class only in TapScript context
+            // 86 opcodes of SuccessOp class only in TapScript context
             (op, ClassifyContext::TapScript)
                 if op.code == 80
                     || op.code == 98
@@ -379,7 +379,8 @@ impl Opcode {
                     || (op.code >= 137 && op.code <= 138)
                     || (op.code >= 141 && op.code <= 142)
                     || (op.code >= 149 && op.code <= 153)
-                    || (op.code >= 187 && op.code <= 254) =>
+                    || op.code == 187
+                    || (op.code >= 189 && op.code <= 254)=>
                 Class::SuccessOp,
 
             // 11 opcodes of NoOp class
@@ -411,7 +412,7 @@ impl Opcode {
             // 76 opcodes of PushBytes class
             (op, _) if op.code <= OP_PUSHBYTES_75.code => Class::PushBytes(self.code as u32),
 
-            // opcodes of Ordinary class: 61 for Legacy and 60 for TapScript context
+            // opcodes of Ordinary class: 62 for Legacy and 60 for TapScript context
             (_, _) => Class::Ordinary(Ordinary::with(self)),
         }
     }
@@ -510,7 +511,7 @@ macro_rules! ordinary_opcode {
     );
 }
 
-// "Ordinary" opcodes -- should be 61 of these
+// "Ordinary" opcodes -- should be 62 of these
 ordinary_opcode! {
     // pushdata
     OP_PUSHDATA1, OP_PUSHDATA2, OP_PUSHDATA4,
@@ -533,7 +534,9 @@ ordinary_opcode! {
     OP_RIPEMD160, OP_SHA1, OP_SHA256, OP_HASH160, OP_HASH256,
     OP_CODESEPARATOR, OP_CHECKSIG, OP_CHECKSIGVERIFY,
     OP_CHECKMULTISIG, OP_CHECKMULTISIGVERIFY,
-    OP_CHECKSIGADD
+    OP_CHECKSIGADD,
+    // colored coins
+    OP_COLOR
 }
 
 impl Ordinary {
@@ -824,7 +827,7 @@ mod tests {
         roundtrip!(unique, OP_NOP10);
         roundtrip!(unique, OP_CHECKSIGADD);
         roundtrip!(unique, OP_RETURN_187);
-        roundtrip!(unique, OP_RETURN_188);
+        roundtrip!(unique, OP_COLOR);
         roundtrip!(unique, OP_RETURN_189);
         roundtrip!(unique, OP_RETURN_190);
         roundtrip!(unique, OP_RETURN_191);
