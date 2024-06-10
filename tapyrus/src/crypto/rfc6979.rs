@@ -5,11 +5,11 @@
 //! RFC6979
 //!
 
-use crate::hashes::{HmacEngine, HashEngine, Hmac, Hash};
-use crate::hashes::sha256::Hash as SHA256;
-use crate::prelude::*;
 use secp256k1::SecretKey;
 
+use crate::hashes::sha256::Hash as SHA256;
+use crate::hashes::{Hash, HashEngine, Hmac, HmacEngine};
+use crate::prelude::*;
 
 /// Generate nonce
 pub fn nonce_rfc6979(
@@ -18,8 +18,7 @@ pub fn nonce_rfc6979(
     algo16: &[u8; 16],
     data: Option<&[u8; 32]>,
     counter: u32,
-) -> [u8; 32]
-{
+) -> [u8; 32] {
     let mut keydata: Vec<u8> = Vec::new();
 
     keydata.extend(&key[..]);
@@ -102,21 +101,24 @@ impl RFC6979 {
 
 #[cfg(test)]
 mod tests {
+    use hex::FromHex;
+
     use super::*;
     use crate::crypto::test_helpers::{decode_message, decode_sk};
-    use hex::FromHex;
 
     #[test]
     fn test() {
-        let message = decode_message("0000000000000000000000000000000000000000000000000000000000000000");
+        let message =
+            decode_message("0000000000000000000000000000000000000000000000000000000000000000");
         let sk = decode_sk("0000000000000000000000000000000000000000000000000000000000000001");
 
         // "SCHNORR + SHA256"
-        static ALGO16: [u8; 16] = [
-            83, 67, 72, 78, 79, 82, 82, 32, 43, 32, 83, 72, 65, 50, 53, 54
-        ];
+        static ALGO16: [u8; 16] = [83, 67, 72, 78, 79, 82, 82, 32, 43, 32, 83, 72, 65, 50, 53, 54];
 
-        assert_eq!(nonce_rfc6979(&message, &sk, &ALGO16, None, 0),
-                   &Vec::from_hex("e9766e06045ef351d82f09d5d8707fd9a3f1f10cd5c596ce34b88b1aa19c7aea").unwrap()[..]);
+        assert_eq!(
+            nonce_rfc6979(&message, &sk, &ALGO16, None, 0),
+            &Vec::from_hex("e9766e06045ef351d82f09d5d8707fd9a3f1f10cd5c596ce34b88b1aa19c7aea")
+                .unwrap()[..]
+        );
     }
 }

@@ -6,15 +6,13 @@
 //!
 //!
 
-use rug::Integer;
 use rug::integer::Order;
+use rug::Integer;
 
 /// Prime number for secp256k1 field element.
 pub const P: [u8; 32] = [
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0xfc, 0x2f
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe, 0xff, 0xff, 0xfc, 0x2f,
 ];
 
 /// Calculate jacobi symbol
@@ -40,20 +38,14 @@ fn jacobi_inner(a: &Integer, n: &Integer) -> i8 {
         a1 = a1.div_exact_u(2);
         e += 1;
     }
-    let mut s: i8 = if e & 1 == 0
-        || n.mod_u(8) == 1
-        || n.mod_u(8) == 7
-    {
+    let mut s: i8 = if e & 1 == 0 || n.mod_u(8) == 1 || n.mod_u(8) == 7 {
         1
-    } else if n.mod_u(8) == 3
-        || n.mod_u(8) == 5
-    {
+    } else if n.mod_u(8) == 3 || n.mod_u(8) == 5 {
         -1
     } else {
         0
     };
-    if n.mod_u(4) == 3 && a1.mod_u(4) == 3
-    {
+    if n.mod_u(4) == 3 && a1.mod_u(4) == 3 {
         s = -s
     }
 
@@ -66,8 +58,9 @@ fn jacobi_inner(a: &Integer, n: &Integer) -> i8 {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use hex::FromHex;
+
+    use super::*;
 
     #[test]
     fn test_jacobi() {
@@ -77,7 +70,8 @@ mod tests {
 
         let a = <[u8; 32]>::from_hex(
             "388f7b0f632de8140fe337e62a37f3566500a99934c2231b6cb9fd7584b8e672",
-        ).unwrap();
+        )
+        .unwrap();
 
         assert_eq!(-1, jacobi(&a[..]));
     }

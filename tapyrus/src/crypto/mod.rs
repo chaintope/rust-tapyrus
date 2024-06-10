@@ -9,10 +9,10 @@ pub mod ecdsa;
 pub mod key;
 pub mod sighash;
 // Contents re-exported in `tapyrus::taproot`.
-pub(crate) mod taproot;
-pub mod schnorr;
 mod prime;
 mod rfc6979;
+pub mod schnorr;
+pub(crate) mod taproot;
 
 #[cfg(test)]
 mod test_helpers;
