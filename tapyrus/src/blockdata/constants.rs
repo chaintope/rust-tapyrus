@@ -8,7 +8,7 @@
 //!
 
 use core::default::Default;
-use std::str::FromStr;
+use core::str::FromStr;
 
 use hashes::{sha256d, Hash};
 use hex_lit::hex;

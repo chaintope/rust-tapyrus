@@ -9,7 +9,7 @@
 //!
 
 use core::fmt;
-use std::str::FromStr;
+use core::str::FromStr;
 
 use hashes::hex::FromHex;
 use hashes::{Hash, HashEngine};
@@ -227,8 +227,8 @@ impl FromStr for XField {
     }
 }
 
-impl std::fmt::Display for XField {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for XField {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", serialize_hex(self))
     }
 }
@@ -252,7 +252,7 @@ impl<'de> ::serde::Deserialize<'de> for XField {
         impl<'de> ::serde::de::Visitor<'de> for XFieldVisitor {
             type Value = XField;
 
-            fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+            fn expecting(&self, formatter: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 formatter.write_str("hex string")
             }
 
@@ -260,7 +260,7 @@ impl<'de> ::serde::Deserialize<'de> for XField {
             where
                 E: ::serde::de::Error,
             {
-                if let Ok(s) = ::std::str::from_utf8(v) {
+                if let Ok(s) = ::core::str::from_utf8(v) {
                     XField::from_str(s).map_err(E::custom)
                 } else {
                     Err(E::invalid_value(::serde::de::Unexpected::Bytes(v), &self))
