@@ -811,11 +811,12 @@ impl Transaction {
     ///
     /// The first transaction in the block distributes the mining reward and is called the coinbase
     /// transaction. It is impossible to check if the transaction is first in the block, so this
-    /// function checks the structure of the transaction instead - the previous output must be
-    /// all-zeros (creates satoshis "out of thin air").
+    /// function checks the structure of the transaction instead.
+    /// In Tapyrus, a coinbase transaction has a default txid ("0000000000000000000000000000000000000000000000000000000000000000") in its input.
+    /// See [Tapyrus Transaction Structure](https://github.com/chaintope/tapyrus-core/blob/master/doc/tapyrus/fix_transaction_malleability.md#tapyrus-transaction-structure) for more information.
     #[doc(alias = "is_coin_base")] // method previously had this name
     pub fn is_coinbase(&self) -> bool {
-        self.input.len() == 1 && self.input[0].previous_output.is_null()
+        self.input.len() == 1 && self.input[0].previous_output.txid == Hash::all_zeros()
     }
 
     /// Checks if this is a coinbase transaction.
@@ -1546,13 +1547,11 @@ mod tests {
 
     #[test]
     fn is_coinbase() {
-        use crate::blockdata::constants;
-        use crate::network::Network;
-
-        let genesis = constants::genesis_block(Network::Bitcoin);
-        assert!(genesis.txdata[0].is_coinbase());
-        let tx_bytes = hex!("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000");
-        let tx: Transaction = deserialize(&tx_bytes).unwrap();
+        let hex_coinbase_tx = Vec::<u8>::from_hex("0100000001000000000000000000000000000000000000000000000000000000000000000000000000222103addb2555f37abf8f28f11f498bec7bd1460e7243c1813847c49a7ae326a97d1cffffffff0100f2052a010000001976a914a15f16ea2ba840d178e4c19781abca5f4fb1b4c288ac00000000").unwrap();
+        let coinbase_tx: Transaction = deserialize(&hex_coinbase_tx).unwrap();
+        assert!(coinbase_tx.is_coinbase());
+        let hex_tx = Vec::<u8>::from_hex("0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52ffffffff0100e1f505000000001976a9140389035a9225b3839e2bbf32d826a1e222031fd888ac00000000").unwrap();
+        let tx: Transaction = deserialize(&hex_tx).unwrap();
         assert!(!tx.is_coinbase());
     }
 
