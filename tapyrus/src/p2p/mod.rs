@@ -205,13 +205,15 @@ pub struct Magic([u8; 4]);
 
 impl Magic {
     /// Bitcoin mainnet network magic bytes.
-    pub const BITCOIN: Self = Self([0xF9, 0xBE, 0xB4, 0xD9]);
+    pub const BITCOIN: Self = Self([0x01, 0xFF, 0xF0, 0x00]);
     /// Bitcoin testnet network magic bytes.
-    pub const TESTNET: Self = Self([0x0B, 0x11, 0x09, 0x07]);
+    pub const TESTNET: Self = Self([0x75, 0x9A, 0x83, 0x74]);
     /// Bitcoin signet network magic bytes.
     pub const SIGNET: Self = Self([0x0A, 0x03, 0xCF, 0x40]);
     /// Bitcoin regtest network magic bytes.
-    pub const REGTEST: Self = Self([0xFA, 0xBF, 0xB5, 0xDA]);
+    pub const REGTEST: Self = Self([0x73, 0x9A, 0x97, 0x74]);
+    /// Paradium network magic bytes.
+    pub const PARADIUM: Self = Self([0x01, 0xff, 0xf0, 0x64]);
 
     /// Create network magic from bytes.
     pub fn from_bytes(bytes: [u8; 4]) -> Magic { Magic(bytes) }
@@ -239,6 +241,7 @@ impl From<Network> for Magic {
             Network::Testnet => Magic::TESTNET,
             Network::Signet => Magic::SIGNET,
             Network::Regtest => Magic::REGTEST,
+            Network::Paradium => Magic::PARADIUM,
         }
     }
 }
@@ -253,6 +256,7 @@ impl TryFrom<Magic> for Network {
             Magic::TESTNET => Ok(Network::Testnet),
             Magic::SIGNET => Ok(Network::Signet),
             Magic::REGTEST => Ok(Network::Regtest),
+            Magic::PARADIUM => Ok(Network::Paradium),
             _ => Err(UnknownMagicError(magic)),
         }
     }
@@ -408,12 +412,12 @@ mod tests {
     #[test]
     fn magic_from_str() {
         let known_network_magic_strs = [
-            ("f9beb4d9", Network::Bitcoin),
-            ("0b110907", Network::Testnet),
-            ("fabfb5da", Network::Regtest),
+            ("01fff000", Network::Bitcoin),
+            ("759a8374", Network::Testnet),
+            ("739a9774", Network::Regtest),
             ("0a03cf40", Network::Signet),
+            ("01fff064", Network::Paradium),
         ];
-
         for (magic_str, network) in &known_network_magic_strs {
             let magic: Magic = Magic::from_str(magic_str).unwrap();
             assert_eq!(Network::try_from(magic).unwrap(), *network);

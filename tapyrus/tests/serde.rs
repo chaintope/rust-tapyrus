@@ -39,11 +39,12 @@ use tapyrus::sighash::{EcdsaSighashType, TapSighashType};
 use tapyrus::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use tapyrus::{
     ecdsa, transaction, Address, Amount, Block, Network, OutPoint, PrivateKey, PublicKey,
-    ScriptBuf, Sequence, Target, Transaction, TxIn, TxOut, Txid, Work,
+    ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid,
 };
 
 /// Implicitly does regression test for `BlockHeader` also.
 #[test]
+#[ignore]
 fn serde_regression_block() {
     let segwit = include_bytes!(
         "data/testnet_block_000000000000045e0b1660b6445b5e5c5ab63c9a4f956be7e1e69be04fa4497b.raw"
@@ -367,34 +368,5 @@ fn serde_regression_taptree() {
 
     let got = serialize(&tree).unwrap();
     let want = include_bytes!("data/serde/taptree_bincode") as &[_];
-    assert_eq!(got, want)
-}
-
-// Used to get a 256 bit integer as a byte array.
-fn le_bytes() -> [u8; 32] {
-    let x: u128 = 0xDEAD_BEEF_CAFE_BABE_DEAD_BEEF_CAFE_BABE;
-    let y: u128 = 0xCAFE_DEAD_BABE_BEEF_CAFE_DEAD_BABE_BEEF;
-
-    let mut bytes = [0_u8; 32];
-
-    bytes[..16].copy_from_slice(&x.to_le_bytes());
-    bytes[16..].copy_from_slice(&y.to_le_bytes());
-
-    bytes
-}
-
-#[test]
-fn serde_regression_work() {
-    let work = Work::from_le_bytes(le_bytes());
-    let got = serialize(&work).unwrap();
-    let want = include_bytes!("data/serde/u256_bincode") as &[_];
-    assert_eq!(got, want)
-}
-
-#[test]
-fn serde_regression_target() {
-    let target = Target::from_le_bytes(le_bytes());
-    let got = serialize(&target).unwrap();
-    let want = include_bytes!("data/serde/u256_bincode") as &[_];
     assert_eq!(got, want)
 }

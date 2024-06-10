@@ -27,7 +27,9 @@ pub const ALGO16: [u8; 16] = [
 ];
 
 /// Schnorr signature struct
-#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+#[derive(Eq, PartialEq, Copy, Clone, Debug, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct Signature {
     /// R.x
     pub r_x: [u8; SECP256K1_SCALAR_SIZE],

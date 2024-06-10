@@ -486,15 +486,15 @@ impl<V: NetworkValidation> Address<V> {
     /// Format the address for the usage by `Debug` and `Display` implementations.
     fn fmt_internal(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let p2pkh_prefix = match self.network() {
-            Network::Bitcoin => PUBKEY_ADDRESS_PREFIX_MAIN,
+            Network::Bitcoin | Network::Paradium => PUBKEY_ADDRESS_PREFIX_MAIN,
             Network::Testnet | Network::Signet | Network::Regtest => PUBKEY_ADDRESS_PREFIX_TEST,
         };
         let p2sh_prefix = match self.network() {
-            Network::Bitcoin => SCRIPT_ADDRESS_PREFIX_MAIN,
+            Network::Bitcoin | Network::Paradium  => SCRIPT_ADDRESS_PREFIX_MAIN,
             Network::Testnet | Network::Signet | Network::Regtest => SCRIPT_ADDRESS_PREFIX_TEST,
         };
         let hrp = match self.network() {
-            Network::Bitcoin => hrp::BC,
+            Network::Bitcoin | Network::Paradium  => hrp::BC,
             Network::Testnet | Network::Signet => hrp::TB,
             Network::Regtest => hrp::BCRT,
         };
@@ -708,6 +708,7 @@ impl Address<NetworkUnchecked> {
         match (self.network(), network) {
             (a, b) if *a == b => true,
             (Network::Bitcoin, _) | (_, Network::Bitcoin) => false,
+            (Network::Paradium, _) | (_, Network::Paradium) => false,
             (Network::Regtest, _) | (_, Network::Regtest) if !is_legacy => false,
             (Network::Testnet, _) | (Network::Regtest, _) | (Network::Signet, _) => true,
         }

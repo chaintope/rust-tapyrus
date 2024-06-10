@@ -15,7 +15,7 @@
 //! let network = Network::Bitcoin;
 //! let bytes = serialize(&network.magic());
 //!
-//! assert_eq!(&bytes[..], &[0xF9, 0xBE, 0xB4, 0xD9]);
+//! assert_eq!(&bytes[..], &[0x01, 0xFF, 0xF0, 0x00]);
 //! ```
 
 use core::convert::TryFrom;
@@ -46,6 +46,8 @@ pub enum Network {
     Signet,
     /// Bitcoin's regtest network.
     Regtest,
+    /// Paradium network
+    Paradium,
 }
 
 impl Network {
@@ -58,7 +60,7 @@ impl Network {
     /// use tapyrus::Network;
     /// use std::convert::TryFrom;
     ///
-    /// assert_eq!(Ok(Network::Bitcoin), Network::try_from(Magic::from_bytes([0xF9, 0xBE, 0xB4, 0xD9])));
+    /// assert_eq!(Ok(Network::Bitcoin), Network::try_from(Magic::from_bytes([0x01, 0xFF, 0xF0, 0x00])));
     /// assert_eq!(None, Network::from_magic(Magic::from_bytes([0xFF, 0xFF, 0xFF, 0xFF])));
     /// ```
     pub fn from_magic(magic: Magic) -> Option<Network> { Network::try_from(magic).ok() }
@@ -73,7 +75,7 @@ impl Network {
     /// use tapyrus::Network;
     ///
     /// let network = Network::Bitcoin;
-    /// assert_eq!(network.magic(), Magic::from_bytes([0xF9, 0xBE, 0xB4, 0xD9]));
+    /// assert_eq!(network.magic(), Magic::from_bytes([0x01, 0xFF, 0xF0, 0x00]));
     /// ```
     pub fn magic(self) -> Magic { Magic::from(self) }
 
@@ -92,6 +94,7 @@ impl Network {
             Network::Testnet => "test",
             Network::Signet => "signet",
             Network::Regtest => "regtest",
+            Network::Paradium => "paradium",
         }
     }
 
@@ -112,6 +115,7 @@ impl Network {
             "test" => Testnet,
             "signet" => Signet,
             "regtest" => Regtest,
+            "paradium" => Paradium,
             _ => return Err(ParseNetworkError(core_arg.to_owned())),
         };
         Ok(network)
@@ -220,6 +224,7 @@ impl FromStr for Network {
             "testnet" => Testnet,
             "signet" => Signet,
             "regtest" => Regtest,
+            "paradium" => Paradium,
             _ => return Err(ParseNetworkError(s.to_owned())),
         };
         Ok(network)
@@ -235,6 +240,7 @@ impl fmt::Display for Network {
             Testnet => "testnet",
             Signet => "signet",
             Regtest => "regtest",
+            Paradium => "paradium",
         };
         write!(f, "{}", s)
     }
@@ -266,6 +272,7 @@ impl TryFrom<ChainHash> for Network {
             ChainHash::TESTNET => Ok(Network::Testnet),
             ChainHash::SIGNET => Ok(Network::Signet),
             ChainHash::REGTEST => Ok(Network::Regtest),
+            ChainHash::PARADIUM => Ok(Network::Paradium),
             _ => Err(UnknownChainHashError(chain_hash)),
         }
     }
@@ -279,15 +286,17 @@ mod tests {
 
     #[test]
     fn serialize_test() {
-        assert_eq!(serialize(&Network::Bitcoin.magic()), &[0xf9, 0xbe, 0xb4, 0xd9]);
-        assert_eq!(serialize(&Network::Testnet.magic()), &[0x0b, 0x11, 0x09, 0x07]);
+        assert_eq!(serialize(&Network::Bitcoin.magic()), &[0x01, 0xff, 0xf0, 0x00]);
+        assert_eq!(serialize(&Network::Testnet.magic()), &[0x75, 0x9a, 0x83, 0x74]);
         assert_eq!(serialize(&Network::Signet.magic()), &[0x0a, 0x03, 0xcf, 0x40]);
-        assert_eq!(serialize(&Network::Regtest.magic()), &[0xfa, 0xbf, 0xb5, 0xda]);
+        assert_eq!(serialize(&Network::Regtest.magic()), &[0x73, 0x9a, 0x97, 0x74]);
+        assert_eq!(serialize(&Network::Paradium.magic()), &[0x01, 0xff, 0xf0, 0x64]);
 
-        assert_eq!(deserialize(&[0xf9, 0xbe, 0xb4, 0xd9]).ok(), Some(Network::Bitcoin.magic()));
-        assert_eq!(deserialize(&[0x0b, 0x11, 0x09, 0x07]).ok(), Some(Network::Testnet.magic()));
+        assert_eq!(deserialize(&[0x01, 0xff, 0xf0, 0x00]).ok(), Some(Network::Bitcoin.magic()));
+        assert_eq!(deserialize(&[0x75, 0x9a, 0x83, 0x74]).ok(), Some(Network::Testnet.magic()));
         assert_eq!(deserialize(&[0x0a, 0x03, 0xcf, 0x40]).ok(), Some(Network::Signet.magic()));
-        assert_eq!(deserialize(&[0xfa, 0xbf, 0xb5, 0xda]).ok(), Some(Network::Regtest.magic()));
+        assert_eq!(deserialize(&[0x73, 0x9a, 0x97, 0x74]).ok(), Some(Network::Regtest.magic()));
+        assert_eq!(deserialize(&[0x01, 0xff, 0xf0, 0x64]).ok(), Some(Network::Paradium.magic()));
     }
 
     #[test]
@@ -296,11 +305,13 @@ mod tests {
         assert_eq!(Network::Testnet.to_string(), "testnet");
         assert_eq!(Network::Regtest.to_string(), "regtest");
         assert_eq!(Network::Signet.to_string(), "signet");
+        assert_eq!(Network::Paradium.to_string(), "paradium");
 
         assert_eq!("bitcoin".parse::<Network>().unwrap(), Network::Bitcoin);
         assert_eq!("testnet".parse::<Network>().unwrap(), Network::Testnet);
         assert_eq!("regtest".parse::<Network>().unwrap(), Network::Regtest);
         assert_eq!("signet".parse::<Network>().unwrap(), Network::Signet);
+        assert_eq!("paradium".parse::<Network>().unwrap(), Network::Paradium);
         assert!("fakenet".parse::<Network>().is_err());
     }
 
@@ -353,6 +364,7 @@ mod tests {
             (Testnet, "testnet"),
             (Signet, "signet"),
             (Regtest, "regtest"),
+            (Paradium, "paradium"),
         ];
 
         for tc in tests {
@@ -374,6 +386,7 @@ mod tests {
             (Network::Testnet, "test"),
             (Network::Regtest, "regtest"),
             (Network::Signet, "signet"),
+            (Network::Paradium, "paradium"),
         ];
 
         for (net, core_arg) in &expected_pairs {
