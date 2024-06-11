@@ -280,21 +280,21 @@ mod test {
     fn chain_hash_and_genesis_block(network_id: NetworkId) {
         use hashes::sha256;
 
-        // // The genesis block hash is a double-sha256 and it is displayed backwards.
+        // The genesis block hash is a double-sha256 and it is displayed backwards.
         let magic = network_id.magic();
         let genesis_hash = match magic {
             0x00F0FF01 => mainnet_genesis_block().block_hash(),
             0x74839A75 => testnet_genesis_block().block_hash(),
             _ => panic!("Network ID is not supported"),
         };
-        // // We abuse the sha256 hash here so we get a LowerHex impl that does not print the hex backwards.
+        // We abuse the sha256 hash here so we get a LowerHex impl that does not print the hex backwards.
         let hash = sha256::Hash::from_slice(genesis_hash.as_byte_array()).unwrap();
         let want = format!("{:02x}", hash);
 
         let chain_hash = ChainHash::using_genesis_block(network_id).unwrap();
         let got = format!("{:02x}", chain_hash);
 
-        // // Compare strings because the spec specifically states how the chain hash must encode to hex.
+        // Compare strings because the spec specifically states how the chain hash must encode to hex.
         assert_eq!(got, want);
     }
 
