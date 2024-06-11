@@ -26,13 +26,13 @@
 //! tapyrus = { version = "...", features = ["rand-std"] }
 //! ```
 
-use core::convert::{TryFrom, TryInto};
+use core::convert::TryInto;
 use core::fmt;
 use core::marker::PhantomData;
 use core::str::FromStr;
 
 use bech32::primitives::hrp::{self, Hrp};
-use hashes::{sha256, Hash, HashEngine};
+use hashes::Hash;
 use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
 
 use crate::base58;
@@ -40,14 +40,10 @@ use crate::blockdata::constants::{
     MAX_SCRIPT_ELEMENT_SIZE, PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST,
     SCRIPT_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_TEST,
 };
-use crate::blockdata::script::witness_program::WitnessProgram;
-use crate::blockdata::script::witness_version::WitnessVersion;
 use crate::blockdata::script::{self, Script, ScriptBuf, ScriptHash};
-use crate::crypto::key::{PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey};
+use crate::crypto::key::{PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey};
 use crate::network::Network;
 use crate::prelude::*;
-use crate::script::PushBytesBuf;
-use crate::taproot::TapNodeHash;
 
 /// Error code for the address module.
 pub mod error;
@@ -61,12 +57,6 @@ pub enum AddressType {
     P2pkh,
     /// Pay to script hash.
     P2sh,
-    /// Pay to witness pubkey hash.
-    P2wpkh,
-    /// Pay to witness script hash.
-    P2wsh,
-    /// Pay to taproot.
-    P2tr,
 }
 
 impl fmt::Display for AddressType {
@@ -74,9 +64,6 @@ impl fmt::Display for AddressType {
         f.write_str(match *self {
             AddressType::P2pkh => "p2pkh",
             AddressType::P2sh => "p2sh",
-            AddressType::P2wpkh => "p2wpkh",
-            AddressType::P2wsh => "p2wsh",
-            AddressType::P2tr => "p2tr",
         })
     }
 }
@@ -87,9 +74,6 @@ impl FromStr for AddressType {
         match s {
             "p2pkh" => Ok(AddressType::P2pkh),
             "p2sh" => Ok(AddressType::P2sh),
-            "p2wpkh" => Ok(AddressType::P2wpkh),
-            "p2wsh" => Ok(AddressType::P2wsh),
-            "p2tr" => Ok(AddressType::P2tr),
             _ => Err(UnknownAddressTypeError(s.to_owned())),
         }
     }
@@ -103,8 +87,6 @@ pub enum Payload {
     PubkeyHash(PubkeyHash),
     /// P2SH address.
     ScriptHash(ScriptHash),
-    /// Segwit address.
-    WitnessProgram(WitnessProgram),
 }
 
 impl Payload {
@@ -116,14 +98,6 @@ impl Payload {
         } else if script.is_p2sh() {
             let bytes = script.as_bytes()[2..22].try_into().expect("statically 20B long");
             Payload::ScriptHash(ScriptHash::from_byte_array(bytes))
-        } else if script.is_witness_program() {
-            let opcode = script.first_opcode().expect("witness_version guarantees len() > 4");
-
-            let witness_program = script.as_bytes()[2..].to_vec();
-
-            let witness_program =
-                WitnessProgram::new(WitnessVersion::try_from(opcode)?, witness_program)?;
-            Payload::WitnessProgram(witness_program)
         } else {
             return Err(Error::UnrecognizedScript);
         })
@@ -134,7 +108,6 @@ impl Payload {
         match *self {
             Payload::PubkeyHash(ref hash) => ScriptBuf::new_p2pkh(hash),
             Payload::ScriptHash(ref hash) => ScriptBuf::new_p2sh(hash),
-            Payload::WitnessProgram(ref prog) => ScriptBuf::new_witness_program(prog),
         }
     }
 
@@ -146,9 +119,7 @@ impl Payload {
                 &script.as_bytes()[3..23] == <PubkeyHash as AsRef<[u8; 20]>>::as_ref(hash),
             Payload::ScriptHash(ref hash) if script.is_p2sh() =>
                 &script.as_bytes()[2..22] == <ScriptHash as AsRef<[u8; 20]>>::as_ref(hash),
-            Payload::WitnessProgram(ref prog) if script.is_witness_program() =>
-                &script.as_bytes()[2..] == prog.program().as_bytes(),
-            Payload::PubkeyHash(_) | Payload::ScriptHash(_) | Payload::WitnessProgram(_) => false,
+            Payload::PubkeyHash(_) | Payload::ScriptHash(_) => false,
         }
     }
 
@@ -165,58 +136,6 @@ impl Payload {
         Ok(Payload::ScriptHash(script.script_hash()))
     }
 
-    /// Create a witness pay to public key payload from a public key
-    pub fn p2wpkh(pk: &PublicKey) -> Result<Payload, Error> {
-        let prog = WitnessProgram::new(
-            WitnessVersion::V0,
-            pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?,
-        )?;
-        Ok(Payload::WitnessProgram(prog))
-    }
-
-    /// Create a pay to script payload that embeds a witness pay to public key
-    pub fn p2shwpkh(pk: &PublicKey) -> Result<Payload, Error> {
-        let builder = script::Builder::new()
-            .push_int(0)
-            .push_slice(pk.wpubkey_hash().ok_or(Error::UncompressedPubkey)?);
-
-        Ok(Payload::ScriptHash(builder.into_script().script_hash()))
-    }
-
-    /// Create a witness pay to script hash payload.
-    pub fn p2wsh(script: &Script) -> Payload {
-        let prog = WitnessProgram::new(WitnessVersion::V0, script.wscript_hash())
-            .expect("wscript_hash has len 32 compatible with segwitv0");
-        Payload::WitnessProgram(prog)
-    }
-
-    /// Create a pay to script payload that embeds a witness pay to script hash address
-    pub fn p2shwsh(script: &Script) -> Payload {
-        let ws = script::Builder::new().push_int(0).push_slice(script.wscript_hash()).into_script();
-
-        Payload::ScriptHash(ws.script_hash())
-    }
-
-    /// Create a pay to taproot payload from untweaked key
-    pub fn p2tr<C: Verification>(
-        secp: &Secp256k1<C>,
-        internal_key: UntweakedPublicKey,
-        merkle_root: Option<TapNodeHash>,
-    ) -> Payload {
-        let (output_key, _parity) = internal_key.tap_tweak(secp, merkle_root);
-        let prog = WitnessProgram::new(WitnessVersion::V1, output_key.to_inner().serialize())
-            .expect("taproot output key has len 32 <= 40");
-        Payload::WitnessProgram(prog)
-    }
-
-    /// Create a pay to taproot payload from a pre-tweaked output key.
-    ///
-    /// This method is not recommended for use and [Payload::p2tr()] should be used where possible.
-    pub fn p2tr_tweaked(output_key: TweakedPublicKey) -> Payload {
-        let prog = WitnessProgram::new(WitnessVersion::V1, output_key.to_inner().serialize())
-            .expect("taproot output key has len 32 <= 40");
-        Payload::WitnessProgram(prog)
-    }
 
     /// Returns a byte slice of the inner program of the payload. If the payload
     /// is a script hash or pubkey hash, a reference to the hash is returned.
@@ -224,7 +143,6 @@ impl Payload {
         match self {
             Payload::ScriptHash(hash) => hash.as_ref(),
             Payload::PubkeyHash(hash) => hash.as_ref(),
-            Payload::WitnessProgram(prog) => prog.program().as_bytes(),
         }
     }
 }
@@ -257,17 +175,6 @@ impl<'a> fmt::Display for AddressEncoding<'a> {
                 prefixed[0] = self.p2sh_prefix;
                 prefixed[1..].copy_from_slice(&hash[..]);
                 base58::encode_check_to_fmt(fmt, &prefixed[..])
-            }
-            Payload::WitnessProgram(witness_program) => {
-                let hrp = &self.hrp;
-                let version = witness_program.version().to_fe();
-                let program = witness_program.program().as_bytes();
-
-                if fmt.alternate() {
-                    bech32::segwit::encode_upper_to_fmt_unchecked(fmt, hrp, version, program)
-                } else {
-                    bech32::segwit::encode_lower_to_fmt_unchecked(fmt, hrp, version, program)
-                }
             }
         }
     }
@@ -466,20 +373,6 @@ impl<V: NetworkValidation> Address<V> {
         match self.payload() {
             Payload::PubkeyHash(_) => Some(AddressType::P2pkh),
             Payload::ScriptHash(_) => Some(AddressType::P2sh),
-            Payload::WitnessProgram(ref prog) => {
-                // BIP-141 p2wpkh or p2wsh addresses.
-                match prog.version() {
-                    WitnessVersion::V0 => match prog.program().len() {
-                        20 => Some(AddressType::P2wpkh),
-                        32 => Some(AddressType::P2wsh),
-                        _ => unreachable!(
-                            "Address creation invariant violation: invalid program length"
-                        ),
-                    },
-                    WitnessVersion::V1 if prog.program().len() == 32 => Some(AddressType::P2tr),
-                    _ => None,
-                }
-            }
         }
     }
 
@@ -529,55 +422,6 @@ impl Address {
     #[inline]
     pub fn p2sh(script: &Script, network: Network) -> Result<Address, Error> {
         Ok(Address::new(network, Payload::p2sh(script)?))
-    }
-
-    /// Creates a witness pay to public key address from a public key.
-    ///
-    /// This is the native segwit address type for an output redeemable with a single signature.
-    ///
-    /// # Errors
-    /// Will only return an error if an uncompressed public key is provided.
-    pub fn p2wpkh(pk: &PublicKey, network: Network) -> Result<Address, Error> {
-        Ok(Address::new(network, Payload::p2wpkh(pk)?))
-    }
-
-    /// Creates a pay to script address that embeds a witness pay to public key.
-    ///
-    /// This is a segwit address type that looks familiar (as p2sh) to legacy clients.
-    ///
-    /// # Errors
-    /// Will only return an Error if an uncompressed public key is provided.
-    pub fn p2shwpkh(pk: &PublicKey, network: Network) -> Result<Address, Error> {
-        Ok(Address::new(network, Payload::p2shwpkh(pk)?))
-    }
-
-    /// Creates a witness pay to script hash address.
-    pub fn p2wsh(script: &Script, network: Network) -> Address {
-        Address::new(network, Payload::p2wsh(script))
-    }
-
-    /// Creates a pay to script address that embeds a witness pay to script hash address.
-    ///
-    /// This is a segwit address type that looks familiar (as p2sh) to legacy clients.
-    pub fn p2shwsh(script: &Script, network: Network) -> Address {
-        Address::new(network, Payload::p2shwsh(script))
-    }
-
-    /// Creates a pay to taproot address from an untweaked key.
-    pub fn p2tr<C: Verification>(
-        secp: &Secp256k1<C>,
-        internal_key: UntweakedPublicKey,
-        merkle_root: Option<TapNodeHash>,
-        network: Network,
-    ) -> Address {
-        Address::new(network, Payload::p2tr(secp, internal_key, merkle_root))
-    }
-
-    /// Creates a pay to taproot address from a pre-tweaked output key.
-    ///
-    /// This method is not recommended for use, [`Address::p2tr()`] should be used where possible.
-    pub fn p2tr_tweaked(output_key: TweakedPublicKey, network: Network) -> Address {
-        Address::new(network, Payload::p2tr_tweaked(output_key))
     }
 
     /// Gets the address type of the address.
@@ -651,7 +495,6 @@ impl Address {
 
         (*pubkey_hash.as_byte_array() == *payload)
             || (xonly_pubkey.serialize() == *payload)
-            || (*segwit_redeem_hash(&pubkey_hash).as_byte_array() == *payload)
     }
 
     /// Returns true if the supplied xonly public key can be used to derive the address.
@@ -762,40 +605,11 @@ impl<V: NetworkValidation> fmt::Debug for Address<V> {
     }
 }
 
-/// Extracts the bech32 prefix.
-///
-/// # Returns
-/// The input slice if no prefix is found.
-fn find_bech32_prefix(bech32: &str) -> &str {
-    // Split at the last occurrence of the separator character '1'.
-    match bech32.rfind('1') {
-        None => bech32,
-        Some(sep) => bech32.split_at(sep).0,
-    }
-}
-
 /// Address can be parsed only with `NetworkUnchecked`.
 impl FromStr for Address<NetworkUnchecked> {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // try bech32
-        let bech32_network = match find_bech32_prefix(s) {
-            // note that upper or lowercase is allowed but NOT mixed case
-            "bc" | "BC" => Some(Network::Prod),
-            "tb" | "TB" => Some(Network::Prod),
-            "bcrt" | "BCRT" => Some(Network::Dev),
-            _ => None,
-        };
-        if let Some(network) = bech32_network {
-            let (_hrp, version, data) = bech32::segwit::decode(s)?;
-            let version = WitnessVersion::try_from(version).expect("we know this is in range 0-16");
-            let program = PushBytesBuf::try_from(data).expect("decode() guarantees valid length");
-            let witness_program = WitnessProgram::new(version, program)?;
-
-            return Ok(Address::new(network, Payload::WitnessProgram(witness_program)));
-        }
-
         // Base58
         if s.len() > 50 {
             return Err(ParseError::Base58(base58::Error::InvalidLength(s.len() * 11 / 15)));
@@ -819,14 +633,6 @@ impl FromStr for Address<NetworkUnchecked> {
 
         Ok(Address::new(network, payload))
     }
-}
-
-/// Convert a byte array of a pubkey hash into a segwit redeem hash
-fn segwit_redeem_hash(pubkey_hash: &PubkeyHash) -> crate::hashes::hash160::Hash {
-    let mut sha_engine = sha256::Hash::engine();
-    sha_engine.input(&[0, 20]);
-    sha_engine.input(pubkey_hash.as_ref());
-    crate::hashes::hash160::Hash::from_engine(sha_engine)
 }
 
 #[cfg(test)]
@@ -926,74 +732,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Segwit address does not support
-    fn test_p2wpkh() {
-        // stolen from Bitcoin transaction: b3c8c2b6cfc335abbcb2c7823a8453f55d64b2b5125a9a61e8737230cdb8ce20
-        let mut key = "033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc"
-            .parse::<PublicKey>()
-            .unwrap();
-        let addr = Address::p2wpkh(&key, Prod).unwrap();
-        assert_eq!(&addr.to_string(), "bc1qvzvkjn4q3nszqxrv3nraga2r822xjty3ykvkuw");
-        assert_eq!(addr.address_type(), Some(AddressType::P2wpkh));
-        roundtrips(&addr);
-
-        // Test uncompressed pubkey
-        key.compressed = false;
-        assert_eq!(Address::p2wpkh(&key, Prod), Err(Error::UncompressedPubkey));
-    }
-
-    #[test]
-    #[ignore] // Segwit address does not support
-    fn test_p2wsh() {
-        // stolen from Bitcoin transaction 5df912fda4becb1c29e928bec8d64d93e9ba8efa9b5b405bd683c86fd2c65667
-        let script = ScriptBuf::from_hex("52210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae").unwrap();
-        let addr = Address::p2wsh(&script, Prod);
-        assert_eq!(
-            &addr.to_string(),
-            "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"
-        );
-        assert_eq!(addr.address_type(), Some(AddressType::P2wsh));
-        roundtrips(&addr);
-    }
-
-    #[test]
-    fn test_p2shwpkh() {
-        // stolen from Bitcoin transaction: ad3fd9c6b52e752ba21425435ff3dd361d6ac271531fc1d2144843a9f550ad01
-        let mut key = "026c468be64d22761c30cd2f12cbc7de255d592d7904b1bab07236897cc4c2e766"
-            .parse::<PublicKey>()
-            .unwrap();
-        let addr = Address::p2shwpkh(&key, Prod).unwrap();
-        assert_eq!(&addr.to_string(), "3QBRmWNqqBGme9er7fMkGqtZtp4gjMFxhE");
-        assert_eq!(addr.address_type(), Some(AddressType::P2sh));
-        roundtrips(&addr);
-
-        // Test uncompressed pubkey
-        key.compressed = false;
-        assert_eq!(Address::p2wpkh(&key, Prod), Err(Error::UncompressedPubkey));
-    }
-
-    #[test]
-    fn test_p2shwsh() {
-        // stolen from Bitcoin transaction f9ee2be4df05041d0e0a35d7caa3157495ca4f93b233234c9967b6901dacf7a9
-        let script = ScriptBuf::from_hex("522103e5529d8eaa3d559903adb2e881eb06c86ac2574ffa503c45f4e942e2a693b33e2102e5f10fcdcdbab211e0af6a481f5532536ec61a5fdbf7183770cf8680fe729d8152ae").unwrap();
-        let addr = Address::p2shwsh(&script, Prod);
-        assert_eq!(&addr.to_string(), "36EqgNnsWW94SreZgBWc1ANC6wpFZwirHr");
-        assert_eq!(addr.address_type(), Some(AddressType::P2sh));
-        roundtrips(&addr);
-    }
-
-    #[test]
-    fn test_non_existent_segwit_version() {
-        // 40-byte program
-        let program = hex!(
-            "654f6ea368e0acdfd92976b7c2103a1b26313f430654f6ea368e0acdfd92976b7c2103a1b26313f4"
-        );
-        let witness_prog = WitnessProgram::new(WitnessVersion::V13, program.to_vec()).unwrap();
-        let addr = Address::new(Prod, Payload::WitnessProgram(witness_prog));
-        roundtrips(&addr);
-    }
-
-    #[test]
     fn test_address_debug() {
         // This is not really testing output of Debug but the ability and proper functioning
         // of Debug derivation on structs generic in NetworkValidation.
@@ -1022,15 +760,6 @@ mod tests {
         let addresses = [
             ("1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY", Some(AddressType::P2pkh)),
             ("33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k", Some(AddressType::P2sh)),
-            ("bc1qvzvkjn4q3nszqxrv3nraga2r822xjty3ykvkuw", Some(AddressType::P2wpkh)),
-            (
-                "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej",
-                Some(AddressType::P2wsh),
-            ),
-            (
-                "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr",
-                Some(AddressType::P2tr),
-            ),
             // Related to future extensions, addresses are valid but have no type
             // segwit v1 and len != 32
             ("bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kt5nd6y", None),
@@ -1078,55 +807,6 @@ mod tests {
             into.script_pubkey(),
             ScriptBuf::from_hex("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087").unwrap()
         );
-
-        // Segwit address does not support
-        // let addr: Address<NetworkUnchecked> =
-        //     Address::from_str("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7")
-        //         .unwrap();
-        // let json = serde_json::to_value(addr).unwrap();
-        // assert_eq!(
-        //     json,
-        //     serde_json::Value::String(
-        //         "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7".to_owned()
-        //     )
-        // );
-
-        // let addr =
-        //     Address::from_str("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7")
-        //         .unwrap()
-        //         .assume_checked();
-        // let json = serde_json::to_value(&addr).unwrap();
-        // assert_eq!(
-        //     json,
-        //     serde_json::Value::String(
-        //         "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7".to_owned()
-        //     )
-        // );
-        // let into: Address = serde_json::from_value::<Address<_>>(json).unwrap().assume_checked();
-        // assert_eq!(addr.to_string(), into.to_string());
-        // assert_eq!(
-        //     into.script_pubkey(),
-        //     ScriptBuf::from_hex(
-        //         "00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262"
-        //     )
-        //     .unwrap()
-        // );
-
-        // Segwit address does not support
-        // let addr = Address::from_str("bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl")
-        //     .unwrap()
-        //     .assume_checked();
-        // let json = serde_json::to_value(&addr).unwrap();
-        // assert_eq!(
-        //     json,
-        //     serde_json::Value::String("bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl".to_owned())
-        // );
-        // let into: Address = serde_json::from_value::<Address<_>>(json).unwrap().assume_checked();
-        // assert_eq!(addr.to_string(), into.to_string());
-        // assert_eq!(
-        //     into.script_pubkey(),
-        //     ScriptBuf::from_hex("001454d26dddb59c7073c6a197946ea1841951fa7a74").unwrap()
-        // );
     }
 
     #[test]
@@ -1138,17 +818,6 @@ mod tests {
                 Address::from_str(el).unwrap().require_network(Network::Prod).expect("mainnet");
             assert_eq!(addr.to_qr_uri(), format!("tapyrus:{}", el));
         }
-
-        // Segwit address does not support
-        // for el in [
-        //     "bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl",
-        //     "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej",
-        // ]
-        // .iter()
-        // {
-        //     let addr = Address::from_str(el).unwrap().assume_checked();
-        //     assert_eq!(addr.to_qr_uri(), format!("tapyrus:{}", el.to_ascii_uppercase()));
-        // }
     }
 
     #[test]
@@ -1157,20 +826,8 @@ mod tests {
             Payload::PubkeyHash(PubkeyHash::all_zeros()),
             Payload::ScriptHash(ScriptHash::all_zeros()),
         ];
-        let segwit_payload = (0..=16)
-            .map(|version| {
-                Payload::WitnessProgram(
-                    WitnessProgram::new(
-                        WitnessVersion::try_from(version).unwrap(),
-                        vec![0xab; 32], // Choose 32 to make test case valid for all witness versions(including v0)
-                    )
-                    .unwrap(),
-                )
-            })
-            .collect::<Vec<_>>();
 
         const LEGACY_EQUIVALENCE_CLASSES: &[&[Network]] = &[&[Network::Prod], &[Network::Dev]];
-        const SEGWIT_EQUIVALENCE_CLASSES: &[&[Network]] = &[&[Network::Prod], &[Network::Dev]];
 
         fn test_addr_type(payloads: &[Payload], equivalence_classes: &[&[Network]]) {
             for pl in payloads {
@@ -1197,66 +854,6 @@ mod tests {
         }
 
         test_addr_type(legacy_payload, LEGACY_EQUIVALENCE_CLASSES);
-        test_addr_type(&segwit_payload, SEGWIT_EQUIVALENCE_CLASSES);
-    }
-
-    #[test]
-    fn p2tr_from_untweaked() {
-        //Test case from BIP-086
-        let internal_key = XOnlyPublicKey::from_str(
-            "cc8a4bc64d897bddc5fbc2f670f7a8ba0b386779106cf1223c6fc5d7cd6fc115",
-        )
-        .unwrap();
-        let secp = Secp256k1::verification_only();
-        let address = Address::p2tr(&secp, internal_key, None, Network::Prod);
-        assert_eq!(
-            address.to_string(),
-            "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr"
-        );
-        assert_eq!(address.address_type(), Some(AddressType::P2tr));
-        roundtrips(&address);
-    }
-
-    #[test]
-    fn test_is_related_to_pubkey_p2wpkh() {
-        let address_string = "bc1qhvd6suvqzjcu9pxjhrwhtrlj85ny3n2mqql5w4";
-        let address = Address::from_str(address_string)
-            .expect("address")
-            .require_network(Network::Prod)
-            .expect("mainnet");
-
-        let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
-        let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
-
-        let result = address.is_related_to_pubkey(&pubkey);
-        assert!(result);
-
-        let unused_pubkey = PublicKey::from_str(
-            "02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c",
-        )
-        .expect("pubkey");
-        assert!(!address.is_related_to_pubkey(&unused_pubkey))
-    }
-
-    #[test]
-    fn test_is_related_to_pubkey_p2shwpkh() {
-        let address_string = "3EZQk4F8GURH5sqVMLTFisD17yNeKa7Dfs";
-        let address = Address::from_str(address_string)
-            .expect("address")
-            .require_network(Network::Prod)
-            .expect("mainnet");
-
-        let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
-        let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
-
-        let result = address.is_related_to_pubkey(&pubkey);
-        assert!(result);
-
-        let unused_pubkey = PublicKey::from_str(
-            "02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c",
-        )
-        .expect("pubkey");
-        assert!(!address.is_related_to_pubkey(&unused_pubkey))
     }
 
     #[test]
@@ -1302,52 +899,6 @@ mod tests {
     }
 
     #[test]
-    fn test_is_related_to_pubkey_p2tr() {
-        let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
-        let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
-        let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
-        let tweaked_pubkey = TweakedPublicKey::dangerous_assume_tweaked(xonly_pubkey);
-        let address = Address::p2tr_tweaked(tweaked_pubkey, Network::Prod);
-
-        assert_eq!(
-            address,
-            Address::from_str("bc1pgllnmtxs0g058qz7c6qgaqq4qknwrqj9z7rqn9e2dzhmcfmhlu4sfadf5e")
-                .expect("address")
-                .require_network(Network::Prod)
-                .expect("mainnet")
-        );
-
-        let result = address.is_related_to_pubkey(&pubkey);
-        assert!(result);
-
-        let unused_pubkey = PublicKey::from_str(
-            "02ba604e6ad9d3864eda8dc41c62668514ef7d5417d3b6db46e45cc4533bff001c",
-        )
-        .expect("pubkey");
-        assert!(!address.is_related_to_pubkey(&unused_pubkey));
-    }
-
-    #[test]
-    fn test_is_related_to_xonly_pubkey() {
-        let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
-        let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
-        let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
-        let tweaked_pubkey = TweakedPublicKey::dangerous_assume_tweaked(xonly_pubkey);
-        let address = Address::p2tr_tweaked(tweaked_pubkey, Network::Prod);
-
-        assert_eq!(
-            address,
-            Address::from_str("bc1pgllnmtxs0g058qz7c6qgaqq4qknwrqj9z7rqn9e2dzhmcfmhlu4sfadf5e")
-                .expect("address")
-                .require_network(Network::Prod)
-                .expect("mainnet")
-        );
-
-        let result = address.is_related_to_xonly_pubkey(&xonly_pubkey);
-        assert!(result);
-    }
-
-    #[test]
     fn test_fail_address_from_script() {
         use crate::witness_program;
 
@@ -1369,12 +920,6 @@ mod tests {
     }
 
     #[test]
-    fn valid_address_parses_correctly() {
-        let addr = AddressType::from_str("p2tr").expect("false negative while parsing address");
-        assert_eq!(addr, AddressType::P2tr);
-    }
-
-    #[test]
     fn invalid_address_parses_error() {
         let got = AddressType::from_str("invalid");
         let want = Err(UnknownAddressTypeError("invalid".to_string()));
@@ -1388,10 +933,6 @@ mod tests {
             "1J4LVanjHMu3JkXbVrahNuQCTGCRRgfWWx",
             "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k",
             "3QBRmWNqqBGme9er7fMkGqtZtp4gjMFxhE",
-            "bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs",
-            "bc1qvzvkjn4q3nszqxrv3nraga2r822xjty3ykvkuw",
-            "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr",
-            "bc1pgllnmtxs0g058qz7c6qgaqq4qknwrqj9z7rqn9e2dzhmcfmhlu4sfadf5e",
         ];
         for addr in &addresses {
             let addr = Address::from_str(addr).unwrap().require_network(Network::Prod).unwrap();
