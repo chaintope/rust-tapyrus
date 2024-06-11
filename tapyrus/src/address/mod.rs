@@ -33,7 +33,7 @@ use core::str::FromStr;
 
 use bech32::primitives::hrp::{self, Hrp};
 use hashes::Hash;
-use secp256k1::{Secp256k1, Verification, XOnlyPublicKey};
+use secp256k1::XOnlyPublicKey;
 
 use crate::base58;
 use crate::blockdata::constants::{
@@ -41,7 +41,7 @@ use crate::blockdata::constants::{
     SCRIPT_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_TEST,
 };
 use crate::blockdata::script::{self, Script, ScriptBuf, ScriptHash};
-use crate::crypto::key::{PubkeyHash, PublicKey, TweakedPublicKey, UntweakedPublicKey};
+use crate::crypto::key::{PubkeyHash, PublicKey};
 use crate::network::Network;
 use crate::prelude::*;
 
@@ -135,7 +135,6 @@ impl Payload {
         }
         Ok(Payload::ScriptHash(script.script_hash()))
     }
-
 
     /// Returns a byte slice of the inner program of the payload. If the payload
     /// is a script hash or pubkey hash, a reference to the hash is returned.
@@ -469,7 +468,7 @@ impl Address {
     /// If you want to avoid allocation you can use alternate display instead:
     /// ```
     /// # use core::fmt::Write;
-    /// # const ADDRESS: &str = "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4";
+    /// # const ADDRESS: &str = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf";
     /// # let address = ADDRESS.parse::<tapyrus::Address<_>>().unwrap().assume_checked();
     /// # let mut writer = String::new();
     /// # // magic trick to make error handling look better
@@ -493,8 +492,7 @@ impl Address {
         let payload = self.payload().inner_prog_as_bytes();
         let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
 
-        (*pubkey_hash.as_byte_array() == *payload)
-            || (xonly_pubkey.serialize() == *payload)
+        (*pubkey_hash.as_byte_array() == *payload) || (xonly_pubkey.serialize() == *payload)
     }
 
     /// Returns true if the supplied xonly public key can be used to derive the address.
@@ -639,9 +637,6 @@ impl FromStr for Address<NetworkUnchecked> {
 mod tests {
     use core::str::FromStr;
 
-    use hex_lit::hex;
-    use secp256k1::XOnlyPublicKey;
-
     use super::*;
     use crate::crypto::key::PublicKey;
     use crate::network::Network::{Dev, Prod};
@@ -760,11 +755,6 @@ mod tests {
         let addresses = [
             ("1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY", Some(AddressType::P2pkh)),
             ("33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k", Some(AddressType::P2sh)),
-            // Related to future extensions, addresses are valid but have no type
-            // segwit v1 and len != 32
-            ("bc1pw508d6qejxtdg4y5r3zarvary0c5xw7kw508d6qejxtdg4y5r3zarvary0c5xw7kt5nd6y", None),
-            // segwit v2
-            ("bc1zw508d6qejxtdg4y5r3zarvaryvaxxpcs", None),
         ];
         for (address, expected_type) in &addresses {
             let addr = Address::from_str(address)
@@ -900,8 +890,6 @@ mod tests {
 
     #[test]
     fn test_fail_address_from_script() {
-        use crate::witness_program;
-
         let bad_p2wpkh = ScriptBuf::from_hex("0014dbc5b0a8f9d4353b4b54c3db48846bb15abfec").unwrap();
         let bad_p2wsh = ScriptBuf::from_hex(
             "00202d4fa2eb233d008cc83206fa2f4f2e60199000f5b857a835e3172323385623",
@@ -913,10 +901,7 @@ mod tests {
 
         assert_eq!(Address::from_script(&bad_p2wpkh, Network::Prod), expected);
         assert_eq!(Address::from_script(&bad_p2wsh, Network::Prod), expected);
-        assert_eq!(
-            Address::from_script(&invalid_segwitv0_script, Network::Prod),
-            Err(Error::WitnessProgram(witness_program::Error::InvalidSegwitV0Length(17)))
-        );
+        assert_eq!(Address::from_script(&invalid_segwitv0_script, Network::Prod), expected);
     }
 
     #[test]

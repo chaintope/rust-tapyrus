@@ -9,24 +9,24 @@
 
 use core::default::Default;
 use core::str::FromStr;
-use crate::alloc::string::ToString;
 
 use hashes::{sha256d, Hash};
 use hex_lit::hex;
 use internals::impl_array_newtype;
 
+use crate::alloc::string::ToString;
+use crate::amount::Amount;
+use crate::blockdata::block::{self, Block, XField};
 use crate::blockdata::locktime::absolute;
 use crate::blockdata::witness::Witness;
 use crate::consensus::deserialize;
-use crate::opcodes::all::*;
-use crate::blockdata::block::{self, Block, XField};
 use crate::crypto::key::PublicKey;
 use crate::crypto::schnorr::Signature;
 use crate::internal_macros::impl_bytes_newtype;
 use crate::network::{NetworkId, ParseNetworkError};
+use crate::opcodes::all::*;
+use crate::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
 use crate::{script, Txid};
-use crate::amount::Amount;
-use crate::transaction::{ self, Transaction, TxIn, TxOut, OutPoint, Sequence};
 
 #[deprecated(since = "0.31.0", note = "Use Weight::MAX_BLOCK instead")]
 /// The maximum allowed weight for a block, see BIP 141 (network rule).
@@ -79,8 +79,13 @@ fn mainnet_genesis_tx() -> Transaction {
 
     // Outputs
     let script_bytes = hex!("314a586d6e436a646453394644366252797a4348376457716844667735486f38794c");
-    let out_script =
-        script::Builder::new().push_opcode(OP_DUP).push_opcode(OP_HASH160).push_slice(script_bytes).push_opcode(OP_EQUALVERIFY).push_opcode(OP_CHECKSIG).into_script();
+    let out_script = script::Builder::new()
+        .push_opcode(OP_DUP)
+        .push_opcode(OP_HASH160)
+        .push_slice(script_bytes)
+        .push_opcode(OP_EQUALVERIFY)
+        .push_opcode(OP_CHECKSIG)
+        .into_script();
     ret.output.push(TxOut { value: Amount::from_sat(50 * 100_000_000), script_pubkey: out_script });
 
     // end
@@ -109,8 +114,13 @@ fn testnet_genesis_tx() -> Transaction {
 
     // Outputs
     let script_bytes = hex!("31415132437447336a686f37385372457a4b6533766636647863456b4a74356e7a41");
-    let out_script =
-        script::Builder::new().push_opcode(OP_DUP).push_opcode(OP_HASH160).push_slice(script_bytes).push_opcode(OP_EQUALVERIFY).push_opcode(OP_CHECKSIG).into_script();
+    let out_script = script::Builder::new()
+        .push_opcode(OP_DUP)
+        .push_opcode(OP_HASH160)
+        .push_slice(script_bytes)
+        .push_opcode(OP_EQUALVERIFY)
+        .push_opcode(OP_CHECKSIG)
+        .into_script();
     ret.output.push(TxOut { value: Amount::from_sat(50 * 100_000_000), script_pubkey: out_script });
 
     // end
@@ -128,7 +138,7 @@ pub fn mainnet_genesis_block() -> Block {
         PublicKey::from_str("02bb8a7fbba7da4e6a0519296e30211c33c7307ac19aba4e8f56cce2d3da36b751")
             .unwrap();
     let sig_data = hex!("fb1edbb9eac53c4a1e67c510c7fe7eefd6f5080c74df88a679cf3853e0784231979b3896b577ed3bb987d1a38fd0901d5f68f38cb0c07aea519885022428cede");
-    let sig: Signature  = deserialize(&sig_data).unwrap();
+    let sig: Signature = deserialize(&sig_data).unwrap();
     Block {
         header: block::Header {
             version: block::Version::ONE,
@@ -154,7 +164,7 @@ pub fn testnet_genesis_block() -> Block {
         PublicKey::from_str("0366262690cbdf648132ce0c088962c6361112582364ede120f3780ab73438fc4b")
             .unwrap();
     let sig_data = hex!("2b1ed9996920f57a425f6f9797557c0e73d0c9fbafdebcaa796b136e0946ffa98d928f8130b6a572f83da39530b13784eeb7007465b673aa95091619e7ee2085");
-    let sig: Signature  = deserialize(&sig_data).unwrap();
+    let sig: Signature = deserialize(&sig_data).unwrap();
     Block {
         header: block::Header {
             version: block::Version::ONE,
@@ -177,13 +187,15 @@ impl_bytes_newtype!(ChainHash, 32);
 impl ChainHash {
     /// `ChainHash` for mainnet network.
     pub const MAINNET: Self = Self([
-        155, 84, 11, 196, 181, 226, 168, 102, 230, 225, 61, 240, 157, 115, 44, 149, 106, 128, 137, 31, 248, 24, 100, 244, 228, 176, 232, 142, 80, 41, 247, 146
+        155, 84, 11, 196, 181, 226, 168, 102, 230, 225, 61, 240, 157, 115, 44, 149, 106, 128, 137,
+        31, 248, 24, 100, 244, 228, 176, 232, 142, 80, 41, 247, 146,
     ]);
     /// `ChainHash` for testnet network.
     pub const TESTNET: Self = Self([
-        138, 221, 107, 29, 21, 71, 229, 121, 61, 154, 226, 230, 174, 95, 234, 56, 95, 144, 154, 84, 216, 215, 47, 90, 143, 247, 194, 117, 72, 17, 139, 3
+        138, 221, 107, 29, 21, 71, 229, 121, 61, 154, 226, 230, 174, 95, 234, 56, 95, 144, 154, 84,
+        216, 215, 47, 90, 143, 247, 194, 117, 72, 17, 139, 3,
     ]);
-    
+
     /// Returns the hash of the `network` genesis block for use as a chain hash.
     ///
     /// See [BOLT 0](https://github.com/lightning/bolts/blob/ffeece3dab1c52efdb9b53ae476539320fa44938/00-introduction.md#chain_hash)
@@ -191,7 +203,7 @@ impl ChainHash {
     pub fn using_genesis_block(network_id: NetworkId) -> Result<ChainHash, ParseNetworkError> {
         // https://github.com/chaintope/tapyrus-core/blob/master/doc/tapyrus/network_id_and_magic_bytes.md
         let magic = network_id.magic();
-        match  magic {
+        match magic {
             0x00F0FF01 => Ok(Self::MAINNET),
             0x74839A75 => Ok(Self::TESTNET),
             _ => Err(ParseNetworkError("Network id is unknown.".to_string())),
@@ -227,8 +239,12 @@ mod test {
 
         assert_eq!(gen.input[0].sequence, Sequence::MAX);
         assert_eq!(gen.output.len(), 1);
-        assert_eq!(serialize(&gen.output[0].script_pubkey),
-                   hex!("2776a922314a586d6e436a646453394644366252797a4348376457716844667735486f38794c88ac"));
+        assert_eq!(
+            serialize(&gen.output[0].script_pubkey),
+            hex!(
+                "2776a922314a586d6e436a646453394644366252797a4348376457716844667735486f38794c88ac"
+            )
+        );
         assert_eq!(gen.output[0].value, Amount::from_str("50 BTC").unwrap());
         assert_eq!(gen.lock_time, absolute::LockTime::ZERO);
 

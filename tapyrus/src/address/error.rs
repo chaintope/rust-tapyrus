@@ -3,7 +3,6 @@ use core::fmt;
 use internals::write_err;
 
 use crate::address::{Address, NetworkUnchecked};
-use crate::blockdata::script::{witness_program, witness_version};
 use crate::prelude::String;
 use crate::{base58, Network};
 
@@ -112,4 +111,3 @@ impl std::error::Error for ParseError {
 impl From<base58::Error> for ParseError {
     fn from(e: base58::Error) -> Self { Self::Base58(e) }
 }
-

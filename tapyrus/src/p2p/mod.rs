@@ -30,9 +30,9 @@ use hex::FromHex;
 use internals::{debug_from_display, write_err};
 
 use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::io;
 use crate::network::NetworkId;
 use crate::prelude::{Borrow, BorrowMut, String, ToOwned};
-use crate::io;
 
 /// Version of the protocol as appearing in network message headers.
 ///
@@ -229,9 +229,7 @@ impl FromStr for Magic {
 }
 
 impl From<NetworkId> for Magic {
-    fn from(network_id: NetworkId) -> Magic {
-        Magic::from_bytes(network_id.magic().to_be_bytes())
-    }
+    fn from(network_id: NetworkId) -> Magic { Magic::from_bytes(network_id.magic().to_be_bytes()) }
 }
 
 impl TryFrom<Magic> for NetworkId {
@@ -393,10 +391,10 @@ mod tests {
     #[test]
     fn magic_from_str() {
         let known_network_magic_strs = [
-            ("01fff000", NetworkId::from(1)), 
+            ("01fff000", NetworkId::from(1)),
             ("01fff064", NetworkId::from(101)),
             ("759a8374", NetworkId::from(1939510133)),
-            ("739a9774", NetworkId::from(1905960821))
+            ("739a9774", NetworkId::from(1905960821)),
         ];
 
         for (magic_str, network_id) in &known_network_magic_strs {

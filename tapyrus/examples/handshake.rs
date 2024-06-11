@@ -6,10 +6,10 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use std::{env, process};
 
 use tapyrus::consensus::{encode, Decodable};
+use tapyrus::network::NetworkId;
 use tapyrus::p2p::{self, address, message, message_network, Magic};
 use tapyrus::secp256k1;
 use tapyrus::secp256k1::rand::Rng;
-use tapyrus::network::NetworkId;
 
 fn main() {
     // This example establishes a connection to a Bitcoin node, sends the intial
@@ -30,8 +30,7 @@ fn main() {
     let version_message = build_version_message(address);
 
     let magic = Magic::from_bytes(NetworkId::from(1).magic().to_be_bytes());
-    let first_message =
-        message::RawNetworkMessage::new(magic , version_message);
+    let first_message = message::RawNetworkMessage::new(magic, version_message);
 
     if let Ok(mut stream) = TcpStream::connect(address) {
         // Send the message
@@ -48,10 +47,8 @@ fn main() {
                 message::NetworkMessage::Version(_) => {
                     println!("Received version message: {:?}", reply.payload());
 
-                    let second_message = message::RawNetworkMessage::new(
-                        magic,
-                        message::NetworkMessage::Verack,
-                    );
+                    let second_message =
+                        message::RawNetworkMessage::new(magic, message::NetworkMessage::Verack);
 
                     let _ = stream.write_all(encode::serialize(&second_message).as_slice());
                     println!("Sent verack message");

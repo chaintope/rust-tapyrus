@@ -68,13 +68,5 @@ name = "bip32"
 name = "handshake"
 required-features = ["std", "rand-std"]
 
-[[example]]
-name = "ecdsa-psbt"
-required-features = ["std", "bitcoinconsensus"]
-
-[[example]]
-name = "taproot-psbt"
-required-features = ["std", "rand-std", "bitcoinconsensus"]
-
 [lints.rust]
 unexpected_cfgs = { level = "deny", check-cfg = ['cfg(bench)', 'cfg(fuzzing)', 'cfg(kani)', 'cfg(mutate)', 'cfg(rust_v_1_60)'] }

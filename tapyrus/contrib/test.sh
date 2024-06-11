@@ -28,8 +28,6 @@ then
     cargo clippy --locked --all-features --all-targets -- -D warnings
     cargo clippy --locked --example bip32 -- -D warnings
     cargo clippy --locked --example handshake --features=rand-std -- -D warnings
-    cargo clippy --locked --example ecdsa-psbt --features=bitcoinconsensus -- -D warnings
-    cargo clippy --locked --example taproot-psbt --features=rand-std,bitcoinconsensus -- -D warnings
 
     # We should not have any duplicate dependencies. This catches mistakes made upgrading dependencies
     # in one crate and not in another (e.g. upgrade tapyrus_hashes in tapyrus but not in secp).
@@ -90,9 +88,6 @@ do
     echo "********* Testing $feature *************"
     cargo test --locked --verbose --features="$feature"
 done
-
-cargo run --locked --example ecdsa-psbt --features=bitcoinconsensus
-cargo run --locked --example taproot-psbt --features=rand-std,bitcoinconsensus
 
 # Build the docs if told to (this only works with the nightly toolchain)
 if [ "$DO_DOCSRS" = true ]; then

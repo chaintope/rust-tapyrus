@@ -3,12 +3,10 @@ extern crate tapyrus;
 use std::str::FromStr;
 use std::{env, process};
 
-use tapyrus::address::Address;
-use tapyrus::bip32::{ChildNumber, DerivationPath, Xpriv, Xpub};
+use tapyrus::bip32::{DerivationPath, Xpriv, Xpub};
 use tapyrus::hex::FromHex;
 use tapyrus::secp256k1::ffi::types::AlignedType;
 use tapyrus::secp256k1::Secp256k1;
-use tapyrus::PublicKey;
 
 fn main() {
     // This example derives root xprv from a 32-byte seed,
@@ -51,8 +49,8 @@ fn main() {
 
     // generate first receiving address at m/0/0
     // manually creating indexes this time
-    let zero = ChildNumber::from_normal_idx(0).unwrap();
-    let public_key = xpub.derive_pub(&secp, &[zero, zero]).unwrap().public_key;
-    let address = Address::p2wpkh(&PublicKey::new(public_key), network).unwrap();
-    println!("First receiving address: {}", address);
+    // let zero = ChildNumber::from_normal_idx(0).unwrap();
+    // let public_key = xpub.derive_pub(&secp, &[zero, zero]).unwrap().public_key;
+    // let address = Address::p2wpkh(&PublicKey::new(public_key), network).unwrap();
+    // println!("First receiving address: {}", address);
 }

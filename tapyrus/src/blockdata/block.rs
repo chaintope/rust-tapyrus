@@ -20,13 +20,12 @@ use crate::blockdata::transaction::Transaction;
 use crate::consensus::encode::serialize_hex;
 use crate::consensus::{encode, serialize, Decodable, Encodable};
 use crate::crypto::key::PublicKey;
-use crate::crypto;
 use crate::crypto::schnorr::Signature;
 pub use crate::hash_types::BlockHash;
 use crate::hash_types::{BlockSigHash, TxMerkleNode, WitnessCommitment, WitnessMerkleNode, Wtxid};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::prelude::*;
-use crate::{io, merkle_tree, VarInt};
+use crate::{crypto, io, merkle_tree, VarInt};
 
 /// Bitcoin block header.
 ///
@@ -215,7 +214,6 @@ impl HeaderWithoutProof {
             xfield: header.xfield.clone(),
         }
     }
-    
 }
 
 impl_consensus_encoding!(
@@ -642,8 +640,9 @@ impl std::error::Error for ValidationError {
 
 #[cfg(test)]
 mod tests {
-    use hex::{test_hex_unwrap as hex, FromHex};
     use core::str::FromStr;
+
+    use hex::{test_hex_unwrap as hex, FromHex};
 
     use super::*;
     use crate::consensus::encode::{deserialize, serialize};
