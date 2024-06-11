@@ -9,6 +9,7 @@
 
 use core::default::Default;
 use core::str::FromStr;
+use crate::alloc::string::ToString;
 
 use hashes::{sha256d, Hash};
 use hex_lit::hex;
@@ -57,8 +58,8 @@ pub const MAX_SCRIPTNUM_VALUE: u32 = 0x80000000; // 2^31
 pub const COINBASE_MATURITY: u32 = 100;
 
 /// Constructs and returns the coinbase (and only) transaction of the Mainnet genesis block.
-/// https://explorer.api.tapyrus.chaintope.com/tx/3231b5798aacd8ea40f3b580e741006a71335ed9a7538768ee4a193bc525c170
 fn mainnet_genesis_tx() -> Transaction {
+    // https://explorer.api.tapyrus.chaintope.com/tx/3231b5798aacd8ea40f3b580e741006a71335ed9a7538768ee4a193bc525c170
     // Base
     let mut ret = Transaction {
         version: transaction::Version::ONE,
@@ -87,8 +88,8 @@ fn mainnet_genesis_tx() -> Transaction {
 }
 
 /// Constructs and returns the coinbase (and only) transaction of the Testnet genesis block.
-/// https://testnet-explorer.tapyrus.dev.chaintope.com/tx/846521b8ff0b89fee8b99d089ffe403856e912c7fc34486d9dbbf03625ec188f
 fn testnet_genesis_tx() -> Transaction {
+    // https://testnet-explorer.tapyrus.dev.chaintope.com/tx/846521b8ff0b89fee8b99d089ffe403856e912c7fc34486d9dbbf03625ec188f
     // Base
     let mut ret = Transaction {
         version: transaction::Version::ONE,
@@ -117,8 +118,8 @@ fn testnet_genesis_tx() -> Transaction {
 }
 
 /// Constructs and returns the Mainnet genesis block.
-/// https://explorer.api.tapyrus.chaintope.com/block/92f729508ee8b0e4f46418f81f89806a952c739df03de1e666a8e2b5c40b549b
 pub fn mainnet_genesis_block() -> Block {
+    // https://explorer.api.tapyrus.chaintope.com/block/92f729508ee8b0e4f46418f81f89806a952c739df03de1e666a8e2b5c40b549b
     let txdata = vec![mainnet_genesis_tx()];
     let hash: sha256d::Hash = txdata[0].txid().into();
     let im_merkle_root = txdata[0].malfix_txid().into();
@@ -143,8 +144,8 @@ pub fn mainnet_genesis_block() -> Block {
 }
 
 /// Constructs and returns the Testnet genesis block.
-/// https://testnet-explorer.tapyrus.dev.chaintope.com/block/038b114875c2f78f5a2fd7d8549a905f38ea5faee6e29a3d79e547151d6bdd8a
 pub fn testnet_genesis_block() -> Block {
+    // https://testnet-explorer.tapyrus.dev.chaintope.com/block/038b114875c2f78f5a2fd7d8549a905f38ea5faee6e29a3d79e547151d6bdd8a
     let txdata = vec![testnet_genesis_tx()];
     let hash: sha256d::Hash = txdata[0].txid().into();
     let im_merkle_root = txdata[0].malfix_txid().into();

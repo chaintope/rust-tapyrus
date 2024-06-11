@@ -198,6 +198,7 @@ impl fmt::Display for Network {
 /// Error in parsing network from chain hash.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
+#[allow(dead_code)]
 pub struct UnknownChainHashError(ChainHash);
 
 impl Display for UnknownChainHashError {
