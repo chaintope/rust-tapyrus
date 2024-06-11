@@ -21,6 +21,7 @@ use crate::consensus::Encodable;
 use crate::key::{PublicKey, UntweakedPublicKey};
 use crate::policy::DUST_RELAY_TX_FEE;
 use crate::prelude::*;
+use crate::script::color_identifier::TokenTypes;
 use crate::taproot::{LeafVersion, TapLeafHash, TapNodeHash};
 
 /// Bitcoin script slice.
@@ -399,6 +400,35 @@ impl Script {
             }
             None => false,
         }
+    }
+
+    /// Check if a script pubkey is a cp2pkh output
+    pub fn is_cp2pkh(&self) -> bool {
+        self.0.len() == 60
+            && self.0[0] == OP_PUSHBYTES_33.to_u8()
+            && TokenTypes::is_valid(&self.0[1])
+            && self.0[34] == OP_COLOR.to_u8()
+            && self.0[35] == OP_DUP.to_u8()
+            && self.0[36] == OP_HASH160.to_u8()
+            && self.0[37] == OP_PUSHBYTES_20.to_u8()
+            && self.0[58] == OP_EQUALVERIFY.to_u8()
+            && self.0[59] == OP_CHECKSIG.to_u8()
+    }
+
+    /// Check if a script pubkey is a cp2sh output
+    pub fn is_cp2sh(&self) -> bool {
+        self.0.len() == 58
+            && self.0[0] == OP_PUSHBYTES_33.to_u8()
+            && TokenTypes::is_valid(&self.0[1])
+            && self.0[34] == OP_COLOR.to_u8()
+            && self.0[35] == OP_HASH160.to_u8()
+            && self.0[36] == OP_PUSHBYTES_20.to_u8()
+            && self.0[57] == OP_EQUAL.to_u8()
+    }
+
+    /// Check if a script pubkey is a colored coin script
+    pub fn is_colored(&self) -> bool {
+        self.is_cp2pkh() || self.is_cp2sh()
     }
 
     /// Computes the P2SH output corresponding to this redeem script.

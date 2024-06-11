@@ -16,6 +16,8 @@ use crate::key::{
     PubkeyHash, PublicKey, TapTweak, TweakedPublicKey, UntweakedPublicKey, WPubkeyHash,
 };
 use crate::prelude::*;
+use crate::script::color_identifier::{ColoredCoinError, ColorIdentifier};
+use crate::script::PushBytesBuf;
 use crate::taproot::TapNodeHash;
 
 /// An owned, growable script.
@@ -96,6 +98,23 @@ impl ScriptBuf {
             .push_slice(script_hash)
             .push_opcode(OP_EQUAL)
             .into_script()
+    }
+
+    /// Create new script with color identifier
+    pub fn add_color(&self, color_id: ColorIdentifier) -> Result<Self, ColoredCoinError> {
+        if !self.is_p2pkh() && !self.is_p2sh() {
+            return Err(ColoredCoinError::UnsuppotedScriptType);
+        }
+
+        let script = Builder::new()
+            .push_slice(PushBytesBuf::from(color_id))
+            .push_opcode(OP_COLOR)
+            .into_script();
+
+        let mut com = Vec::new();
+        com.extend_from_slice(script.as_bytes());
+        com.extend_from_slice(self.as_bytes());
+        Ok(ScriptBuf::from_bytes(com))
     }
 
     /// Generates P2WPKH-type of scriptPubkey.

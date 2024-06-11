@@ -9,6 +9,7 @@ use super::*;
 use crate::blockdata::opcodes;
 use crate::consensus::encode::{deserialize, serialize};
 use crate::crypto::key::{PubkeyHash, PublicKey, WPubkeyHash, XOnlyPublicKey};
+use crate::script::color_identifier::{ColorIdentifier, TokenTypes};
 
 #[test]
 #[rustfmt::skip]
@@ -870,4 +871,84 @@ fn instruction_script_num_parse() {
         Script::from_bytes(&[0x00]).instructions().next(),
         Some(Ok(Instruction::PushBytes(PushBytes::empty()))),
     );
+}
+
+#[test]
+fn script_cp2pkh() {
+    // cp2pkh
+    assert!(ScriptBuf::from_hex("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").unwrap().is_cp2pkh());
+    // cp2sh
+    assert!(!ScriptBuf::from_hex("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bca9147620a79e8657d066cff10e21228bf983cf546ac687").unwrap().is_cp2pkh());
+    // p2pkh
+    assert!(!ScriptBuf::from_hex("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").unwrap().is_cp2pkh());
+    // invalid type
+    assert!(!ScriptBuf::from_hex("21c4ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").unwrap().is_cp2pkh());
+}
+
+#[test]
+fn script_cp2sh() {
+    // cp2sh
+    assert!(ScriptBuf::from_hex("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bca9147620a79e8657d066cff10e21228bf983cf546ac687").unwrap().is_cp2sh());
+    // cp2pkh
+    assert!(!ScriptBuf::from_hex("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").unwrap().is_cp2sh());
+    // p2sh
+    assert!(!ScriptBuf::from_hex("a9147620a79e8657d066cff10e21228bf983cf546ac687").unwrap().is_cp2sh());
+    // invalid type
+    assert!(!ScriptBuf::from_hex("21c4ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bca9147620a79e8657d066cff10e21228bf983cf546ac687").unwrap().is_cp2sh());
+}
+
+#[test]
+fn is_colored_test() {
+    // cp2pkh
+    assert!(ScriptBuf::from_hex("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").unwrap().is_colored());
+    // cp2sh
+    assert!(ScriptBuf::from_hex("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bca9147620a79e8657d066cff10e21228bf983cf546ac687").unwrap().is_colored());
+    // p2pkh
+    assert!(!ScriptBuf::from_hex("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").unwrap().is_colored());
+    // p2sh
+    assert!(!ScriptBuf::from_hex("a9147620a79e8657d066cff10e21228bf983cf546ac687").unwrap().is_colored());
+}
+
+#[test]
+fn color_identifier_test() {
+    let script = ScriptBuf::from_hex("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").unwrap();
+    let color_id = ColorIdentifier::reissuable(&script);
+    assert_eq!(color_id.token_type, TokenTypes::Reissuable);
+
+    let color_id = ColorIdentifier::non_reissuable(OutPoint::default());
+    assert_eq!(color_id.token_type, TokenTypes::NonReissuable);
+
+    let color_id = ColorIdentifier::nft(OutPoint::default());
+    assert_eq!(color_id.token_type, TokenTypes::Nft);
+}
+
+#[test]
+fn token_type_is_valid() {
+    assert!(TokenTypes::is_valid(&0xc1));
+    assert!(TokenTypes::is_valid(&0xc2));
+    assert!(TokenTypes::is_valid(&0xc3));
+    assert!(!TokenTypes::is_valid(&0xc4));
+}
+
+#[test]
+fn add_color_test() {
+    let out_point = OutPoint { txid: "0101010101010101010101010101010101010101010101010101010101010101".parse().expect("txid"), vout: 1 };
+    let color_id = ColorIdentifier::nft(out_point);
+    let p2pkh = ScriptBuf::from_hex("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").expect("p2pkh");
+    let p2sh = ScriptBuf::from_hex("a9147620a79e8657d066cff10e21228bf983cf546ac687").expect("p2sh");
+    let op_return = ScriptBuf::from_hex("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87").expect("op_return");
+
+    // p2pkh -> cp2pkh
+    let cp2pkh = p2pkh.add_color(color_id).unwrap();
+    assert!(cp2pkh.is_cp2pkh());
+    assert_eq!(cp2pkh.to_bytes(), hex!("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac"));
+
+    // p2sh -> cp2sh
+    let cp2sh = p2sh.add_color(color_id).unwrap();
+    assert!(cp2sh.is_cp2sh());
+    assert_eq!(cp2sh.to_bytes(), hex!("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bca9147620a79e8657d066cff10e21228bf983cf546ac687"));
+
+    // op_return -> err
+    let op_return = op_return.add_color(color_id);
+    assert!(op_return.is_err());
 }

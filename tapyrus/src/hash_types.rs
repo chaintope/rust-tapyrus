@@ -25,6 +25,7 @@ macro_rules! impl_hashencode {
         }
     };
 }
+pub(crate) use impl_hashencode;
 
 #[rustfmt::skip]
 macro_rules! impl_asref_push_bytes {
