@@ -19,14 +19,12 @@
 //! ```
 
 use core::fmt;
-use core::fmt::Display;
 use core::str::FromStr;
 
 use internals::write_err;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-use crate::constants::ChainHash;
 use crate::prelude::{String, ToOwned};
 
 /// Network ID is identifier of the Tapyrus network
@@ -193,23 +191,6 @@ impl fmt::Display for Network {
         };
         write!(f, "{}", s)
     }
-}
-
-/// Error in parsing network from chain hash.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
-#[allow(dead_code)]
-pub struct UnknownChainHashError(ChainHash);
-
-impl Display for UnknownChainHashError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "unknown chain hash: {}", self.0)
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for UnknownChainHashError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
 }
 
 #[cfg(test)]
