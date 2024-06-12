@@ -391,7 +391,7 @@ mod test {
                 sequence: Sequence(1),
                 witness: Witness::new(),
             }],
-            output: vec![TxOut { value: Amount::ONE_SAT, script_pubkey: ScriptBuf::new() }],
+            output: vec![TxOut { value: Amount::ONE_TAP, script_pubkey: ScriptBuf::new() }],
         }
     }
 

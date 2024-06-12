@@ -112,7 +112,7 @@ fn serde_regression_txin() {
 #[test]
 fn serde_regression_txout() {
     let txout = TxOut {
-        value: Amount::from_sat(0xDEADBEEFCAFEBABE),
+        value: Amount::from_tap(0xDEADBEEFCAFEBABE),
         script_pubkey: ScriptBuf::from(vec![0u8, 1u8, 2u8]),
     };
     let got = serialize(&txout).unwrap();
@@ -240,7 +240,7 @@ fn serde_regression_psbt() {
             .unwrap()]),
         }],
         output: vec![TxOut {
-            value: Amount::from_sat(190_303_501_938),
+            value: Amount::from_tap(190_303_501_938),
             script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587")
                 .unwrap(),
         }],
@@ -285,7 +285,7 @@ fn serde_regression_psbt() {
         inputs: vec![Input {
             non_witness_utxo: Some(tx),
             witness_utxo: Some(TxOut {
-                value: Amount::from_sat(190_303_501_938),
+                value: Amount::from_tap(190_303_501_938),
                 script_pubkey: ScriptBuf::from_hex("a914339725ba21efd62ac753a9bcd067d6c7a6a39d0587").unwrap(),
             }),
             sighash_type: Some(PsbtSighashType::from(EcdsaSighashType::from_str("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY").unwrap())),

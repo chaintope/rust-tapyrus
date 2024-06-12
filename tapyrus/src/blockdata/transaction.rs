@@ -490,7 +490,7 @@ impl_parse_str_from_int_infallible!(Sequence, u32, from_consensus);
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub struct TxOut {
-    /// The value of the output, in satoshis.
+    /// The value of the output, in tapyruses.
     pub value: Amount,
     /// The script which must be satisfied for the output to be spent.
     pub script_pubkey: ScriptBuf,
@@ -499,7 +499,7 @@ pub struct TxOut {
 impl TxOut {
     /// This is used as a "null txout" in consensus signing code.
     pub const NULL: Self =
-        TxOut { value: Amount::from_sat(0xffffffffffffffff), script_pubkey: ScriptBuf::new() };
+        TxOut { value: Amount::from_tap(0xffffffffffffffff), script_pubkey: ScriptBuf::new() };
 
     /// The weight of this output.
     ///
@@ -524,7 +524,7 @@ impl TxOut {
     /// Creates a `TxOut` with given script and the smallest possible `value` that is **not** dust
     /// per current Core policy.
     ///
-    /// The current dust fee rate is 3 sat/vB.
+    /// The current dust fee rate is 3 tap/vB.
     pub fn minimal_non_dust(script_pubkey: ScriptBuf) -> Self {
         let len = size_from_script_pubkey(&script_pubkey);
         let len = len
@@ -536,7 +536,7 @@ impl TxOut {
         let dust_amount = (len as u64) * 3;
 
         TxOut {
-            value: Amount::from_sat(dust_amount + 1), // minimal non-dust amount is one higher than dust amount
+            value: Amount::from_tap(dust_amount + 1), // minimal non-dust amount is one higher than dust amount
             script_pubkey,
         }
     }

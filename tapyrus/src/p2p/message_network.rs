@@ -151,9 +151,9 @@ mod tests {
     #[test]
     fn version_message_test() {
         // This message is from my satoshi node, morning of May 27 2014
-        let from_sat = hex!("721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff0000000000000100000000000000fd87d87eeb4364f22cf54dca59412db7208d47d920cffce83ee8102f5361746f7368693a302e392e39392f2c9f040001");
+        let from_tap = hex!("721101000100000000000000e6e0845300000000010000000000000000000000000000000000ffff0000000000000100000000000000fd87d87eeb4364f22cf54dca59412db7208d47d920cffce83ee8102f5361746f7368693a302e392e39392f2c9f040001");
 
-        let decode: Result<VersionMessage, _> = deserialize(&from_sat);
+        let decode: Result<VersionMessage, _> = deserialize(&from_tap);
         assert!(decode.is_ok());
         let real_decode = decode.unwrap();
         assert_eq!(real_decode.version, 70002);
@@ -165,7 +165,7 @@ mod tests {
         assert_eq!(real_decode.start_height, 302892);
         assert!(real_decode.relay);
 
-        assert_eq!(serialize(&real_decode), from_sat);
+        assert_eq!(serialize(&real_decode), from_tap);
     }
 
     #[test]
