@@ -64,7 +64,7 @@ const RECEIVE_ADDRESS: &str = "bcrt1qcmnpjjjw78yhyjrxtql6lk7pzpujs3h244p7ae"; //
 const OUTPUT_AMOUNT_BTC: &str = "1 BTC";
 const CHANGE_AMOUNT_BTC: &str = "48.99999 BTC"; // 1000 sat transaction fee.
 
-const NETWORK: Network = Network::Regtest;
+const NETWORK: Network = Network::Dev;
 
 fn main() -> Result<()> {
     let secp = Secp256k1::new();
@@ -170,7 +170,7 @@ impl WatchOnly {
 
     /// Creates the PSBT, in BIP174 parlance this is the 'Creater'.
     fn create_psbt<C: Verification>(&self, secp: &Secp256k1<C>) -> Result<Psbt> {
-        let to_address = Address::from_str(RECEIVE_ADDRESS)?.require_network(Network::Regtest)?;
+        let to_address = Address::from_str(RECEIVE_ADDRESS)?.require_network(Network::Dev)?;
         let to_amount = Amount::from_str(OUTPUT_AMOUNT_BTC)?;
 
         let (_, change_address, _) = self.change_address(secp)?;

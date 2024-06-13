@@ -16,7 +16,7 @@
 //! let public_key = PublicKey::new(s.generate_keypair(&mut rand::thread_rng()).1);
 //!
 //! // Generate pay-to-pubkey-hash address.
-//! let address = Address::p2pkh(&public_key, Network::Bitcoin);
+//! let address = Address::p2pkh(&public_key, Network::Prod);
 //! # }
 //! ```
 //!
@@ -339,15 +339,15 @@ struct AddressInner {
 ///
 /// // variant 1
 /// let address: Address<NetworkUnchecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse().unwrap();
-/// let address: Address<NetworkChecked> = address.require_network(Network::Bitcoin).unwrap();
+/// let address: Address<NetworkChecked> = address.require_network(Network::Prod).unwrap();
 ///
 /// // variant 2
 /// let address: Address = Address::from_str("32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf").unwrap()
-///                .require_network(Network::Bitcoin).unwrap();
+///                .require_network(Network::Prod).unwrap();
 ///
 /// // variant 3
 /// let address: Address<NetworkChecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse::<Address<_>>()
-///                .unwrap().require_network(Network::Bitcoin).unwrap();
+///                .unwrap().require_network(Network::Prod).unwrap();
 /// ```
 ///
 /// ### Formatting addresses
@@ -486,17 +486,16 @@ impl<V: NetworkValidation> Address<V> {
     /// Format the address for the usage by `Debug` and `Display` implementations.
     fn fmt_internal(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let p2pkh_prefix = match self.network() {
-            Network::Bitcoin | Network::Paradium => PUBKEY_ADDRESS_PREFIX_MAIN,
-            Network::Testnet | Network::Signet | Network::Regtest => PUBKEY_ADDRESS_PREFIX_TEST,
+            Network::Prod => PUBKEY_ADDRESS_PREFIX_MAIN,
+            Network::Dev => PUBKEY_ADDRESS_PREFIX_TEST,
         };
         let p2sh_prefix = match self.network() {
-            Network::Bitcoin | Network::Paradium => SCRIPT_ADDRESS_PREFIX_MAIN,
-            Network::Testnet | Network::Signet | Network::Regtest => SCRIPT_ADDRESS_PREFIX_TEST,
+            Network::Prod => SCRIPT_ADDRESS_PREFIX_MAIN,
+            Network::Dev => SCRIPT_ADDRESS_PREFIX_TEST,
         };
         let hrp = match self.network() {
-            Network::Bitcoin | Network::Paradium => hrp::BC,
-            Network::Testnet | Network::Signet => hrp::TB,
-            Network::Regtest => hrp::BCRT,
+            Network::Prod => hrp::BC,
+            Network::Dev => hrp::TB,
         };
         let encoding = AddressEncoding { payload: self.payload(), p2pkh_prefix, p2sh_prefix, hrp };
 
@@ -689,28 +688,18 @@ impl Address<NetworkUnchecked> {
     /// use tapyrus::address::NetworkUnchecked;
     ///
     /// let address: Address<NetworkUnchecked> = "2N83imGV3gPwBzKJQvWJ7cRUY2SpUyU6A5e".parse().unwrap();
-    /// assert!(address.is_valid_for_network(Network::Testnet));
-    /// assert!(address.is_valid_for_network(Network::Regtest));
-    /// assert!(address.is_valid_for_network(Network::Signet));
+    /// assert!(address.is_valid_for_network(Network::Dev));
     ///
-    /// assert_eq!(address.is_valid_for_network(Network::Bitcoin), false);
+    /// assert_eq!(address.is_valid_for_network(Network::Prod), false);
     ///
     /// let address: Address<NetworkUnchecked> = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf".parse().unwrap();
-    /// assert!(address.is_valid_for_network(Network::Bitcoin));
-    /// assert_eq!(address.is_valid_for_network(Network::Testnet), false);
+    /// assert!(address.is_valid_for_network(Network::Prod));
+    /// assert_eq!(address.is_valid_for_network(Network::Dev), false);
     /// ```
     pub fn is_valid_for_network(&self, network: Network) -> bool {
-        let is_legacy = matches!(
-            self.address_type_internal(),
-            Some(AddressType::P2pkh) | Some(AddressType::P2sh)
-        );
-
         match (self.network(), network) {
             (a, b) if *a == b => true,
-            (Network::Bitcoin, _) | (_, Network::Bitcoin) => false,
-            (Network::Paradium, _) | (_, Network::Paradium) => false,
-            (Network::Regtest, _) | (_, Network::Regtest) if !is_legacy => false,
-            (Network::Testnet, _) | (Network::Regtest, _) | (Network::Signet, _) => true,
+            (_, _) => false,
         }
     }
 
@@ -793,9 +782,9 @@ impl FromStr for Address<NetworkUnchecked> {
         // try bech32
         let bech32_network = match find_bech32_prefix(s) {
             // note that upper or lowercase is allowed but NOT mixed case
-            "bc" | "BC" => Some(Network::Bitcoin),
-            "tb" | "TB" => Some(Network::Testnet), // this may also be signet
-            "bcrt" | "BCRT" => Some(Network::Regtest),
+            "bc" | "BC" => Some(Network::Prod),
+            "tb" | "TB" => Some(Network::Prod),
+            "bcrt" | "BCRT" => Some(Network::Dev),
             _ => None,
         };
         if let Some(network) = bech32_network {
@@ -818,13 +807,13 @@ impl FromStr for Address<NetworkUnchecked> {
 
         let (network, payload) = match data[0] {
             PUBKEY_ADDRESS_PREFIX_MAIN =>
-                (Network::Bitcoin, Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap())),
+                (Network::Prod, Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap())),
             SCRIPT_ADDRESS_PREFIX_MAIN =>
-                (Network::Bitcoin, Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap())),
+                (Network::Prod, Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap())),
             PUBKEY_ADDRESS_PREFIX_TEST =>
-                (Network::Testnet, Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap())),
+                (Network::Dev, Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap())),
             SCRIPT_ADDRESS_PREFIX_TEST =>
-                (Network::Testnet, Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap())),
+                (Network::Dev, Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap())),
             x => return Err(ParseError::Base58(base58::Error::InvalidAddressVersion(x))),
         };
 
@@ -849,7 +838,7 @@ mod tests {
 
     use super::*;
     use crate::crypto::key::PublicKey;
-    use crate::network::Network::{Bitcoin, Testnet};
+    use crate::network::Network::{Dev, Prod};
 
     fn roundtrips(addr: &Address) {
         assert_eq!(
@@ -877,7 +866,7 @@ mod tests {
     #[test]
     fn test_p2pkh_address_58() {
         let addr = Address::new(
-            Bitcoin,
+            Prod,
             Payload::PubkeyHash("162c5ea71c0b23f5b9022ef047c4a86470a5b070".parse().unwrap()),
         );
 
@@ -893,13 +882,13 @@ mod tests {
     #[test]
     fn test_p2pkh_from_key() {
         let key = "048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183".parse::<PublicKey>().unwrap();
-        let addr = Address::p2pkh(&key, Bitcoin);
+        let addr = Address::p2pkh(&key, Prod);
         assert_eq!(&addr.to_string(), "1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY");
 
         let key = "03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f"
             .parse::<PublicKey>()
             .unwrap();
-        let addr = Address::p2pkh(&key, Testnet);
+        let addr = Address::p2pkh(&key, Dev);
         assert_eq!(&addr.to_string(), "mqkhEMH6NCeYjFybv7pvFC22MFeaNT9AQC");
         assert_eq!(addr.address_type(), Some(AddressType::P2pkh));
         roundtrips(&addr);
@@ -908,7 +897,7 @@ mod tests {
     #[test]
     fn test_p2sh_address_58() {
         let addr = Address::new(
-            Bitcoin,
+            Prod,
             Payload::ScriptHash("162c5ea71c0b23f5b9022ef047c4a86470a5b070".parse().unwrap()),
         );
 
@@ -924,7 +913,7 @@ mod tests {
     #[test]
     fn test_p2sh_parse() {
         let script = ScriptBuf::from_hex("552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae").unwrap();
-        let addr = Address::p2sh(&script, Testnet).unwrap();
+        let addr = Address::p2sh(&script, Dev).unwrap();
         assert_eq!(&addr.to_string(), "2N3zXjbwdTcPsJiy8sUK9FhWJhqQCxA8Jjr");
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));
         roundtrips(&addr);
@@ -933,30 +922,32 @@ mod tests {
     #[test]
     fn test_p2sh_parse_for_large_script() {
         let script = ScriptBuf::from_hex("552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123552103a765fc35b3f210b95223846b36ef62a4e53e34e2925270c2c7906b92c9f718eb2103c327511374246759ec8d0b89fa6c6b23b33e11f92c5bc155409d86de0c79180121038cae7406af1f12f4786d820a1466eec7bc5785a1b5e4a387eca6d797753ef6db2103252bfb9dcaab0cd00353f2ac328954d791270203d66c2be8b430f115f451b8a12103e79412d42372c55dd336f2eb6eb639ef9d74a22041ba79382c74da2338fe58ad21035049459a4ebc00e876a9eef02e72a3e70202d3d1f591fc0dd542f93f642021f82102016f682920d9723c61b27f562eb530c926c00106004798b6471e8c52c60ee02057ae12123122313123123ac1231231231231313123131231231231313212313213123123").unwrap();
-        assert_eq!(Address::p2sh(&script, Testnet), Err(Error::ExcessiveScriptSize));
+        assert_eq!(Address::p2sh(&script, Dev), Err(Error::ExcessiveScriptSize));
     }
 
     #[test]
+    #[ignore] // Segwit address does not support
     fn test_p2wpkh() {
         // stolen from Bitcoin transaction: b3c8c2b6cfc335abbcb2c7823a8453f55d64b2b5125a9a61e8737230cdb8ce20
         let mut key = "033bc8c83c52df5712229a2f72206d90192366c36428cb0c12b6af98324d97bfbc"
             .parse::<PublicKey>()
             .unwrap();
-        let addr = Address::p2wpkh(&key, Bitcoin).unwrap();
+        let addr = Address::p2wpkh(&key, Prod).unwrap();
         assert_eq!(&addr.to_string(), "bc1qvzvkjn4q3nszqxrv3nraga2r822xjty3ykvkuw");
         assert_eq!(addr.address_type(), Some(AddressType::P2wpkh));
         roundtrips(&addr);
 
         // Test uncompressed pubkey
         key.compressed = false;
-        assert_eq!(Address::p2wpkh(&key, Bitcoin), Err(Error::UncompressedPubkey));
+        assert_eq!(Address::p2wpkh(&key, Prod), Err(Error::UncompressedPubkey));
     }
 
     #[test]
+    #[ignore] // Segwit address does not support
     fn test_p2wsh() {
         // stolen from Bitcoin transaction 5df912fda4becb1c29e928bec8d64d93e9ba8efa9b5b405bd683c86fd2c65667
         let script = ScriptBuf::from_hex("52210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae").unwrap();
-        let addr = Address::p2wsh(&script, Bitcoin);
+        let addr = Address::p2wsh(&script, Prod);
         assert_eq!(
             &addr.to_string(),
             "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"
@@ -971,21 +962,21 @@ mod tests {
         let mut key = "026c468be64d22761c30cd2f12cbc7de255d592d7904b1bab07236897cc4c2e766"
             .parse::<PublicKey>()
             .unwrap();
-        let addr = Address::p2shwpkh(&key, Bitcoin).unwrap();
+        let addr = Address::p2shwpkh(&key, Prod).unwrap();
         assert_eq!(&addr.to_string(), "3QBRmWNqqBGme9er7fMkGqtZtp4gjMFxhE");
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));
         roundtrips(&addr);
 
         // Test uncompressed pubkey
         key.compressed = false;
-        assert_eq!(Address::p2wpkh(&key, Bitcoin), Err(Error::UncompressedPubkey));
+        assert_eq!(Address::p2wpkh(&key, Prod), Err(Error::UncompressedPubkey));
     }
 
     #[test]
     fn test_p2shwsh() {
         // stolen from Bitcoin transaction f9ee2be4df05041d0e0a35d7caa3157495ca4f93b233234c9967b6901dacf7a9
         let script = ScriptBuf::from_hex("522103e5529d8eaa3d559903adb2e881eb06c86ac2574ffa503c45f4e942e2a693b33e2102e5f10fcdcdbab211e0af6a481f5532536ec61a5fdbf7183770cf8680fe729d8152ae").unwrap();
-        let addr = Address::p2shwsh(&script, Bitcoin);
+        let addr = Address::p2shwsh(&script, Prod);
         assert_eq!(&addr.to_string(), "36EqgNnsWW94SreZgBWc1ANC6wpFZwirHr");
         assert_eq!(addr.address_type(), Some(AddressType::P2sh));
         roundtrips(&addr);
@@ -998,7 +989,7 @@ mod tests {
             "654f6ea368e0acdfd92976b7c2103a1b26313f430654f6ea368e0acdfd92976b7c2103a1b26313f4"
         );
         let witness_prog = WitnessProgram::new(WitnessVersion::V13, program.to_vec()).unwrap();
-        let addr = Address::new(Bitcoin, Payload::WitnessProgram(witness_prog));
+        let addr = Address::new(Prod, Payload::WitnessProgram(witness_prog));
         roundtrips(&addr);
     }
 
@@ -1049,7 +1040,7 @@ mod tests {
         for (address, expected_type) in &addresses {
             let addr = Address::from_str(address)
                 .unwrap()
-                .require_network(Network::Bitcoin)
+                .require_network(Network::Prod)
                 .expect("mainnet");
             assert_eq!(&addr.address_type(), expected_type);
         }
@@ -1088,52 +1079,54 @@ mod tests {
             ScriptBuf::from_hex("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087").unwrap()
         );
 
-        let addr: Address<NetworkUnchecked> =
-            Address::from_str("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7")
-                .unwrap();
-        let json = serde_json::to_value(addr).unwrap();
-        assert_eq!(
-            json,
-            serde_json::Value::String(
-                "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7".to_owned()
-            )
-        );
+        // Segwit address does not support
+        // let addr: Address<NetworkUnchecked> =
+        //     Address::from_str("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7")
+        //         .unwrap();
+        // let json = serde_json::to_value(addr).unwrap();
+        // assert_eq!(
+        //     json,
+        //     serde_json::Value::String(
+        //         "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7".to_owned()
+        //     )
+        // );
 
-        let addr =
-            Address::from_str("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7")
-                .unwrap()
-                .assume_checked();
-        let json = serde_json::to_value(&addr).unwrap();
-        assert_eq!(
-            json,
-            serde_json::Value::String(
-                "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7".to_owned()
-            )
-        );
-        let into: Address = serde_json::from_value::<Address<_>>(json).unwrap().assume_checked();
-        assert_eq!(addr.to_string(), into.to_string());
-        assert_eq!(
-            into.script_pubkey(),
-            ScriptBuf::from_hex(
-                "00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262"
-            )
-            .unwrap()
-        );
+        // let addr =
+        //     Address::from_str("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7")
+        //         .unwrap()
+        //         .assume_checked();
+        // let json = serde_json::to_value(&addr).unwrap();
+        // assert_eq!(
+        //     json,
+        //     serde_json::Value::String(
+        //         "tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7".to_owned()
+        //     )
+        // );
+        // let into: Address = serde_json::from_value::<Address<_>>(json).unwrap().assume_checked();
+        // assert_eq!(addr.to_string(), into.to_string());
+        // assert_eq!(
+        //     into.script_pubkey(),
+        //     ScriptBuf::from_hex(
+        //         "00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262"
+        //     )
+        //     .unwrap()
+        // );
 
-        let addr = Address::from_str("bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl")
-            .unwrap()
-            .assume_checked();
-        let json = serde_json::to_value(&addr).unwrap();
-        assert_eq!(
-            json,
-            serde_json::Value::String("bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl".to_owned())
-        );
-        let into: Address = serde_json::from_value::<Address<_>>(json).unwrap().assume_checked();
-        assert_eq!(addr.to_string(), into.to_string());
-        assert_eq!(
-            into.script_pubkey(),
-            ScriptBuf::from_hex("001454d26dddb59c7073c6a197946ea1841951fa7a74").unwrap()
-        );
+        // Segwit address does not support
+        // let addr = Address::from_str("bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl")
+        //     .unwrap()
+        //     .assume_checked();
+        // let json = serde_json::to_value(&addr).unwrap();
+        // assert_eq!(
+        //     json,
+        //     serde_json::Value::String("bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl".to_owned())
+        // );
+        // let into: Address = serde_json::from_value::<Address<_>>(json).unwrap().assume_checked();
+        // assert_eq!(addr.to_string(), into.to_string());
+        // assert_eq!(
+        //     into.script_pubkey(),
+        //     ScriptBuf::from_hex("001454d26dddb59c7073c6a197946ea1841951fa7a74").unwrap()
+        // );
     }
 
     #[test]
@@ -1142,19 +1135,20 @@ mod tests {
             ["132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM", "33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k"].iter()
         {
             let addr =
-                Address::from_str(el).unwrap().require_network(Network::Bitcoin).expect("mainnet");
+                Address::from_str(el).unwrap().require_network(Network::Prod).expect("mainnet");
             assert_eq!(addr.to_qr_uri(), format!("tapyrus:{}", el));
         }
 
-        for el in [
-            "bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl",
-            "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej",
-        ]
-        .iter()
-        {
-            let addr = Address::from_str(el).unwrap().assume_checked();
-            assert_eq!(addr.to_qr_uri(), format!("tapyrus:{}", el.to_ascii_uppercase()));
-        }
+        // Segwit address does not support
+        // for el in [
+        //     "bcrt1q2nfxmhd4n3c8834pj72xagvyr9gl57n5r94fsl",
+        //     "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej",
+        // ]
+        // .iter()
+        // {
+        //     let addr = Address::from_str(el).unwrap().assume_checked();
+        //     assert_eq!(addr.to_qr_uri(), format!("tapyrus:{}", el.to_ascii_uppercase()));
+        // }
     }
 
     #[test]
@@ -1175,10 +1169,8 @@ mod tests {
             })
             .collect::<Vec<_>>();
 
-        const LEGACY_EQUIVALENCE_CLASSES: &[&[Network]] =
-            &[&[Network::Bitcoin], &[Network::Testnet, Network::Regtest, Network::Signet]];
-        const SEGWIT_EQUIVALENCE_CLASSES: &[&[Network]] =
-            &[&[Network::Bitcoin], &[Network::Regtest], &[Network::Testnet, Network::Signet]];
+        const LEGACY_EQUIVALENCE_CLASSES: &[&[Network]] = &[&[Network::Prod], &[Network::Dev]];
+        const SEGWIT_EQUIVALENCE_CLASSES: &[&[Network]] = &[&[Network::Prod], &[Network::Dev]];
 
         fn test_addr_type(payloads: &[Payload], equivalence_classes: &[&[Network]]) {
             for pl in payloads {
@@ -1216,7 +1208,7 @@ mod tests {
         )
         .unwrap();
         let secp = Secp256k1::verification_only();
-        let address = Address::p2tr(&secp, internal_key, None, Network::Bitcoin);
+        let address = Address::p2tr(&secp, internal_key, None, Network::Prod);
         assert_eq!(
             address.to_string(),
             "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr"
@@ -1230,7 +1222,7 @@ mod tests {
         let address_string = "bc1qhvd6suvqzjcu9pxjhrwhtrlj85ny3n2mqql5w4";
         let address = Address::from_str(address_string)
             .expect("address")
-            .require_network(Network::Bitcoin)
+            .require_network(Network::Prod)
             .expect("mainnet");
 
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
@@ -1251,7 +1243,7 @@ mod tests {
         let address_string = "3EZQk4F8GURH5sqVMLTFisD17yNeKa7Dfs";
         let address = Address::from_str(address_string)
             .expect("address")
-            .require_network(Network::Bitcoin)
+            .require_network(Network::Prod)
             .expect("mainnet");
 
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
@@ -1272,7 +1264,7 @@ mod tests {
         let address_string = "1J4LVanjHMu3JkXbVrahNuQCTGCRRgfWWx";
         let address = Address::from_str(address_string)
             .expect("address")
-            .require_network(Network::Bitcoin)
+            .require_network(Network::Prod)
             .expect("mainnet");
 
         let pubkey_string = "0347ff3dacd07a1f43805ec6808e801505a6e18245178609972a68afbc2777ff2b";
@@ -1293,7 +1285,7 @@ mod tests {
         let address_string = "msvS7KzhReCDpQEJaV2hmGNvuQqVUDuC6p";
         let address = Address::from_str(address_string)
             .expect("address")
-            .require_network(Network::Testnet)
+            .require_network(Network::Dev)
             .expect("testnet");
 
         let pubkey_string = "04e96e22004e3db93530de27ccddfdf1463975d2138ac018fc3e7ba1a2e5e0aad8e424d0b55e2436eb1d0dcd5cb2b8bcc6d53412c22f358de57803a6a655fbbd04";
@@ -1315,13 +1307,13 @@ mod tests {
         let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
         let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
         let tweaked_pubkey = TweakedPublicKey::dangerous_assume_tweaked(xonly_pubkey);
-        let address = Address::p2tr_tweaked(tweaked_pubkey, Network::Bitcoin);
+        let address = Address::p2tr_tweaked(tweaked_pubkey, Network::Prod);
 
         assert_eq!(
             address,
             Address::from_str("bc1pgllnmtxs0g058qz7c6qgaqq4qknwrqj9z7rqn9e2dzhmcfmhlu4sfadf5e")
                 .expect("address")
-                .require_network(Network::Bitcoin)
+                .require_network(Network::Prod)
                 .expect("mainnet")
         );
 
@@ -1341,13 +1333,13 @@ mod tests {
         let pubkey = PublicKey::from_str(pubkey_string).expect("pubkey");
         let xonly_pubkey = XOnlyPublicKey::from(pubkey.inner);
         let tweaked_pubkey = TweakedPublicKey::dangerous_assume_tweaked(xonly_pubkey);
-        let address = Address::p2tr_tweaked(tweaked_pubkey, Network::Bitcoin);
+        let address = Address::p2tr_tweaked(tweaked_pubkey, Network::Prod);
 
         assert_eq!(
             address,
             Address::from_str("bc1pgllnmtxs0g058qz7c6qgaqq4qknwrqj9z7rqn9e2dzhmcfmhlu4sfadf5e")
                 .expect("address")
-                .require_network(Network::Bitcoin)
+                .require_network(Network::Prod)
                 .expect("mainnet")
         );
 
@@ -1368,10 +1360,10 @@ mod tests {
             ScriptBuf::from_hex("001161458e330389cd0437ee9fe3641d70cc18").unwrap();
         let expected = Err(Error::UnrecognizedScript);
 
-        assert_eq!(Address::from_script(&bad_p2wpkh, Network::Bitcoin), expected);
-        assert_eq!(Address::from_script(&bad_p2wsh, Network::Bitcoin), expected);
+        assert_eq!(Address::from_script(&bad_p2wpkh, Network::Prod), expected);
+        assert_eq!(Address::from_script(&bad_p2wsh, Network::Prod), expected);
         assert_eq!(
-            Address::from_script(&invalid_segwitv0_script, Network::Bitcoin),
+            Address::from_script(&invalid_segwitv0_script, Network::Prod),
             Err(Error::WitnessProgram(witness_program::Error::InvalidSegwitV0Length(17)))
         );
     }
@@ -1402,10 +1394,10 @@ mod tests {
             "bc1pgllnmtxs0g058qz7c6qgaqq4qknwrqj9z7rqn9e2dzhmcfmhlu4sfadf5e",
         ];
         for addr in &addresses {
-            let addr = Address::from_str(addr).unwrap().require_network(Network::Bitcoin).unwrap();
+            let addr = Address::from_str(addr).unwrap().require_network(Network::Prod).unwrap();
             for another in &addresses {
                 let another =
-                    Address::from_str(another).unwrap().require_network(Network::Bitcoin).unwrap();
+                    Address::from_str(another).unwrap().require_network(Network::Prod).unwrap();
                 assert_eq!(addr.matches_script_pubkey(&another.script_pubkey()), addr == another);
             }
         }
