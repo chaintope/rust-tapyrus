@@ -61,6 +61,25 @@ impl ColorIdentifier {
             payload: ColorIdentifierPayload::from_engine(enc),
         }
     }
+
+    /// Check if the color identifier is colored
+    pub fn is_colored(&self) -> bool {
+        self.token_type != TokenTypes::None
+    }
+
+    /// Check if the color identifier is TPC
+    pub fn is_default(&self) -> bool {
+        self.token_type == TokenTypes::None
+    }
+}
+
+impl Default for ColorIdentifier {
+    fn default() -> Self {
+        ColorIdentifier {
+            token_type: TokenTypes::None,
+            payload: ColorIdentifierPayload::all_zeros(),
+        }
+    }
 }
 
 impl Encodable for ColorIdentifier {
@@ -106,6 +125,8 @@ crate::hash_types::impl_hashencode!(ColorIdentifierPayload);
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(crate = "actual_serde"))]
 pub enum TokenTypes {
+    /// TPC
+    None = 0x00,
     /// Reissuable
     Reissuable = 0xc1,
     /// Non reissuable
@@ -117,7 +138,12 @@ pub enum TokenTypes {
 impl TokenTypes {
     /// return true if token type is supported
     pub fn is_valid(token_type: &u8) -> bool {
-        [TokenTypes::Reissuable, TokenTypes::NonReissuable, TokenTypes::Nft].iter().any(|e| *e as u8 == *token_type)
+        [
+            TokenTypes::None,
+            TokenTypes::Reissuable,
+            TokenTypes::NonReissuable,
+            TokenTypes::Nft
+        ].iter().any(|e| *e as u8 == *token_type)
     }
 }
 
@@ -131,6 +157,7 @@ impl Decodable for TokenTypes {
     fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
         let token_type = u8::consensus_decode(r)?;
         match token_type {
+            0x00 => Ok(TokenTypes::None),
             0xc1 => Ok(TokenTypes::Reissuable),
             0xc2 => Ok(TokenTypes::NonReissuable),
             0xc3 => Ok(TokenTypes::Nft),
