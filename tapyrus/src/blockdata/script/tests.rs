@@ -914,12 +914,23 @@ fn color_identifier_test() {
     let script = ScriptBuf::from_hex("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").unwrap();
     let color_id = ColorIdentifier::reissuable(&script);
     assert_eq!(color_id.token_type, TokenTypes::Reissuable);
+    assert!(color_id.is_colored());
+    assert!(!color_id.is_default());
 
     let color_id = ColorIdentifier::non_reissuable(OutPoint::default());
     assert_eq!(color_id.token_type, TokenTypes::NonReissuable);
+    assert!(color_id.is_colored());
+    assert!(!color_id.is_default());
 
     let color_id = ColorIdentifier::nft(OutPoint::default());
     assert_eq!(color_id.token_type, TokenTypes::Nft);
+    assert!(color_id.is_colored());
+    assert!(!color_id.is_default());
+
+    let color_id = ColorIdentifier::default();
+    assert_eq!(color_id.token_type, TokenTypes::None);
+    assert!(!color_id.is_colored());
+    assert!(color_id.is_default());
 }
 
 #[test]
