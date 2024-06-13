@@ -425,6 +425,51 @@ fn multisig() {
 }
 
 #[test]
+fn script_type() {
+    let p2pk = ScriptBuf::from_hex("2102a5613bd857b7048924264d1e70e08fb2a7e6527d32b7ab1bb993ac59964ff397ac").unwrap();
+    let p2pkh = ScriptBuf::from_hex("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").unwrap();
+    let multisig = ScriptBuf::from_hex("522102a5613bd857b7048924264d1e70e08fb2a7e6527d32b7ab1bb993ac59964ff39721021ac43c7ff740014c3b33737ede99c967e4764553d1b2b83db77c83b8715fa72d2102df2089105c77f266fa11a9d33f05c735234075f2e8780824c6b709415f9fb48553ae").unwrap();
+    let p2sh = ScriptBuf::from_hex("a9147620a79e8657d066cff10e21228bf983cf546ac687").unwrap();
+    let op_return = ScriptBuf::from_hex("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87").unwrap();
+    let cp2pkh = ScriptBuf::from_hex("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").unwrap();
+    let cp2sh = ScriptBuf::from_hex("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bca9147620a79e8657d066cff10e21228bf983cf546ac687").unwrap();
+    let non_standard = ScriptBuf::from_hex("00").unwrap();
+
+    // p2pk
+    assert_eq!(p2pk.script_type(), ScriptType::P2pk);
+    assert_eq!(format!("{}", p2pk.script_type()), "pubkey");
+    assert_eq!(ScriptType::from_str("pubkey"), Ok(ScriptType::P2pk));
+    // p2pkh
+    assert_eq!(p2pkh.script_type(), ScriptType::P2pkh);
+    assert_eq!(format!("{}", p2pkh.script_type()), "pubkeyhash");
+    assert_eq!(ScriptType::from_str("pubkeyhash"), Ok(ScriptType::P2pkh));
+    // multisig
+    assert_eq!(multisig.script_type(), ScriptType::P2ms);
+    assert_eq!(format!("{}", multisig.script_type()), "multisig");
+    assert_eq!(ScriptType::from_str("multisig"), Ok(ScriptType::P2ms));
+    // p2sh
+    assert_eq!(p2sh.script_type(), ScriptType::P2sh);
+    assert_eq!(format!("{}", p2sh.script_type()), "scripthash");
+    assert_eq!(ScriptType::from_str("scripthash"), Ok(ScriptType::P2sh));
+    // op-return
+    assert_eq!(op_return.script_type(), ScriptType::Nulldata);
+    assert_eq!(format!("{}", op_return.script_type()), "nulldata");
+    assert_eq!(ScriptType::from_str("nulldata"), Ok(ScriptType::Nulldata));
+    // cp2pkh
+    assert_eq!(cp2pkh.script_type(), ScriptType::Cp2pkh);
+    assert_eq!(format!("{}", cp2pkh.script_type()), "coloredpubkeyhash");
+    assert_eq!(ScriptType::from_str("coloredpubkeyhash"), Ok(ScriptType::Cp2pkh));
+    // cp2sh
+    assert_eq!(cp2sh.script_type(), ScriptType::Cp2sh);
+    assert_eq!(format!("{}", cp2sh.script_type()), "coloredscripthash");
+    assert_eq!(ScriptType::from_str("coloredscripthash"), Ok(ScriptType::Cp2sh));
+    // non-standard
+    assert_eq!(non_standard.script_type(), ScriptType::NonStandard);
+    assert_eq!(format!("{}", non_standard.script_type()), "nonstandard");
+    assert_eq!(ScriptType::from_str("nonstandard"), Ok(ScriptType::NonStandard));
+}
+
+#[test]
 #[cfg(feature = "serde")]
 fn script_json_serialize() {
     use serde_json;

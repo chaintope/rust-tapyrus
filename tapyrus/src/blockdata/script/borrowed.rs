@@ -5,6 +5,7 @@ use core::fmt;
 use core::ops::{
     Bound, Index, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
 };
+use core::str::FromStr;
 
 use hashes::Hash;
 use secp256k1::{Secp256k1, Verification};
@@ -642,6 +643,28 @@ impl Script {
         let inner = unsafe { Box::from_raw(rw) };
         ScriptBuf(Vec::from(inner))
     }
+
+
+    /// Return script type.
+    pub fn script_type(&self) -> ScriptType {
+        if self.is_p2pk() {
+            ScriptType::P2pk
+        } else if self.is_p2pkh() {
+            ScriptType::P2pkh
+        } else if self.is_multisig() {
+            ScriptType::P2ms
+        } else if self.is_p2sh() {
+            ScriptType::P2sh
+        } else if self.is_op_return() {
+            ScriptType::Nulldata
+        } else if self.is_cp2pkh() {
+            ScriptType::Cp2pkh
+        } else if self.is_cp2sh() {
+            ScriptType::Cp2sh
+        } else {
+            ScriptType::NonStandard
+        }
+    }
 }
 
 /// Iterator over bytes of a script
@@ -696,3 +719,56 @@ delegate_index!(
     RangeToInclusive<usize>,
     (Bound<usize>, Bound<usize>)
 );
+
+/// The types of scripts
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum ScriptType {
+    /// pay-to-pubkey
+    P2pk,
+    /// pay-to-pubkey-hash
+    P2pkh,
+    /// pay-to-multisig
+    P2ms,
+    /// pay-to-script-hash
+    P2sh,
+    /// colored pay-to-pubkey-hash
+    Cp2pkh,
+    /// colored pay-to-script-hash
+    Cp2sh,
+    /// op_return script
+    Nulldata,
+    /// non-standard script
+    NonStandard,
+}
+
+impl fmt::Display for ScriptType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str(match *self {
+            ScriptType::P2pk => "pubkey",
+            ScriptType::P2pkh => "pubkeyhash",
+            ScriptType::P2ms => "multisig",
+            ScriptType::P2sh => "scripthash",
+            ScriptType::Cp2pkh => "coloredpubkeyhash",
+            ScriptType::Cp2sh => "coloredscripthash",
+            ScriptType::Nulldata => "nulldata",
+            ScriptType::NonStandard => "nonstandard"
+        })
+    }
+}
+
+impl FromStr for ScriptType {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "pubkey" => Ok(ScriptType::P2pk),
+            "pubkeyhash" => Ok(ScriptType::P2pkh),
+            "multisig" => Ok(ScriptType::P2ms),
+            "scripthash" => Ok(ScriptType::P2sh),
+            "coloredpubkeyhash" => Ok(ScriptType::Cp2pkh),
+            "coloredscripthash" => Ok(ScriptType::Cp2sh),
+            "nulldata" => Ok(ScriptType::Nulldata),
+            "nonstandard" => Ok(ScriptType::NonStandard),
+            _ => Err(()),
+        }
+    }
+}
