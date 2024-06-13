@@ -74,6 +74,7 @@ mod push_bytes;
 mod tests;
 pub mod witness_program;
 pub mod witness_version;
+pub mod color_identifier;
 
 pub use self::borrowed::*;
 pub use self::builder::*;
