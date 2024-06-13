@@ -103,7 +103,7 @@ impl ScriptBuf {
     /// Create new script with color identifier
     pub fn add_color(&self, color_id: ColorIdentifier) -> Result<Self, ColoredCoinError> {
         if !self.is_p2pkh() && !self.is_p2sh() {
-            return Err(ColoredCoinError::UnsuppotedScriptType);
+            return Err(ColoredCoinError::UnsupportedScriptType);
         }
 
         let script = Builder::new()

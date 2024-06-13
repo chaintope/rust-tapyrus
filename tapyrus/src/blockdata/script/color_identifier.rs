@@ -10,11 +10,13 @@
 //! [Colored Coin]: <https://github.com/chaintope/tapyrus-core/blob/master/doc/tapyrus/colored_coin.md>
 
 use core::convert::TryFrom;
+use core::fmt;
 
 use hashes::{Hash, sha256};
-use crate::consensus::{Encodable, serialize};
+use crate::consensus::{Decodable, Encodable, encode, serialize};
 use crate::blockdata::script::Script;
 use crate::blockdata::transaction::OutPoint;
+use crate::consensus::encode::serialize_hex;
 use crate::script::PushBytesBuf;
 use crate::io;
 
@@ -63,9 +65,26 @@ impl ColorIdentifier {
 
 impl Encodable for ColorIdentifier {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
-        let mut len = (self.token_type as u8).consensus_encode(w)?;
+        let mut len = self.token_type.consensus_encode(w)?;
         len += self.payload.consensus_encode(w)?;
         Ok(len)
+    }
+}
+
+impl Decodable for ColorIdentifier {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        let token_type = TokenTypes::consensus_decode(r)?;
+        let payload = ColorIdentifierPayload::consensus_decode(r)?;
+        Ok(ColorIdentifier {
+            token_type,
+            payload,
+        })
+    }
+}
+
+impl fmt::Display for ColorIdentifier {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", serialize_hex(self))
     }
 }
 
@@ -102,9 +121,27 @@ impl TokenTypes {
     }
 }
 
+impl Encodable for TokenTypes {
+    fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
+        (*self as u8).consensus_encode(w)
+    }
+}
+
+impl Decodable for TokenTypes {
+    fn consensus_decode<R: io::Read + ?Sized>(r: &mut R) -> Result<Self, encode::Error> {
+        let token_type = u8::consensus_decode(r)?;
+        match token_type {
+            0xc1 => Ok(TokenTypes::Reissuable),
+            0xc2 => Ok(TokenTypes::NonReissuable),
+            0xc3 => Ok(TokenTypes::Nft),
+            _ => Err(encode::Error::ParseFailed("Unknown token type")),
+        }
+    }
+}
+
 /// Error occured with colored coin
 #[derive(Debug)]
 pub enum ColoredCoinError {
     /// original script is not based p2pkh and p2sh
-    UnsuppotedScriptType,
+    UnsupportedScriptType,
 }

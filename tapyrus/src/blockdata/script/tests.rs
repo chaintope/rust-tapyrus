@@ -952,3 +952,18 @@ fn add_color_test() {
     let op_return = op_return.add_color(color_id);
     assert!(op_return.is_err());
 }
+
+#[test]
+fn serialize_color_id() {
+    let out_point = OutPoint { txid: "0101010101010101010101010101010101010101010101010101010101010101".parse().expect("txid"), vout: 1 };
+    let color_id = ColorIdentifier::nft(out_point);
+
+    assert_eq!(format!("{}", color_id), "c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46");
+
+    let hex_script = hex!("c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46");
+    let script: Result<ColorIdentifier, _> = deserialize(&hex_script);
+    assert!(script.is_ok());
+    let color_id = script.unwrap();
+    assert_eq!(color_id.token_type, TokenTypes::Nft);
+    assert_eq!(serialize(&color_id), hex_script);
+}
