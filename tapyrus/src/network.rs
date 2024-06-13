@@ -20,6 +20,7 @@
 
 use core::fmt;
 use core::str::FromStr;
+use core::num::ParseIntError;
 
 use internals::write_err;
 #[cfg(feature = "serde")]
@@ -48,6 +49,13 @@ impl NetworkId {
 
 impl From<u32> for NetworkId {
     fn from(n: u32) -> Self { NetworkId(n) }
+}
+
+impl FromStr for NetworkId {
+    type Err = ParseIntError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(NetworkId::from(s.parse::<u32>()?))
+    }
 }
 
 /// The cryptocurrency network to act on.
@@ -195,6 +203,8 @@ impl fmt::Display for Network {
 
 #[cfg(test)]
 mod tests {
+    use core::str::FromStr;
+
     use super::{Network, NetworkId};
     use crate::consensus::encode::{deserialize, serialize};
     use crate::p2p::ServiceFlags;
@@ -234,6 +244,11 @@ mod tests {
         assert_eq!("prod".parse::<Network>().unwrap(), Network::Prod);
         assert_eq!("dev".parse::<Network>().unwrap(), Network::Dev);
         assert!("fakenet".parse::<Network>().is_err());
+    }
+
+    #[test]
+    fn network_id_from_str_test() {
+        assert_eq!(NetworkId::from_str("1").unwrap(), NetworkId::from(1));
     }
 
     #[test]
