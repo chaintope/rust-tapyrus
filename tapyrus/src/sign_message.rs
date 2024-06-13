@@ -223,7 +223,7 @@ mod tests {
 
         use secp256k1;
 
-        use crate::{Address, AddressType, Network};
+        use crate::{Address, Network};
 
         let secp = secp256k1::Secp256k1::new();
         let message = "rust-tapyrus MessageSignature test";
@@ -241,16 +241,6 @@ mod tests {
 
         let p2pkh = Address::p2pkh(&pubkey, Network::Prod);
         assert_eq!(signature2.is_signed_by_address(&secp, &p2pkh, msg_hash), Ok(true));
-        let p2wpkh = Address::p2wpkh(&pubkey, Network::Prod).unwrap();
-        assert_eq!(
-            signature2.is_signed_by_address(&secp, &p2wpkh, msg_hash),
-            Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2wpkh))
-        );
-        let p2shwpkh = Address::p2shwpkh(&pubkey, Network::Prod).unwrap();
-        assert_eq!(
-            signature2.is_signed_by_address(&secp, &p2shwpkh, msg_hash),
-            Err(MessageSignatureError::UnsupportedAddressType(AddressType::P2sh))
-        );
     }
 
     #[test]

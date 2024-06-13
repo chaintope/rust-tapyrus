@@ -18,7 +18,5 @@ pub struct Params {
 
 impl Params {
     /// Creates parameters set for the given network.
-    pub fn new(network: Network) -> Self {
-        Params { network, }
-    }
+    pub fn new(network: Network) -> Self { Params { network } }
 }
