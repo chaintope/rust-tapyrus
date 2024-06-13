@@ -11,14 +11,17 @@
 
 use core::convert::TryFrom;
 use core::fmt;
+use core::str::FromStr;
+use hex::FromHex;
 
 use hashes::{Hash, sha256};
-use crate::consensus::{Decodable, Encodable, encode, serialize};
+use crate::consensus::{Decodable, deserialize, Encodable, encode, serialize};
 use crate::blockdata::script::Script;
 use crate::blockdata::transaction::OutPoint;
 use crate::consensus::encode::serialize_hex;
 use crate::script::PushBytesBuf;
 use crate::io;
+use crate::prelude::*;
 
 /// ColorIdentifier
 #[derive(Copy, PartialEq, Eq, Clone, Debug, PartialOrd, Ord, Hash)]
@@ -110,6 +113,15 @@ impl fmt::Display for ColorIdentifier {
 impl From<ColorIdentifier> for PushBytesBuf {
     fn from(color_id: ColorIdentifier) -> Self {
         PushBytesBuf::try_from(serialize(&color_id)).unwrap()
+    }
+}
+
+impl FromStr for ColorIdentifier {
+    type Err = encode::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let bytes = Vec::<u8>::from_hex(s).unwrap();
+        deserialize(&bytes)
     }
 }
 

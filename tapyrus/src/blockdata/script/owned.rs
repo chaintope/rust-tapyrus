@@ -100,6 +100,30 @@ impl ScriptBuf {
             .into_script()
     }
 
+    /// Generates CP2PKH-type of scriptPubkey.
+    pub fn new_cp2pkh(color_id: &ColorIdentifier, pubkey_hash: &PubkeyHash) -> Self {
+        Builder::new()
+            .push_slice(PushBytesBuf::from(*color_id))
+            .push_opcode(OP_COLOR)
+            .push_opcode(OP_DUP)
+            .push_opcode(OP_HASH160)
+            .push_slice(pubkey_hash)
+            .push_opcode(OP_EQUALVERIFY)
+            .push_opcode(OP_CHECKSIG)
+            .into_script()
+    }
+
+    /// Generates CP2SH-type of scriptPubkey.
+    pub fn new_cp2sh(color_id: &ColorIdentifier, script_hash: &ScriptHash) -> Self {
+        Builder::new()
+            .push_slice(PushBytesBuf::from(*color_id))
+            .push_opcode(OP_COLOR)
+            .push_opcode(OP_HASH160)
+            .push_slice(script_hash)
+            .push_opcode(OP_EQUAL)
+            .into_script()
+    }
+
     /// Create new script with color identifier
     pub fn add_color(&self, color_id: ColorIdentifier) -> Result<Self, ColoredCoinError> {
         if !self.is_p2pkh() && !self.is_p2sh() {
