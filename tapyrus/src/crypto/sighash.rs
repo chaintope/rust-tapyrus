@@ -1156,7 +1156,7 @@ impl<R: BorrowMut<Transaction>> SighashCache<R> {
     /// let mut sig_hasher = SighashCache::new(&mut tx_to_sign);
     /// for inp in 0..input_count {
     ///     let prevout_script = Script::new();
-    ///     let _sighash = sig_hasher.segwit_signature_hash(inp, prevout_script, Amount::ONE_SAT, EcdsaSighashType::All);
+    ///     let _sighash = sig_hasher.segwit_signature_hash(inp, prevout_script, Amount::ONE_TAP, EcdsaSighashType::All);
     ///     // ... sign the sighash
     ///     sig_hasher.witness_mut(inp).unwrap().push(&Vec::new());
     /// }
@@ -1825,7 +1825,7 @@ mod tests {
         ).unwrap();
 
         let spk = ScriptBuf::from_hex("00141d0f172a0ecb48aee1be1f2687d2963ae33f71a1").unwrap();
-        let value = Amount::from_sat(600_000_000);
+        let value = Amount::from_tap(600_000_000);
 
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
@@ -1866,7 +1866,7 @@ mod tests {
 
         let redeem_script =
             ScriptBuf::from_hex("001479091972186c449eb1ded22b78e40d009bdf0089").unwrap();
-        let value = Amount::from_sat(1_000_000_000);
+        let value = Amount::from_tap(1_000_000_000);
 
         let mut cache = SighashCache::new(&tx);
         assert_eq!(
@@ -1916,7 +1916,7 @@ mod tests {
         )
         .unwrap();
 
-        let value = Amount::from_sat(987_654_321);
+        let value = Amount::from_tap(987_654_321);
         (tx, witness_script, value)
     }
 

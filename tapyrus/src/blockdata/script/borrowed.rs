@@ -456,7 +456,7 @@ impl Script {
     pub fn dust_value(&self) -> crate::Amount {
         // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
         // otherwise allow users to create transactions which likely can never be broadcast/confirmed.
-        let sats = DUST_RELAY_TX_FEE as u64 / 1000 * // The default dust relay fee is 3000 satoshi/kB (i.e. 3 sat/vByte)
+        let taps = DUST_RELAY_TX_FEE as u64 / 1000 * // The default dust relay fee is 3000 tapyrus/kB (i.e. 3 tap/vByte)
         if self.is_op_return() {
             0
         } else if self.is_witness_program() {
@@ -469,7 +469,7 @@ impl Script {
             self.consensus_encode(&mut sink()).expect("sinks don't error") as u64 // The serialized size of this script_pubkey
         };
 
-        crate::Amount::from_sat(sats)
+        crate::Amount::from_tap(taps)
     }
 
     /// Counts the sigops for this Script using accurate counting.

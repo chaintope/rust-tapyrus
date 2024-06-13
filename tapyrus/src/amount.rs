@@ -22,83 +22,76 @@ use crate::prelude::*;
 /// # use core::str::FromStr;
 /// # use tapyrus::Amount;
 ///
-/// assert_eq!(Amount::from_str("1 BTC").unwrap(), Amount::from_sat(100_000_000));
-/// assert_eq!(Amount::from_str("1 cBTC").unwrap(), Amount::from_sat(1_000_000));
-/// assert_eq!(Amount::from_str("1 mBTC").unwrap(), Amount::from_sat(100_000));
-/// assert_eq!(Amount::from_str("1 uBTC").unwrap(), Amount::from_sat(100));
-/// assert_eq!(Amount::from_str("10 nBTC").unwrap(), Amount::from_sat(1));
-/// assert_eq!(Amount::from_str("10000 pBTC").unwrap(), Amount::from_sat(1));
-/// assert_eq!(Amount::from_str("1 bit").unwrap(), Amount::from_sat(100));
-/// assert_eq!(Amount::from_str("1 sat").unwrap(), Amount::from_sat(1));
-/// assert_eq!(Amount::from_str("1000 msats").unwrap(), Amount::from_sat(1));
+/// assert_eq!(Amount::from_str("1 TPC").unwrap(), Amount::from_tap(100_000_000));
+/// assert_eq!(Amount::from_str("1 cTPC").unwrap(), Amount::from_tap(1_000_000));
+/// assert_eq!(Amount::from_str("1 mTPC").unwrap(), Amount::from_tap(100_000));
+/// assert_eq!(Amount::from_str("1 uTPC").unwrap(), Amount::from_tap(100));
+/// assert_eq!(Amount::from_str("10 nTPC").unwrap(), Amount::from_tap(1));
+/// assert_eq!(Amount::from_str("10000 pTPC").unwrap(), Amount::from_tap(1));
+/// assert_eq!(Amount::from_str("1 tap").unwrap(), Amount::from_tap(1));
+/// assert_eq!(Amount::from_str("1000 mtaps").unwrap(), Amount::from_tap(1));
 /// ```
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 #[non_exhaustive]
 pub enum Denomination {
-    /// BTC
-    Bitcoin,
-    /// cBTC
-    CentiBitcoin,
-    /// mBTC
-    MilliBitcoin,
-    /// uBTC
-    MicroBitcoin,
-    /// nBTC
-    NanoBitcoin,
-    /// pBTC
-    PicoBitcoin,
-    /// bits
-    Bit,
-    /// satoshi
-    Satoshi,
-    /// msat
-    MilliSatoshi,
+    /// TPC
+    TPC,
+    /// cTPC
+    CentiTPC,
+    /// mTPC
+    MilliTPC,
+    /// uTPC
+    MicroTPC,
+    /// nTPC
+    NanoTPC,
+    /// pTPC
+    PicoTPC,
+    /// tapyrus
+    Tapyrus,
+    /// mtap
+    MilliTapyrus,
 }
 
 impl Denomination {
-    /// The number of decimal places more than a satoshi.
+    /// The number of decimal places more than a tapyrus.
     fn precision(self) -> i8 {
         match self {
-            Denomination::Bitcoin => -8,
-            Denomination::CentiBitcoin => -6,
-            Denomination::MilliBitcoin => -5,
-            Denomination::MicroBitcoin => -2,
-            Denomination::NanoBitcoin => 1,
-            Denomination::PicoBitcoin => 4,
-            Denomination::Bit => -2,
-            Denomination::Satoshi => 0,
-            Denomination::MilliSatoshi => 3,
+            Denomination::TPC => -8,
+            Denomination::CentiTPC => -6,
+            Denomination::MilliTPC => -5,
+            Denomination::MicroTPC => -2,
+            Denomination::NanoTPC => 1,
+            Denomination::PicoTPC => 4,
+            Denomination::Tapyrus => 0,
+            Denomination::MilliTapyrus => 3,
         }
     }
 
     /// Returns stringly representation of this
     fn as_str(self) -> &'static str {
         match self {
-            Denomination::Bitcoin => "BTC",
-            Denomination::CentiBitcoin => "cBTC",
-            Denomination::MilliBitcoin => "mBTC",
-            Denomination::MicroBitcoin => "uBTC",
-            Denomination::NanoBitcoin => "nBTC",
-            Denomination::PicoBitcoin => "pBTC",
-            Denomination::Bit => "bits",
-            Denomination::Satoshi => "satoshi",
-            Denomination::MilliSatoshi => "msat",
+            Denomination::TPC => "TPC",
+            Denomination::CentiTPC => "cTPC",
+            Denomination::MilliTPC => "mTPC",
+            Denomination::MicroTPC => "uTPC",
+            Denomination::NanoTPC => "nTPC",
+            Denomination::PicoTPC => "pTPC",
+            Denomination::Tapyrus => "tapyrus",
+            Denomination::MilliTapyrus => "mtap",
         }
     }
 
     /// The different str forms of denominations that are recognized.
     fn forms(s: &str) -> Option<Self> {
         match s {
-            "BTC" | "btc" => Some(Denomination::Bitcoin),
-            "cBTC" | "cbtc" => Some(Denomination::CentiBitcoin),
-            "mBTC" | "mbtc" => Some(Denomination::MilliBitcoin),
-            "uBTC" | "ubtc" => Some(Denomination::MicroBitcoin),
-            "nBTC" | "nbtc" => Some(Denomination::NanoBitcoin),
-            "pBTC" | "pbtc" => Some(Denomination::PicoBitcoin),
-            "bit" | "bits" | "BIT" | "BITS" => Some(Denomination::Bit),
-            "SATOSHI" | "satoshi" | "SATOSHIS" | "satoshis" | "SAT" | "sat" | "SATS" | "sats" =>
-                Some(Denomination::Satoshi),
-            "mSAT" | "msat" | "mSATs" | "msats" => Some(Denomination::MilliSatoshi),
+            "TPC" | "tpc" => Some(Denomination::TPC),
+            "cTPC" | "ctpc" => Some(Denomination::CentiTPC),
+            "mTPC" | "mtpc" => Some(Denomination::MilliTPC),
+            "uTPC" | "utpc" => Some(Denomination::MicroTPC),
+            "nTPC" | "ntpc" => Some(Denomination::NanoTPC),
+            "pTPC" | "ptpc" => Some(Denomination::PicoTPC),
+            "TAPYRUS" | "tapyrus" | "TAPYRUSES" | "tapyruses" | "TAP" | "tap" | "TAPS" | "taps" => Some(Denomination::Tapyrus),
+            "mTAP" | "mtap" | "mTAPs" | "mtaps" => Some(Denomination::MilliTapyrus),
             _ => None,
         }
     }
@@ -107,7 +100,7 @@ impl Denomination {
 /// These form are ambigous and could have many meanings.  For example, M could denote Mega or Milli.
 /// If any of these forms are used, an error type PossiblyConfusingDenomination is returned.
 const CONFUSING_FORMS: [&str; 9] =
-    ["Msat", "Msats", "MSAT", "MSATS", "MSat", "MSats", "MBTC", "Mbtc", "PBTC"];
+    ["Mtap", "Mtaps", "MTAP", "MTAPS", "MTap", "MTaps", "MTPC", "Mtpc", "PTPC"];
 
 impl fmt::Display for Denomination {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { f.write_str(self.as_str()) }
@@ -119,8 +112,8 @@ impl FromStr for Denomination {
     /// Convert from a str to Denomination.
     ///
     /// Any combination of upper and/or lower case, excluding uppercase of SI(m, u, n, p) is considered valid.
-    /// - Singular: BTC, mBTC, uBTC, nBTC, pBTC
-    /// - Plural or singular: sat, satoshi, bit, msat
+    /// - Singular: TPC, mTPC, uTPC, nTPC, pTPC
+    /// - Plural or singular: tap, tapyrus, mtap
     ///
     /// Due to ambiguity between mega and milli, pico and peta we prohibit usage of leading capital 'M', 'P'.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -211,9 +204,9 @@ fn is_too_precise(s: &str, precision: usize) -> bool {
     }
 }
 
-/// Parse decimal string in the given denomination into a satoshi value and a
+/// Parse decimal string in the given denomination into a tapyrus value and a
 /// bool indicator for a negative amount.
-fn parse_signed_to_satoshi(
+fn parse_signed_to_tapyrus(
     mut s: &str,
     denom: Denomination,
 ) -> Result<(bool, u64), ParseAmountError> {
@@ -233,7 +226,7 @@ fn parse_signed_to_satoshi(
     }
 
     let max_decimals = {
-        // The difference in precision between native (satoshi)
+        // The difference in precision between native (tapyrus)
         // and desired denomination.
         let precision_diff = -denom.precision();
         if precision_diff <= 0 {
@@ -256,7 +249,7 @@ fn parse_signed_to_satoshi(
     };
 
     let mut decimals = None;
-    let mut value: u64 = 0; // as satoshis
+    let mut value: u64 = 0; // as tapyruses
     for c in s.chars() {
         match c {
             '0'..='9' => {
@@ -365,9 +358,9 @@ fn repeat_char(f: &mut dyn fmt::Write, c: char, count: usize) -> fmt::Result {
     Ok(())
 }
 
-/// Format the given satoshi amount in the given denomination.
-fn fmt_satoshi_in(
-    satoshi: u64,
+/// Format the given tapyrus amount in the given denomination.
+fn fmt_tapyrus_in(
+    tapyrus: u64,
     negative: bool,
     f: &mut dyn fmt::Write,
     denom: Denomination,
@@ -379,13 +372,13 @@ fn fmt_satoshi_in(
     // {num_before_decimal_point}{:0exp}{"." if nb_decimals > 0}{:0nb_decimals}{num_after_decimal_point}{:0trailing_decimal_zeros}
     let mut num_after_decimal_point = 0;
     let mut norm_nb_decimals = 0;
-    let mut num_before_decimal_point = satoshi;
+    let mut num_before_decimal_point = tapyrus;
     let trailing_decimal_zeros;
     let mut exp = 0;
     match precision.cmp(&0) {
         // We add the number of zeroes to the end
         Ordering::Greater => {
-            if satoshi > 0 {
+            if tapyrus > 0 {
                 exp = precision as usize;
             }
             trailing_decimal_zeros = options.precision.unwrap_or(0);
@@ -393,8 +386,8 @@ fn fmt_satoshi_in(
         Ordering::Less => {
             let precision = unsigned_abs(precision);
             let divisor = 10u64.pow(precision.into());
-            num_before_decimal_point = satoshi / divisor;
-            num_after_decimal_point = satoshi % divisor;
+            num_before_decimal_point = tapyrus / divisor;
+            num_after_decimal_point = tapyrus % divisor;
             // normalize by stripping trailing zeros
             if num_after_decimal_point == 0 {
                 norm_nb_decimals = 0;
@@ -477,7 +470,7 @@ fn fmt_satoshi_in(
 
 /// Amount
 ///
-/// The [Amount] type can be used to express Bitcoin amounts that support
+/// The [Amount] type can be used to express TPC amounts that support
 /// arithmetic and conversion to various denominations.
 ///
 ///
@@ -500,12 +493,12 @@ pub struct Amount(u64);
 impl Amount {
     /// The zero amount.
     pub const ZERO: Amount = Amount(0);
-    /// Exactly one satoshi.
-    pub const ONE_SAT: Amount = Amount(1);
     /// Exactly one tapyrus.
-    pub const ONE_BTC: Amount = Self::from_int_btc(1);
+    pub const ONE_TAP: Amount = Amount(1);
+    /// Exactly one TPC.
+    pub const ONE_TPC: Amount = Self::from_int_tpc(1);
     /// The maximum value allowed as an amount. Useful for sanity checking.
-    pub const MAX_MONEY: Amount = Self::from_int_btc(21_000_000);
+    pub const MAX_MONEY: Amount = Self::from_int_tpc(21_000_000);
     /// The minimum value of an amount.
     pub const MIN: Amount = Amount::ZERO;
     /// The maximum value of an amount.
@@ -513,11 +506,11 @@ impl Amount {
     /// The number of bytes that an amount contributes to the size of a transaction.
     pub const SIZE: usize = 8; // Serialized length of a u64.
 
-    /// Create an [Amount] with satoshi precision and the given number of satoshis.
-    pub const fn from_sat(satoshi: u64) -> Amount { Amount(satoshi) }
+    /// Create an [Amount] with tapyrus precision and the given number of tapyruses.
+    pub const fn from_tap(tapyrus: u64) -> Amount { Amount(tapyrus) }
 
-    /// Gets the number of satoshis in this [`Amount`].
-    pub fn to_sat(self) -> u64 { self.0 }
+    /// Gets the number of tapyruses in this [`Amount`].
+    pub fn to_tap(self) -> u64 { self.0 }
 
     /// The maximum value of an [Amount].
     #[deprecated(since = "0.31.0", note = "Use Self::MAX instead")]
@@ -527,9 +520,9 @@ impl Amount {
     #[deprecated(since = "0.31.0", note = "Use Self::MIN instead")]
     pub const fn min_value() -> Amount { Amount(u64::MIN) }
 
-    /// Convert from a value expressing bitcoins to an [Amount].
-    pub fn from_btc(btc: f64) -> Result<Amount, ParseAmountError> {
-        Amount::from_float_in(btc, Denomination::Bitcoin)
+    /// Convert from a value expressing TPCs to an [Amount].
+    pub fn from_tpc(tpc: f64) -> Result<Amount, ParseAmountError> {
+        Amount::from_float_in(tpc, Denomination::TPC)
     }
 
     /// Convert from a value expressing integer values of bitcoins to an [Amount]
@@ -537,19 +530,19 @@ impl Amount {
     ///
     /// ## Panics
     ///
-    /// The function panics if the argument multiplied by the number of sats
+    /// The function panics if the argument multiplied by the number of taps
     /// per tapyrus overflows a u64 type.
-    pub const fn from_int_btc(btc: u64) -> Amount {
+    pub const fn from_int_tpc(tpc: u64) -> Amount {
         // TODO replace whith unwrap() when available in const context.
-        match btc.checked_mul(100_000_000) {
-            Some(amount) => Amount::from_sat(amount),
+        match tpc.checked_mul(100_000_000) {
+            Some(amount) => Amount::from_tap(amount),
             None => {
                 // TODO replace with panic!() when MSRV = 1.57+
                 #[allow(unconditional_panic)]
                 // disabling this lint until panic!() can be used.
                 #[allow(clippy::let_unit_value)]
                 #[allow(clippy::out_of_bounds_indexing)]
-                let _int_overflow_converting_btc_to_sats = [(); 0][1];
+                let _int_overflow_converting_tpc_to_taps = [(); 0][1];
                 Amount(0)
             }
         }
@@ -560,14 +553,14 @@ impl Amount {
     /// Note: This only parses the value string.  If you want to parse a value
     /// with denomination, use [FromStr].
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<Amount, ParseAmountError> {
-        let (negative, satoshi) = parse_signed_to_satoshi(s, denom)?;
+        let (negative, tapyrus) = parse_signed_to_tapyrus(s, denom)?;
         if negative {
             return Err(ParseAmountError::Negative);
         }
-        if satoshi > i64::MAX as u64 {
+        if tapyrus > i64::MAX as u64 {
             return Err(ParseAmountError::TooBig);
         }
-        Ok(Amount::from_sat(satoshi))
+        Ok(Amount::from_tap(tapyrus))
     }
 
     /// Parses amounts with denomination suffix like they are produced with
@@ -586,17 +579,17 @@ impl Amount {
         f64::from_str(&self.to_string_in(denom)).unwrap()
     }
 
-    /// Express this [`Amount`] as a floating-point value in Bitcoin.
+    /// Express this [`Amount`] as a floating-point value in TPC.
     ///
     /// Please be aware of the risk of using floating-point numbers.
     ///
     /// # Examples
     /// ```
     /// # use tapyrus::{Amount, Denomination};
-    /// let amount = Amount::from_sat(100_000);
-    /// assert_eq!(amount.to_btc(), amount.to_float_in(Denomination::Bitcoin))
+    /// let amount = Amount::from_tap(100_000);
+    /// assert_eq!(amount.to_tpc(), amount.to_float_in(Denomination::TPC))
     /// ```
-    pub fn to_btc(self) -> f64 { self.to_float_in(Denomination::Bitcoin) }
+    pub fn to_tpc(self) -> f64 { self.to_float_in(Denomination::TPC) }
 
     /// Convert this [Amount] in floating-point notation with a given
     /// denomination.
@@ -615,7 +608,7 @@ impl Amount {
     /// Create an object that implements [`fmt::Display`] using specified denomination.
     pub fn display_in(self, denomination: Denomination) -> Display {
         Display {
-            sats_abs: self.to_sat(),
+            taps_abs: self.to_tap(),
             is_negative: false,
             style: DisplayStyle::FixedDenomination { denomination, show_denomination: false },
         }
@@ -623,11 +616,11 @@ impl Amount {
 
     /// Create an object that implements [`fmt::Display`] dynamically selecting denomination.
     ///
-    /// This will use BTC for values greater than or equal to 1 BTC and satoshis otherwise. To
+    /// This will use TPC for values greater than or equal to 1 TPC and tapyruses otherwise. To
     /// avoid confusion the denomination is always shown.
     pub fn display_dynamic(self) -> Display {
         Display {
-            sats_abs: self.to_sat(),
+            taps_abs: self.to_tap(),
             is_negative: false,
             style: DisplayStyle::DynamicDenomination,
         }
@@ -638,7 +631,7 @@ impl Amount {
     /// Does not include the denomination.
     #[rustfmt::skip]
     pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
-        fmt_satoshi_in(self.to_sat(), false, f, denom, false, FormatOptions::default())
+        fmt_tapyrus_in(self.to_tap(), false, f, denom, false, FormatOptions::default())
     }
 
     /// Get a string number of this [Amount] in the given denomination.
@@ -689,10 +682,10 @@ impl Amount {
 
     /// Convert to a signed amount.
     pub fn to_signed(self) -> Result<SignedAmount, ParseAmountError> {
-        if self.to_sat() > SignedAmount::MAX.to_sat() as u64 {
+        if self.to_tap() > SignedAmount::MAX.to_tap() as u64 {
             Err(ParseAmountError::TooBig)
         } else {
-            Ok(SignedAmount::from_sat(self.to_sat() as i64))
+            Ok(SignedAmount::from_tap(self.to_tap() as i64))
         }
     }
 }
@@ -717,7 +710,7 @@ impl default::Default for Amount {
 
 impl fmt::Debug for Amount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Amount({:.8} BTC)", self.to_btc())
+        write!(f, "Amount({:.8} TPC)", self.to_tpc())
     }
 }
 
@@ -725,8 +718,8 @@ impl fmt::Debug for Amount {
 // Just using Bitcoin denominated string.
 impl fmt::Display for Amount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.fmt_value_in(f, Denomination::Bitcoin)?;
-        write!(f, " {}", Denomination::Bitcoin)
+        self.fmt_value_in(f, Denomination::TPC)?;
+        write!(f, " {}", Denomination::TPC)
     }
 }
 
@@ -796,8 +789,8 @@ impl FromStr for Amount {
 
 impl core::iter::Sum for Amount {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let sats: u64 = iter.map(|amt| amt.0).sum();
-        Amount::from_sat(sats)
+        let taps: u64 = iter.map(|amt| amt.0).sum();
+        Amount::from_tap(taps)
     }
 }
 
@@ -807,7 +800,7 @@ impl core::iter::Sum for Amount {
 ///
 /// * Ability to select denomination
 /// * Show or hide denomination
-/// * Dynamically-selected denomination - show in sats if less than 1 BTC.
+/// * Dynamically-selected denomination - show in taps if less than 1 TPC.
 ///
 /// However this can still be combined with `fmt::Formatter` options to precisely control zeros,
 /// padding, alignment... The formatting works like floats from `core` but note that precision will
@@ -816,8 +809,8 @@ impl core::iter::Sum for Amount {
 /// See [`Amount::display_in`] and [`Amount::display_dynamic`] on how to construct this.
 #[derive(Debug, Clone)]
 pub struct Display {
-    /// Absolute value of satoshis to display (sign is below)
-    sats_abs: u64,
+    /// Absolute value of tapyruses to display (sign is below)
+    taps_abs: u64,
     /// The sign
     is_negative: bool,
     /// How to display the value
@@ -842,13 +835,13 @@ impl fmt::Display for Display {
         let format_options = FormatOptions::from_formatter(f);
         match &self.style {
             DisplayStyle::FixedDenomination { show_denomination, denomination } => {
-                fmt_satoshi_in(self.sats_abs, self.is_negative, f, *denomination, *show_denomination, format_options)
+                fmt_tapyrus_in(self.taps_abs, self.is_negative, f, *denomination, *show_denomination, format_options)
             },
-            DisplayStyle::DynamicDenomination if self.sats_abs >= Amount::ONE_BTC.to_sat() => {
-                fmt_satoshi_in(self.sats_abs, self.is_negative, f, Denomination::Bitcoin, true, format_options)
+            DisplayStyle::DynamicDenomination if self.taps_abs >= Amount::ONE_TPC.to_tap() => {
+                fmt_tapyrus_in(self.taps_abs, self.is_negative, f, Denomination::TPC, true, format_options)
             },
             DisplayStyle::DynamicDenomination => {
-                fmt_satoshi_in(self.sats_abs, self.is_negative, f, Denomination::Satoshi, true, format_options)
+                fmt_tapyrus_in(self.taps_abs, self.is_negative, f, Denomination::Tapyrus, true, format_options)
             },
         }
     }
@@ -880,10 +873,10 @@ pub struct SignedAmount(i64);
 impl SignedAmount {
     /// The zero amount.
     pub const ZERO: SignedAmount = SignedAmount(0);
-    /// Exactly one satoshi.
-    pub const ONE_SAT: SignedAmount = SignedAmount(1);
     /// Exactly one tapyrus.
-    pub const ONE_BTC: SignedAmount = SignedAmount(100_000_000);
+    pub const ONE_TAP: SignedAmount = SignedAmount(1);
+    /// Exactly one tapyrus.
+    pub const ONE_TPC: SignedAmount = SignedAmount(100_000_000);
     /// The maximum value allowed as an amount. Useful for sanity checking.
     pub const MAX_MONEY: SignedAmount = SignedAmount(21_000_000 * 100_000_000);
     /// The minimum value of an amount.
@@ -891,11 +884,11 @@ impl SignedAmount {
     /// The maximum value of an amount.
     pub const MAX: SignedAmount = SignedAmount(i64::MAX);
 
-    /// Create an [SignedAmount] with satoshi precision and the given number of satoshis.
-    pub const fn from_sat(satoshi: i64) -> SignedAmount { SignedAmount(satoshi) }
+    /// Create an [SignedAmount] with tapyrus precision and the given number of tapyruses.
+    pub const fn from_tap(tapyrus: i64) -> SignedAmount { SignedAmount(tapyrus) }
 
-    /// Gets the number of satoshis in this [`SignedAmount`].
-    pub fn to_sat(self) -> i64 { self.0 }
+    /// Gets the number of tapyruses in this [`SignedAmount`].
+    pub fn to_tap(self) -> i64 { self.0 }
 
     /// The maximum value of an [SignedAmount].
     #[deprecated(since = "0.31.0", note = "Use Self::MAX instead")]
@@ -906,8 +899,8 @@ impl SignedAmount {
     pub const fn min_value() -> SignedAmount { SignedAmount(i64::MIN) }
 
     /// Convert from a value expressing bitcoins to an [SignedAmount].
-    pub fn from_btc(btc: f64) -> Result<SignedAmount, ParseAmountError> {
-        SignedAmount::from_float_in(btc, Denomination::Bitcoin)
+    pub fn from_tpc(tpc: f64) -> Result<SignedAmount, ParseAmountError> {
+        SignedAmount::from_float_in(tpc, Denomination::TPC)
     }
 
     /// Parse a decimal string as a value in the given denomination.
@@ -915,13 +908,13 @@ impl SignedAmount {
     /// Note: This only parses the value string.  If you want to parse a value
     /// with denomination, use [FromStr].
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<SignedAmount, ParseAmountError> {
-        let (negative, satoshi) = parse_signed_to_satoshi(s, denom)?;
-        if satoshi > i64::MAX as u64 {
+        let (negative, tapyrus) = parse_signed_to_tapyrus(s, denom)?;
+        if tapyrus > i64::MAX as u64 {
             return Err(ParseAmountError::TooBig);
         }
         Ok(match negative {
-            true => SignedAmount(-(satoshi as i64)),
-            false => SignedAmount(satoshi as i64),
+            true => SignedAmount(-(tapyrus as i64)),
+            false => SignedAmount(tapyrus as i64),
         })
     }
 
@@ -941,12 +934,12 @@ impl SignedAmount {
         f64::from_str(&self.to_string_in(denom)).unwrap()
     }
 
-    /// Express this [`SignedAmount`] as a floating-point value in Bitcoin.
+    /// Express this [`SignedAmount`] as a floating-point value in TPC.
     ///
-    /// Equivalent to `to_float_in(Denomination::Bitcoin)`.
+    /// Equivalent to `to_float_in(Denomination::TPC)`.
     ///
     /// Please be aware of the risk of using floating-point numbers.
-    pub fn to_btc(self) -> f64 { self.to_float_in(Denomination::Bitcoin) }
+    pub fn to_tpc(self) -> f64 { self.to_float_in(Denomination::TPC) }
 
     /// Convert this [SignedAmount] in floating-point notation with a given
     /// denomination.
@@ -962,15 +955,15 @@ impl SignedAmount {
         SignedAmount::from_str_in(&value.to_string(), denom)
     }
 
-    /// Returns the absolute value as satoshis.
+    /// Returns the absolute value as tapyruses.
     ///
     /// This is the implementation of `unsigned_abs()` copied from `core` to support older MSRV.
-    fn to_sat_abs(self) -> u64 { self.to_sat().wrapping_abs() as u64 }
+    fn to_tap_abs(self) -> u64 { self.to_tap().wrapping_abs() as u64 }
 
     /// Create an object that implements [`fmt::Display`] using specified denomination.
     pub fn display_in(self, denomination: Denomination) -> Display {
         Display {
-            sats_abs: self.to_sat_abs(),
+            taps_abs: self.to_tap_abs(),
             is_negative: self.is_negative(),
             style: DisplayStyle::FixedDenomination { denomination, show_denomination: false },
         }
@@ -978,11 +971,11 @@ impl SignedAmount {
 
     /// Create an object that implements [`fmt::Display`] dynamically selecting denomination.
     ///
-    /// This will use BTC for values greater than or equal to 1 BTC and satoshis otherwise. To
+    /// This will use TPC for values greater than or equal to 1 TPC and tapyruses otherwise. To
     /// avoid confusion the denomination is always shown.
     pub fn display_dynamic(self) -> Display {
         Display {
-            sats_abs: self.to_sat_abs(),
+            taps_abs: self.to_tap_abs(),
             is_negative: self.is_negative(),
             style: DisplayStyle::DynamicDenomination,
         }
@@ -993,7 +986,7 @@ impl SignedAmount {
     /// Does not include the denomination.
     #[rustfmt::skip]
     pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
-        fmt_satoshi_in(self.to_sat_abs(), self.is_negative(), f, denom, false, FormatOptions::default())
+        fmt_tapyrus_in(self.to_tap_abs(), self.is_negative(), f, denom, false, FormatOptions::default())
     }
 
     /// Get a string number of this [SignedAmount] in the given denomination.
@@ -1085,7 +1078,7 @@ impl SignedAmount {
         if self.is_negative() {
             Err(ParseAmountError::Negative)
         } else {
-            Ok(Amount::from_sat(self.to_sat() as u64))
+            Ok(Amount::from_tap(self.to_tap() as u64))
         }
     }
 }
@@ -1096,7 +1089,7 @@ impl default::Default for SignedAmount {
 
 impl fmt::Debug for SignedAmount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "SignedAmount({:.8} BTC)", self.to_btc())
+        write!(f, "SignedAmount({:.8} TPC)", self.to_tpc())
     }
 }
 
@@ -1104,8 +1097,8 @@ impl fmt::Debug for SignedAmount {
 // Just using Bitcoin denominated string.
 impl fmt::Display for SignedAmount {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.fmt_value_in(f, Denomination::Bitcoin)?;
-        write!(f, " {}", Denomination::Bitcoin)
+        self.fmt_value_in(f, Denomination::TPC)?;
+        write!(f, " {}", Denomination::TPC)
     }
 }
 
@@ -1177,8 +1170,8 @@ impl FromStr for SignedAmount {
 
 impl core::iter::Sum for SignedAmount {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let sats: i64 = iter.map(|amt| amt.0).sum();
-        SignedAmount::from_sat(sats)
+        let taps: i64 = iter.map(|amt| amt.0).sum();
+        SignedAmount::from_tap(taps)
     }
 }
 
@@ -1238,7 +1231,7 @@ pub mod serde {
     //! #[derive(Serialize, Deserialize)]
     //! # #[serde(crate = "actual_serde")]
     //! pub struct HasAmount {
-    //!     #[serde(with = "tapyrus::amount::serde::as_btc")]
+    //!     #[serde(with = "tapyrus::amount::serde::as_tpc")]
     //!     pub amount: Amount,
     //! }
     //! ```
@@ -1250,10 +1243,10 @@ pub mod serde {
     /// This trait is used only to avoid code duplication and naming collisions
     /// of the different serde serialization crates.
     pub trait SerdeAmount: Copy + Sized + private::Sealed {
-        fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
-        fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
-        fn ser_btc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
-        fn des_btc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
+        fn ser_tap<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
+        fn des_tap<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
+        fn ser_tpc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
+        fn des_tpc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error>;
     }
 
     mod private {
@@ -1267,81 +1260,81 @@ pub mod serde {
     /// This trait is only for internal Amount type serialization/deserialization
     pub trait SerdeAmountForOpt: Copy + Sized + SerdeAmount + private::Sealed {
         fn type_prefix() -> &'static str;
-        fn ser_sat_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
-        fn ser_btc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
+        fn ser_tap_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
+        fn ser_tpc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error>;
     }
 
     impl SerdeAmount for Amount {
-        fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
-            u64::serialize(&self.to_sat(), s)
+        fn ser_tap<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+            u64::serialize(&self.to_tap(), s)
         }
-        fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
-            Ok(Amount::from_sat(u64::deserialize(d)?))
+        fn des_tap<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
+            Ok(Amount::from_tap(u64::deserialize(d)?))
         }
-        fn ser_btc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
-            f64::serialize(&self.to_float_in(Denomination::Bitcoin), s)
+        fn ser_tpc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+            f64::serialize(&self.to_float_in(Denomination::TPC), s)
         }
-        fn des_btc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
+        fn des_tpc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
             use serde::de::Error;
-            Amount::from_btc(f64::deserialize(d)?).map_err(D::Error::custom)
+            Amount::from_tpc(f64::deserialize(d)?).map_err(D::Error::custom)
         }
     }
 
     impl SerdeAmountForOpt for Amount {
         fn type_prefix() -> &'static str { "u" }
-        fn ser_sat_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
-            s.serialize_some(&self.to_sat())
+        fn ser_tap_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+            s.serialize_some(&self.to_tap())
         }
-        fn ser_btc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
-            s.serialize_some(&self.to_btc())
+        fn ser_tpc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+            s.serialize_some(&self.to_tpc())
         }
     }
 
     impl SerdeAmount for SignedAmount {
-        fn ser_sat<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
-            i64::serialize(&self.to_sat(), s)
+        fn ser_tap<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+            i64::serialize(&self.to_tap(), s)
         }
-        fn des_sat<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
-            Ok(SignedAmount::from_sat(i64::deserialize(d)?))
+        fn des_tap<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
+            Ok(SignedAmount::from_tap(i64::deserialize(d)?))
         }
-        fn ser_btc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
-            f64::serialize(&self.to_float_in(Denomination::Bitcoin), s)
+        fn ser_tpc<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+            f64::serialize(&self.to_float_in(Denomination::TPC), s)
         }
-        fn des_btc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
+        fn des_tpc<'d, D: Deserializer<'d>>(d: D) -> Result<Self, D::Error> {
             use serde::de::Error;
-            SignedAmount::from_btc(f64::deserialize(d)?).map_err(D::Error::custom)
+            SignedAmount::from_tpc(f64::deserialize(d)?).map_err(D::Error::custom)
         }
     }
 
     impl SerdeAmountForOpt for SignedAmount {
         fn type_prefix() -> &'static str { "i" }
-        fn ser_sat_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
-            s.serialize_some(&self.to_sat())
+        fn ser_tap_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+            s.serialize_some(&self.to_tap())
         }
-        fn ser_btc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
-            s.serialize_some(&self.to_btc())
+        fn ser_tpc_opt<S: Serializer>(self, s: S) -> Result<S::Ok, S::Error> {
+            s.serialize_some(&self.to_tpc())
         }
     }
 
-    pub mod as_sat {
-        //! Serialize and deserialize [`Amount`](crate::Amount) as real numbers denominated in satoshi.
-        //! Use with `#[serde(with = "amount::serde::as_sat")]`.
+    pub mod as_tap {
+        //! Serialize and deserialize [`Amount`](crate::Amount) as real numbers denominated in tapyrus.
+        //! Use with `#[serde(with = "amount::serde::as_tap")]`.
 
         use serde::{Deserializer, Serializer};
 
         use crate::amount::serde::SerdeAmount;
 
         pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
-            a.ser_sat(s)
+            a.ser_tap(s)
         }
 
         pub fn deserialize<'d, A: SerdeAmount, D: Deserializer<'d>>(d: D) -> Result<A, D::Error> {
-            A::des_sat(d)
+            A::des_tap(d)
         }
 
         pub mod opt {
-            //! Serialize and deserialize [`Option<Amount>`](crate::Amount) as real numbers denominated in satoshi.
-            //! Use with `#[serde(default, with = "amount::serde::as_sat::opt")]`.
+            //! Serialize and deserialize [`Option<Amount>`](crate::Amount) as real numbers denominated in tapyrus.
+            //! Use with `#[serde(default, with = "amount::serde::as_tap::opt")]`.
 
             use core::fmt;
             use core::marker::PhantomData;
@@ -1355,7 +1348,7 @@ pub mod serde {
                 s: S,
             ) -> Result<S::Ok, S::Error> {
                 match *a {
-                    Some(a) => a.ser_sat_opt(s),
+                    Some(a) => a.ser_tap_opt(s),
                     None => s.serialize_none(),
                 }
             }
@@ -1382,7 +1375,7 @@ pub mod serde {
                     where
                         D: Deserializer<'de>,
                     {
-                        Ok(Some(X::des_sat(d)?))
+                        Ok(Some(X::des_tap(d)?))
                     }
                 }
                 d.deserialize_option(VisitOptAmt::<A>(PhantomData))
@@ -1390,25 +1383,25 @@ pub mod serde {
         }
     }
 
-    pub mod as_btc {
-        //! Serialize and deserialize [`Amount`](crate::Amount) as JSON numbers denominated in BTC.
-        //! Use with `#[serde(with = "amount::serde::as_btc")]`.
+    pub mod as_tpc {
+        //! Serialize and deserialize [`Amount`](crate::Amount) as JSON numbers denominated in TPC".
+        //! Use with `#[serde(with = "amount::serde::as_tpc")]`.
 
         use serde::{Deserializer, Serializer};
 
         use crate::amount::serde::SerdeAmount;
 
         pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
-            a.ser_btc(s)
+            a.ser_tpc(s)
         }
 
         pub fn deserialize<'d, A: SerdeAmount, D: Deserializer<'d>>(d: D) -> Result<A, D::Error> {
-            A::des_btc(d)
+            A::des_tpc(d)
         }
 
         pub mod opt {
-            //! Serialize and deserialize `Option<Amount>` as JSON numbers denominated in BTC.
-            //! Use with `#[serde(default, with = "amount::serde::as_btc::opt")]`.
+            //! Serialize and deserialize `Option<Amount>` as JSON numbers denominated in TPC".
+            //! Use with `#[serde(default, with = "amount::serde::as_tpc::opt")]`.
 
             use core::fmt;
             use core::marker::PhantomData;
@@ -1422,7 +1415,7 @@ pub mod serde {
                 s: S,
             ) -> Result<S::Ok, S::Error> {
                 match *a {
-                    Some(a) => a.ser_btc_opt(s),
+                    Some(a) => a.ser_tpc_opt(s),
                     None => s.serialize_none(),
                 }
             }
@@ -1449,7 +1442,7 @@ pub mod serde {
                     where
                         D: Deserializer<'de>,
                     {
-                        Ok(Some(X::des_btc(d)?))
+                        Ok(Some(X::des_tpc(d)?))
                     }
                 }
                 d.deserialize_option(VisitOptAmt::<A>(PhantomData))
@@ -1483,24 +1476,24 @@ mod verification {
         let n1 = kani::any::<u64>();
         let n2 = kani::any::<u64>();
         kani::assume(n1.checked_add(n2).is_some()); // assume we don't overflow in the actual test
-        assert_eq!(Amount::from_sat(n1) + Amount::from_sat(n2), Amount::from_sat(n1 + n2));
+        assert_eq!(Amount::from_tap(n1) + Amount::from_tap(n2), Amount::from_tap(n1 + n2));
 
-        let mut amt = Amount::from_sat(n1);
-        amt += Amount::from_sat(n2);
-        assert_eq!(amt, Amount::from_sat(n1 + n2));
+        let mut amt = Amount::from_tap(n1);
+        amt += Amount::from_tap(n2);
+        assert_eq!(amt, Amount::from_tap(n1 + n2));
 
         let max = cmp::max(n1, n2);
         let min = cmp::min(n1, n2);
-        assert_eq!(Amount::from_sat(max) - Amount::from_sat(min), Amount::from_sat(max - min));
+        assert_eq!(Amount::from_tap(max) - Amount::from_tap(min), Amount::from_tap(max - min));
 
-        let mut amt = Amount::from_sat(max);
-        amt -= Amount::from_sat(min);
-        assert_eq!(amt, Amount::from_sat(max - min));
+        let mut amt = Amount::from_tap(max);
+        amt -= Amount::from_tap(min);
+        assert_eq!(amt, Amount::from_tap(max - min));
 
         assert_eq!(
-            Amount::from_sat(n1).to_signed(),
+            Amount::from_tap(n1).to_signed(),
             if n1 <= i64::MAX as u64 {
-                Ok(SignedAmount::from_sat(n1.try_into().unwrap()))
+                Ok(SignedAmount::from_tap(n1.try_into().unwrap()))
             } else {
                 Err(ParseAmountError::TooBig)
             },
@@ -1513,12 +1506,12 @@ mod verification {
         let n1 = kani::any::<u64>();
         let n2 = kani::any::<u64>();
         assert_eq!(
-            Amount::from_sat(n1).checked_add(Amount::from_sat(n2)),
-            n1.checked_add(n2).map(Amount::from_sat),
+            Amount::from_tap(n1).checked_add(Amount::from_tap(n2)),
+            n1.checked_add(n2).map(Amount::from_tap),
         );
         assert_eq!(
-            Amount::from_sat(n1).checked_sub(Amount::from_sat(n2)),
-            n1.checked_sub(n2).map(Amount::from_sat),
+            Amount::from_tap(n1).checked_sub(Amount::from_tap(n2)),
+            n1.checked_sub(n2).map(Amount::from_tap),
         );
     }
 
@@ -1530,25 +1523,25 @@ mod verification {
         kani::assume(n1.checked_add(n2).is_some()); // assume we don't overflow in the actual test
         kani::assume(n1.checked_sub(n2).is_some()); // assume we don't overflow in the actual test
         assert_eq!(
-            SignedAmount::from_sat(n1) + SignedAmount::from_sat(n2),
-            SignedAmount::from_sat(n1 + n2)
+            SignedAmount::from_tap(n1) + SignedAmount::from_tap(n2),
+            SignedAmount::from_tap(n1 + n2)
         );
         assert_eq!(
-            SignedAmount::from_sat(n1) - SignedAmount::from_sat(n2),
-            SignedAmount::from_sat(n1 - n2)
+            SignedAmount::from_tap(n1) - SignedAmount::from_tap(n2),
+            SignedAmount::from_tap(n1 - n2)
         );
 
-        let mut amt = SignedAmount::from_sat(n1);
-        amt += SignedAmount::from_sat(n2);
-        assert_eq!(amt, SignedAmount::from_sat(n1 + n2));
-        let mut amt = SignedAmount::from_sat(n1);
-        amt -= SignedAmount::from_sat(n2);
-        assert_eq!(amt, SignedAmount::from_sat(n1 - n2));
+        let mut amt = SignedAmount::from_tap(n1);
+        amt += SignedAmount::from_tap(n2);
+        assert_eq!(amt, SignedAmount::from_tap(n1 + n2));
+        let mut amt = SignedAmount::from_tap(n1);
+        amt -= SignedAmount::from_tap(n2);
+        assert_eq!(amt, SignedAmount::from_tap(n1 - n2));
 
         assert_eq!(
-            SignedAmount::from_sat(n1).to_unsigned(),
+            SignedAmount::from_tap(n1).to_unsigned(),
             if n1 >= 0 {
-                Ok(Amount::from_sat(n1.try_into().unwrap()))
+                Ok(Amount::from_tap(n1.try_into().unwrap()))
             } else {
                 Err(ParseAmountError::Negative)
             },
@@ -1561,18 +1554,18 @@ mod verification {
         let n1 = kani::any::<i64>();
         let n2 = kani::any::<i64>();
         assert_eq!(
-            SignedAmount::from_sat(n1).checked_add(SignedAmount::from_sat(n2)),
-            n1.checked_add(n2).map(SignedAmount::from_sat),
+            SignedAmount::from_tap(n1).checked_add(SignedAmount::from_tap(n2)),
+            n1.checked_add(n2).map(SignedAmount::from_tap),
         );
         assert_eq!(
-            SignedAmount::from_sat(n1).checked_sub(SignedAmount::from_sat(n2)),
-            n1.checked_sub(n2).map(SignedAmount::from_sat),
+            SignedAmount::from_tap(n1).checked_sub(SignedAmount::from_tap(n2)),
+            n1.checked_sub(n2).map(SignedAmount::from_tap),
         );
 
         assert_eq!(
-            SignedAmount::from_sat(n1).positive_sub(SignedAmount::from_sat(n2)),
+            SignedAmount::from_tap(n1).positive_sub(SignedAmount::from_tap(n2)),
             if n1 >= 0 && n2 >= 0 && n1 >= n2 {
-                Some(SignedAmount::from_sat(n1 - n2))
+                Some(SignedAmount::from_tap(n1 - n2))
             } else {
                 None
             },
@@ -1593,13 +1586,13 @@ mod tests {
 
     #[test]
     fn from_str_zero() {
-        let denoms = vec!["BTC", "mBTC", "uBTC", "nBTC", "pBTC", "bits", "sats", "msats"];
+        let denoms = vec!["TPC", "mTPC", "uTPC", "nTPC", "pTPC", "taps", "mtaps"];
         for denom in denoms {
             for v in &["0", "000"] {
                 let s = format!("{} {}", v, denom);
                 match Amount::from_str(&s) {
                     Err(e) => panic!("Failed to crate amount from {}: {:?}", s, e),
-                    Ok(amount) => assert_eq!(amount, Amount::from_sat(0)),
+                    Ok(amount) => assert_eq!(amount, Amount::from_tap(0)),
                 }
             }
 
@@ -1610,62 +1603,62 @@ mod tests {
             }
             match SignedAmount::from_str(&s) {
                 Err(e) => panic!("Failed to crate amount from {}: {:?}", s, e),
-                Ok(amount) => assert_eq!(amount, SignedAmount::from_sat(0)),
+                Ok(amount) => assert_eq!(amount, SignedAmount::from_tap(0)),
             }
         }
     }
 
     #[test]
-    fn from_int_btc() {
-        let amt = Amount::from_int_btc(2);
-        assert_eq!(Amount::from_sat(200_000_000), amt);
+    fn from_int_tpc() {
+        let amt = Amount::from_int_tpc(2);
+        assert_eq!(Amount::from_tap(200_000_000), amt);
     }
 
     #[should_panic]
     #[test]
-    fn from_int_btc_panic() { Amount::from_int_btc(u64::MAX); }
+    fn from_int_tpc_panic() { Amount::from_int_tpc(u64::MAX); }
 
     #[test]
     fn mul_div() {
-        let sat = Amount::from_sat;
-        let ssat = SignedAmount::from_sat;
+        let tap = Amount::from_tap;
+        let stap = SignedAmount::from_tap;
 
-        assert_eq!(sat(14) * 3, sat(42));
-        assert_eq!(sat(14) / 2, sat(7));
-        assert_eq!(sat(14) % 3, sat(2));
-        assert_eq!(ssat(-14) * 3, ssat(-42));
-        assert_eq!(ssat(-14) / 2, ssat(-7));
-        assert_eq!(ssat(-14) % 3, ssat(-2));
+        assert_eq!(tap(14) * 3, tap(42));
+        assert_eq!(tap(14) / 2, tap(7));
+        assert_eq!(tap(14) % 3, tap(2));
+        assert_eq!(stap(-14) * 3, stap(-42));
+        assert_eq!(stap(-14) / 2, stap(-7));
+        assert_eq!(stap(-14) % 3, stap(-2));
 
-        let mut b = ssat(30);
+        let mut b = stap(30);
         b /= 3;
-        assert_eq!(b, ssat(10));
+        assert_eq!(b, stap(10));
         b %= 3;
-        assert_eq!(b, ssat(1));
+        assert_eq!(b, stap(1));
     }
 
     #[cfg(feature = "std")]
     #[test]
     fn test_overflows() {
         // panic on overflow
-        let result = panic::catch_unwind(|| Amount::MAX + Amount::from_sat(1));
+        let result = panic::catch_unwind(|| Amount::MAX + Amount::from_tap(1));
         assert!(result.is_err());
-        let result = panic::catch_unwind(|| Amount::from_sat(8446744073709551615) * 3);
+        let result = panic::catch_unwind(|| Amount::from_tap(8446744073709551615) * 3);
         assert!(result.is_err());
     }
 
     #[test]
     fn checked_arithmetic() {
-        let sat = Amount::from_sat;
-        let ssat = SignedAmount::from_sat;
+        let tap = Amount::from_tap;
+        let stap = SignedAmount::from_tap;
 
-        assert_eq!(SignedAmount::MAX.checked_add(ssat(1)), None);
-        assert_eq!(SignedAmount::MIN.checked_sub(ssat(1)), None);
-        assert_eq!(Amount::MAX.checked_add(sat(1)), None);
-        assert_eq!(Amount::MIN.checked_sub(sat(1)), None);
+        assert_eq!(SignedAmount::MAX.checked_add(stap(1)), None);
+        assert_eq!(SignedAmount::MIN.checked_sub(stap(1)), None);
+        assert_eq!(Amount::MAX.checked_add(tap(1)), None);
+        assert_eq!(Amount::MIN.checked_sub(tap(1)), None);
 
-        assert_eq!(sat(5).checked_div(2), Some(sat(2))); // integer division
-        assert_eq!(ssat(-6).checked_div(2), Some(ssat(-3)));
+        assert_eq!(tap(5).checked_div(2), Some(tap(2))); // integer division
+        assert_eq!(stap(-6).checked_div(2), Some(stap(-3)));
     }
 
     #[test]
@@ -1673,103 +1666,102 @@ mod tests {
         use super::Denomination as D;
         let f = Amount::from_float_in;
         let sf = SignedAmount::from_float_in;
-        let sat = Amount::from_sat;
-        let ssat = SignedAmount::from_sat;
+        let tap = Amount::from_tap;
+        let stap = SignedAmount::from_tap;
 
-        assert_eq!(f(11.22, D::Bitcoin), Ok(sat(1122000000)));
-        assert_eq!(sf(-11.22, D::MilliBitcoin), Ok(ssat(-1122000)));
-        assert_eq!(f(11.22, D::Bit), Ok(sat(1122)));
-        assert_eq!(sf(-1000.0, D::MilliSatoshi), Ok(ssat(-1)));
-        assert_eq!(f(0.0001234, D::Bitcoin), Ok(sat(12340)));
-        assert_eq!(sf(-0.00012345, D::Bitcoin), Ok(ssat(-12345)));
+        assert_eq!(f(11.22, D::TPC), Ok(tap(1122000000)));
+        assert_eq!(sf(-11.22, D::MilliTPC), Ok(stap(-1122000)));
+        assert_eq!(sf(-1000.0, D::MilliTapyrus), Ok(stap(-1)));
+        assert_eq!(f(0.0001234, D::TPC), Ok(tap(12340)));
+        assert_eq!(sf(-0.00012345, D::TPC), Ok(stap(-12345)));
 
-        assert_eq!(f(-100.0, D::MilliSatoshi), Err(ParseAmountError::Negative));
-        assert_eq!(f(11.22, D::Satoshi), Err(ParseAmountError::TooPrecise));
-        assert_eq!(sf(-100.0, D::MilliSatoshi), Err(ParseAmountError::TooPrecise));
-        assert_eq!(sf(-100.0, D::MilliSatoshi), Err(ParseAmountError::TooPrecise));
-        assert_eq!(f(42.123456781, D::Bitcoin), Err(ParseAmountError::TooPrecise));
-        assert_eq!(sf(-184467440738.0, D::Bitcoin), Err(ParseAmountError::TooBig));
-        assert_eq!(f(18446744073709551617.0, D::Satoshi), Err(ParseAmountError::TooBig));
+        assert_eq!(f(-100.0, D::MilliTapyrus), Err(ParseAmountError::Negative));
+        assert_eq!(f(11.22, D::Tapyrus), Err(ParseAmountError::TooPrecise));
+        assert_eq!(sf(-100.0, D::MilliTapyrus), Err(ParseAmountError::TooPrecise));
+        assert_eq!(sf(-100.0, D::MilliTapyrus), Err(ParseAmountError::TooPrecise));
+        assert_eq!(f(42.123456781, D::TPC), Err(ParseAmountError::TooPrecise));
+        assert_eq!(sf(-184467440738.0, D::TPC), Err(ParseAmountError::TooBig));
+        assert_eq!(f(18446744073709551617.0, D::Tapyrus), Err(ParseAmountError::TooBig));
         assert_eq!(
-            f(SignedAmount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi),
+            f(SignedAmount::MAX.to_float_in(D::Tapyrus) + 1.0, D::Tapyrus),
             Err(ParseAmountError::TooBig)
         );
         assert_eq!(
-            f(Amount::MAX.to_float_in(D::Satoshi) + 1.0, D::Satoshi),
+            f(Amount::MAX.to_float_in(D::Tapyrus) + 1.0, D::Tapyrus),
             Err(ParseAmountError::TooBig)
         );
 
-        let btc = move |f| SignedAmount::from_btc(f).unwrap();
-        assert_eq!(btc(2.5).to_float_in(D::Bitcoin), 2.5);
-        assert_eq!(btc(-2.5).to_float_in(D::MilliBitcoin), -2500.0);
-        assert_eq!(btc(2.5).to_float_in(D::Satoshi), 250000000.0);
-        assert_eq!(btc(-2.5).to_float_in(D::MilliSatoshi), -250000000000.0);
+        let tpc = move |f| SignedAmount::from_tpc(f).unwrap();
+        assert_eq!(tpc(2.5).to_float_in(D::TPC), 2.5);
+        assert_eq!(tpc(-2.5).to_float_in(D::MilliTPC), -2500.0);
+        assert_eq!(tpc(2.5).to_float_in(D::Tapyrus), 250000000.0);
+        assert_eq!(tpc(-2.5).to_float_in(D::MilliTapyrus), -250000000000.0);
 
-        let btc = move |f| Amount::from_btc(f).unwrap();
-        assert_eq!(&btc(0.0012).to_float_in(D::Bitcoin).to_string(), "0.0012")
+        let tpc = move |f| Amount::from_tpc(f).unwrap();
+        assert_eq!(&tpc(0.0012).to_float_in(D::TPC).to_string(), "0.0012")
     }
 
     #[test]
-    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per tapyrus.
+    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 taps per tapyrus.
     fn parsing() {
         use super::ParseAmountError as E;
-        let btc = Denomination::Bitcoin;
-        let sat = Denomination::Satoshi;
-        let msat = Denomination::MilliSatoshi;
+        let tpc = Denomination::TPC;
+        let tap = Denomination::Tapyrus;
+        let mtap = Denomination::MilliTapyrus;
         let p = Amount::from_str_in;
         let sp = SignedAmount::from_str_in;
 
-        assert_eq!(p("x", btc), Err(E::InvalidCharacter('x')));
-        assert_eq!(p("-", btc), Err(E::InvalidFormat));
-        assert_eq!(sp("-", btc), Err(E::InvalidFormat));
-        assert_eq!(p("-1.0x", btc), Err(E::InvalidCharacter('x')));
-        assert_eq!(p("0.0 ", btc), Err(ParseAmountError::InvalidCharacter(' ')));
-        assert_eq!(p("0.000.000", btc), Err(E::InvalidFormat));
+        assert_eq!(p("x", tpc), Err(E::InvalidCharacter('x')));
+        assert_eq!(p("-", tpc), Err(E::InvalidFormat));
+        assert_eq!(sp("-", tpc), Err(E::InvalidFormat));
+        assert_eq!(p("-1.0x", tpc), Err(E::InvalidCharacter('x')));
+        assert_eq!(p("0.0 ", tpc), Err(ParseAmountError::InvalidCharacter(' ')));
+        assert_eq!(p("0.000.000", tpc), Err(E::InvalidFormat));
         let more_than_max = format!("1{}", Amount::MAX);
-        assert_eq!(p(&more_than_max, btc), Err(E::TooBig));
-        assert_eq!(p("0.000000042", btc), Err(E::TooPrecise));
-        assert_eq!(p("999.0000000", msat), Err(E::TooPrecise));
-        assert_eq!(p("1.0000000", msat), Err(E::TooPrecise));
-        assert_eq!(p("1.1", msat), Err(E::TooPrecise));
-        assert_eq!(p("1000.1", msat), Err(E::TooPrecise));
-        assert_eq!(p("1001.0000000", msat), Err(E::TooPrecise));
-        assert_eq!(p("1000.0000001", msat), Err(E::TooPrecise));
-        assert_eq!(p("1000.1000000", msat), Err(E::TooPrecise));
-        assert_eq!(p("1100.0000000", msat), Err(E::TooPrecise));
-        assert_eq!(p("10001.0000000", msat), Err(E::TooPrecise));
+        assert_eq!(p(&more_than_max, tpc), Err(E::TooBig));
+        assert_eq!(p("0.000000042", tpc), Err(E::TooPrecise));
+        assert_eq!(p("999.0000000", mtap), Err(E::TooPrecise));
+        assert_eq!(p("1.0000000", mtap), Err(E::TooPrecise));
+        assert_eq!(p("1.1", mtap), Err(E::TooPrecise));
+        assert_eq!(p("1000.1", mtap), Err(E::TooPrecise));
+        assert_eq!(p("1001.0000000", mtap), Err(E::TooPrecise));
+        assert_eq!(p("1000.0000001", mtap), Err(E::TooPrecise));
+        assert_eq!(p("1000.1000000", mtap), Err(E::TooPrecise));
+        assert_eq!(p("1100.0000000", mtap), Err(E::TooPrecise));
+        assert_eq!(p("10001.0000000", mtap), Err(E::TooPrecise));
 
-        assert_eq!(p("1", btc), Ok(Amount::from_sat(1_000_000_00)));
-        assert_eq!(sp("-.5", btc), Ok(SignedAmount::from_sat(-500_000_00)));
-        assert_eq!(p("1.1", btc), Ok(Amount::from_sat(1_100_000_00)));
-        assert_eq!(p("100", sat), Ok(Amount::from_sat(100)));
-        assert_eq!(p("55", sat), Ok(Amount::from_sat(55)));
-        assert_eq!(p("5500000000000000000", sat), Ok(Amount::from_sat(55_000_000_000_000_000_00)));
+        assert_eq!(p("1", tpc), Ok(Amount::from_tap(1_000_000_00)));
+        assert_eq!(sp("-.5", tpc), Ok(SignedAmount::from_tap(-500_000_00)));
+        assert_eq!(p("1.1", tpc), Ok(Amount::from_tap(1_100_000_00)));
+        assert_eq!(p("100", tap), Ok(Amount::from_tap(100)));
+        assert_eq!(p("55", tap), Ok(Amount::from_tap(55)));
+        assert_eq!(p("5500000000000000000", tap), Ok(Amount::from_tap(55_000_000_000_000_000_00)));
         // Should this even pass?
-        assert_eq!(p("5500000000000000000.", sat), Ok(Amount::from_sat(55_000_000_000_000_000_00)));
+        assert_eq!(p("5500000000000000000.", tap), Ok(Amount::from_tap(55_000_000_000_000_000_00)));
         assert_eq!(
-            p("12345678901.12345678", btc),
-            Ok(Amount::from_sat(12_345_678_901__123_456_78))
+            p("12345678901.12345678", tpc),
+            Ok(Amount::from_tap(12_345_678_901__123_456_78))
         );
-        assert_eq!(p("1000.0", msat), Ok(Amount::from_sat(1)));
-        assert_eq!(p("1000.000000000000000000000000000", msat), Ok(Amount::from_sat(1)));
+        assert_eq!(p("1000.0", mtap), Ok(Amount::from_tap(1)));
+        assert_eq!(p("1000.000000000000000000000000000", mtap), Ok(Amount::from_tap(1)));
 
-        // make sure satoshi > i64::MAX is checked.
-        let amount = Amount::from_sat(i64::MAX as u64);
-        assert_eq!(Amount::from_str_in(&amount.to_string_in(sat), sat), Ok(amount));
+        // make sure tapyrus > i64::MAX is checked.
+        let amount = Amount::from_tap(i64::MAX as u64);
+        assert_eq!(Amount::from_str_in(&amount.to_string_in(tap), tap), Ok(amount));
         assert_eq!(
-            Amount::from_str_in(&(amount + Amount(1)).to_string_in(sat), sat),
+            Amount::from_str_in(&(amount + Amount(1)).to_string_in(tap), tap),
             Err(E::TooBig)
         );
 
-        assert_eq!(p("12.000", Denomination::MilliSatoshi), Err(E::TooPrecise));
+        assert_eq!(p("12.000", Denomination::MilliTapyrus), Err(E::TooPrecise));
         // exactly 50 chars.
         assert_eq!(
-            p("100000000000000.0000000000000000000000000000000000", Denomination::Bitcoin),
+            p("100000000000000.0000000000000000000000000000000000", Denomination::TPC),
             Err(E::TooBig)
         );
         // more than 50 chars.
         assert_eq!(
-            p("100000000000000.00000000000000000000000000000000000", Denomination::Bitcoin),
+            p("100000000000000.00000000000000000000000000000000000", Denomination::TPC),
             Err(E::InputTooLarge)
         );
     }
@@ -1778,22 +1770,22 @@ mod tests {
     fn to_string() {
         use super::Denomination as D;
 
-        assert_eq!(Amount::ONE_BTC.to_string_in(D::Bitcoin), "1");
-        assert_eq!(format!("{:.8}", Amount::ONE_BTC.display_in(D::Bitcoin)), "1.00000000");
-        assert_eq!(Amount::ONE_BTC.to_string_in(D::Satoshi), "100000000");
-        assert_eq!(Amount::ONE_SAT.to_string_in(D::Bitcoin), "0.00000001");
-        assert_eq!(SignedAmount::from_sat(-42).to_string_in(D::Bitcoin), "-0.00000042");
+        assert_eq!(Amount::ONE_TPC.to_string_in(D::TPC), "1");
+        assert_eq!(format!("{:.8}", Amount::ONE_TPC.display_in(D::TPC)), "1.00000000");
+        assert_eq!(Amount::ONE_TPC.to_string_in(D::Tapyrus), "100000000");
+        assert_eq!(Amount::ONE_TAP.to_string_in(D::TPC), "0.00000001");
+        assert_eq!(SignedAmount::from_tap(-42).to_string_in(D::TPC), "-0.00000042");
 
-        assert_eq!(Amount::ONE_BTC.to_string_with_denomination(D::Bitcoin), "1 BTC");
-        assert_eq!(Amount::ONE_SAT.to_string_with_denomination(D::MilliSatoshi), "1000 msat");
+        assert_eq!(Amount::ONE_TPC.to_string_with_denomination(D::TPC), "1 TPC");
+        assert_eq!(Amount::ONE_TAP.to_string_with_denomination(D::MilliTapyrus), "1000 mtap");
         assert_eq!(
-            SignedAmount::ONE_BTC.to_string_with_denomination(D::Satoshi),
-            "100000000 satoshi"
+            SignedAmount::ONE_TPC.to_string_with_denomination(D::Tapyrus),
+            "100000000 tapyrus"
         );
-        assert_eq!(Amount::ONE_SAT.to_string_with_denomination(D::Bitcoin), "0.00000001 BTC");
+        assert_eq!(Amount::ONE_TAP.to_string_with_denomination(D::TPC), "0.00000001 TPC");
         assert_eq!(
-            SignedAmount::from_sat(-42).to_string_with_denomination(D::Bitcoin),
-            "-0.00000042 BTC"
+            SignedAmount::from_tap(-42).to_string_with_denomination(D::TPC),
+            "-0.00000042 TPC"
         );
     }
 
@@ -1814,8 +1806,8 @@ mod tests {
             $(
                 #[test]
                 fn $test_name() {
-                    assert_eq!(format!($format_string, Amount::from_sat($val).display_in(Denomination::$denom)), $expected);
-                    assert_eq!(format!($format_string, SignedAmount::from_sat($val as i64).display_in(Denomination::$denom)), $expected);
+                    assert_eq!(format!($format_string, Amount::from_tap($val).display_in(Denomination::$denom)), $expected);
+                    assert_eq!(format!($format_string, SignedAmount::from_tap($val as i64).display_in(Denomination::$denom)), $expected);
                 }
             )*
         }
@@ -1826,164 +1818,164 @@ mod tests {
             $(
                 #[test]
                 fn $test_name() {
-                    assert_eq!(format!($format_string, Amount::from_sat($val).display_in(Denomination::$denom).show_denomination()), concat!($expected, $denom_suffix));
-                    assert_eq!(format!($format_string, SignedAmount::from_sat($val as i64).display_in(Denomination::$denom).show_denomination()), concat!($expected, $denom_suffix));
+                    assert_eq!(format!($format_string, Amount::from_tap($val).display_in(Denomination::$denom).show_denomination()), concat!($expected, $denom_suffix));
+                    assert_eq!(format!($format_string, SignedAmount::from_tap($val as i64).display_in(Denomination::$denom).show_denomination()), concat!($expected, $denom_suffix));
                 }
             )*
         }
     }
 
     check_format_non_negative! {
-        Satoshi;
-        sat_check_fmt_non_negative_0, 0, "{}", "0";
-        sat_check_fmt_non_negative_1, 0, "{:2}", " 0";
-        sat_check_fmt_non_negative_2, 0, "{:02}", "00";
-        sat_check_fmt_non_negative_3, 0, "{:.1}", "0.0";
-        sat_check_fmt_non_negative_4, 0, "{:4.1}", " 0.0";
-        sat_check_fmt_non_negative_5, 0, "{:04.1}", "00.0";
-        sat_check_fmt_non_negative_6, 1, "{}", "1";
-        sat_check_fmt_non_negative_7, 1, "{:2}", " 1";
-        sat_check_fmt_non_negative_8, 1, "{:02}", "01";
-        sat_check_fmt_non_negative_9, 1, "{:.1}", "1.0";
-        sat_check_fmt_non_negative_10, 1, "{:4.1}", " 1.0";
-        sat_check_fmt_non_negative_11, 1, "{:04.1}", "01.0";
-        sat_check_fmt_non_negative_12, 10, "{}", "10";
-        sat_check_fmt_non_negative_13, 10, "{:2}", "10";
-        sat_check_fmt_non_negative_14, 10, "{:02}", "10";
-        sat_check_fmt_non_negative_15, 10, "{:3}", " 10";
-        sat_check_fmt_non_negative_16, 10, "{:03}", "010";
-        sat_check_fmt_non_negative_17, 10, "{:.1}", "10.0";
-        sat_check_fmt_non_negative_18, 10, "{:5.1}", " 10.0";
-        sat_check_fmt_non_negative_19, 10, "{:05.1}", "010.0";
-        sat_check_fmt_non_negative_20, 1, "{:<2}", "1 ";
-        sat_check_fmt_non_negative_21, 1, "{:<02}", "01";
-        sat_check_fmt_non_negative_22, 1, "{:<3.1}", "1.0";
-        sat_check_fmt_non_negative_23, 1, "{:<4.1}", "1.0 ";
+        Tapyrus;
+        tap_check_fmt_non_negative_0, 0, "{}", "0";
+        tap_check_fmt_non_negative_1, 0, "{:2}", " 0";
+        tap_check_fmt_non_negative_2, 0, "{:02}", "00";
+        tap_check_fmt_non_negative_3, 0, "{:.1}", "0.0";
+        tap_check_fmt_non_negative_4, 0, "{:4.1}", " 0.0";
+        tap_check_fmt_non_negative_5, 0, "{:04.1}", "00.0";
+        tap_check_fmt_non_negative_6, 1, "{}", "1";
+        tap_check_fmt_non_negative_7, 1, "{:2}", " 1";
+        tap_check_fmt_non_negative_8, 1, "{:02}", "01";
+        tap_check_fmt_non_negative_9, 1, "{:.1}", "1.0";
+        tap_check_fmt_non_negative_10, 1, "{:4.1}", " 1.0";
+        tap_check_fmt_non_negative_11, 1, "{:04.1}", "01.0";
+        tap_check_fmt_non_negative_12, 10, "{}", "10";
+        tap_check_fmt_non_negative_13, 10, "{:2}", "10";
+        tap_check_fmt_non_negative_14, 10, "{:02}", "10";
+        tap_check_fmt_non_negative_15, 10, "{:3}", " 10";
+        tap_check_fmt_non_negative_16, 10, "{:03}", "010";
+        tap_check_fmt_non_negative_17, 10, "{:.1}", "10.0";
+        tap_check_fmt_non_negative_18, 10, "{:5.1}", " 10.0";
+        tap_check_fmt_non_negative_19, 10, "{:05.1}", "010.0";
+        tap_check_fmt_non_negative_20, 1, "{:<2}", "1 ";
+        tap_check_fmt_non_negative_21, 1, "{:<02}", "01";
+        tap_check_fmt_non_negative_22, 1, "{:<3.1}", "1.0";
+        tap_check_fmt_non_negative_23, 1, "{:<4.1}", "1.0 ";
     }
 
     check_format_non_negative_show_denom! {
-        Satoshi, " satoshi";
-        sat_check_fmt_non_negative_show_denom_0, 0, "{}", "0";
-        sat_check_fmt_non_negative_show_denom_1, 0, "{:2}", "0";
-        sat_check_fmt_non_negative_show_denom_2, 0, "{:02}", "0";
-        sat_check_fmt_non_negative_show_denom_3, 0, "{:9}", "0";
-        sat_check_fmt_non_negative_show_denom_4, 0, "{:09}", "0";
-        sat_check_fmt_non_negative_show_denom_5, 0, "{:10}", " 0";
-        sat_check_fmt_non_negative_show_denom_6, 0, "{:010}", "00";
-        sat_check_fmt_non_negative_show_denom_7, 0, "{:.1}", "0.0";
-        sat_check_fmt_non_negative_show_denom_8, 0, "{:11.1}", "0.0";
-        sat_check_fmt_non_negative_show_denom_9, 0, "{:011.1}", "0.0";
-        sat_check_fmt_non_negative_show_denom_10, 0, "{:12.1}", " 0.0";
-        sat_check_fmt_non_negative_show_denom_11, 0, "{:012.1}", "00.0";
-        sat_check_fmt_non_negative_show_denom_12, 1, "{}", "1";
-        sat_check_fmt_non_negative_show_denom_13, 1, "{:10}", " 1";
-        sat_check_fmt_non_negative_show_denom_14, 1, "{:010}", "01";
-        sat_check_fmt_non_negative_show_denom_15, 1, "{:.1}", "1.0";
-        sat_check_fmt_non_negative_show_denom_16, 1, "{:12.1}", " 1.0";
-        sat_check_fmt_non_negative_show_denom_17, 1, "{:012.1}", "01.0";
-        sat_check_fmt_non_negative_show_denom_18, 10, "{}", "10";
-        sat_check_fmt_non_negative_show_denom_19, 10, "{:10}", "10";
-        sat_check_fmt_non_negative_show_denom_20, 10, "{:010}", "10";
-        sat_check_fmt_non_negative_show_denom_21, 10, "{:11}", " 10";
-        sat_check_fmt_non_negative_show_denom_22, 10, "{:011}", "010";
+        Tapyrus, " tapyrus";
+        tap_check_fmt_non_negative_show_denom_0, 0, "{}", "0";
+        tap_check_fmt_non_negative_show_denom_1, 0, "{:2}", "0";
+        tap_check_fmt_non_negative_show_denom_2, 0, "{:02}", "0";
+        tap_check_fmt_non_negative_show_denom_3, 0, "{:9}", "0";
+        tap_check_fmt_non_negative_show_denom_4, 0, "{:09}", "0";
+        tap_check_fmt_non_negative_show_denom_5, 0, "{:10}", " 0";
+        tap_check_fmt_non_negative_show_denom_6, 0, "{:010}", "00";
+        tap_check_fmt_non_negative_show_denom_7, 0, "{:.1}", "0.0";
+        tap_check_fmt_non_negative_show_denom_8, 0, "{:11.1}", "0.0";
+        tap_check_fmt_non_negative_show_denom_9, 0, "{:011.1}", "0.0";
+        tap_check_fmt_non_negative_show_denom_10, 0, "{:12.1}", " 0.0";
+        tap_check_fmt_non_negative_show_denom_11, 0, "{:012.1}", "00.0";
+        tap_check_fmt_non_negative_show_denom_12, 1, "{}", "1";
+        tap_check_fmt_non_negative_show_denom_13, 1, "{:10}", " 1";
+        tap_check_fmt_non_negative_show_denom_14, 1, "{:010}", "01";
+        tap_check_fmt_non_negative_show_denom_15, 1, "{:.1}", "1.0";
+        tap_check_fmt_non_negative_show_denom_16, 1, "{:12.1}", " 1.0";
+        tap_check_fmt_non_negative_show_denom_17, 1, "{:012.1}", "01.0";
+        tap_check_fmt_non_negative_show_denom_18, 10, "{}", "10";
+        tap_check_fmt_non_negative_show_denom_19, 10, "{:10}", "10";
+        tap_check_fmt_non_negative_show_denom_20, 10, "{:010}", "10";
+        tap_check_fmt_non_negative_show_denom_21, 10, "{:11}", " 10";
+        tap_check_fmt_non_negative_show_denom_22, 10, "{:011}", "010";
     }
 
     check_format_non_negative! {
-        Bitcoin;
-        btc_check_fmt_non_negative_0, 0, "{}", "0";
-        btc_check_fmt_non_negative_1, 0, "{:2}", " 0";
-        btc_check_fmt_non_negative_2, 0, "{:02}", "00";
-        btc_check_fmt_non_negative_3, 0, "{:.1}", "0.0";
-        btc_check_fmt_non_negative_4, 0, "{:4.1}", " 0.0";
-        btc_check_fmt_non_negative_5, 0, "{:04.1}", "00.0";
-        btc_check_fmt_non_negative_6, 1, "{}", "0.00000001";
-        btc_check_fmt_non_negative_7, 1, "{:2}", "0.00000001";
-        btc_check_fmt_non_negative_8, 1, "{:02}", "0.00000001";
-        btc_check_fmt_non_negative_9, 1, "{:.1}", "0.00000001";
-        btc_check_fmt_non_negative_10, 1, "{:11}", " 0.00000001";
-        btc_check_fmt_non_negative_11, 1, "{:11.1}", " 0.00000001";
-        btc_check_fmt_non_negative_12, 1, "{:011.1}", "00.00000001";
-        btc_check_fmt_non_negative_13, 1, "{:.9}", "0.000000010";
-        btc_check_fmt_non_negative_14, 1, "{:11.9}", "0.000000010";
-        btc_check_fmt_non_negative_15, 1, "{:011.9}", "0.000000010";
-        btc_check_fmt_non_negative_16, 1, "{:12.9}", " 0.000000010";
-        btc_check_fmt_non_negative_17, 1, "{:012.9}", "00.000000010";
-        btc_check_fmt_non_negative_18, 100_000_000, "{}", "1";
-        btc_check_fmt_non_negative_19, 100_000_000, "{:2}", " 1";
-        btc_check_fmt_non_negative_20, 100_000_000, "{:02}", "01";
-        btc_check_fmt_non_negative_21, 100_000_000, "{:.1}", "1.0";
-        btc_check_fmt_non_negative_22, 100_000_000, "{:4.1}", " 1.0";
-        btc_check_fmt_non_negative_23, 100_000_000, "{:04.1}", "01.0";
-        btc_check_fmt_non_negative_24, 110_000_000, "{}", "1.1";
-        btc_check_fmt_non_negative_25, 100_000_001, "{}", "1.00000001";
-        btc_check_fmt_non_negative_26, 100_000_001, "{:1}", "1.00000001";
-        btc_check_fmt_non_negative_27, 100_000_001, "{:.1}", "1.00000001";
-        btc_check_fmt_non_negative_28, 100_000_001, "{:10}", "1.00000001";
-        btc_check_fmt_non_negative_29, 100_000_001, "{:11}", " 1.00000001";
-        btc_check_fmt_non_negative_30, 100_000_001, "{:011}", "01.00000001";
-        btc_check_fmt_non_negative_31, 100_000_001, "{:.8}", "1.00000001";
-        btc_check_fmt_non_negative_32, 100_000_001, "{:.9}", "1.000000010";
-        btc_check_fmt_non_negative_33, 100_000_001, "{:11.9}", "1.000000010";
-        btc_check_fmt_non_negative_34, 100_000_001, "{:12.9}", " 1.000000010";
-        btc_check_fmt_non_negative_35, 100_000_001, "{:012.9}", "01.000000010";
-        btc_check_fmt_non_negative_36, 100_000_001, "{:+011.8}", "+1.00000001";
-        btc_check_fmt_non_negative_37, 100_000_001, "{:+12.8}", " +1.00000001";
-        btc_check_fmt_non_negative_38, 100_000_001, "{:+012.8}", "+01.00000001";
-        btc_check_fmt_non_negative_39, 100_000_001, "{:+12.9}", "+1.000000010";
-        btc_check_fmt_non_negative_40, 100_000_001, "{:+012.9}", "+1.000000010";
-        btc_check_fmt_non_negative_41, 100_000_001, "{:+13.9}", " +1.000000010";
-        btc_check_fmt_non_negative_42, 100_000_001, "{:+013.9}", "+01.000000010";
-        btc_check_fmt_non_negative_43, 100_000_001, "{:<10}", "1.00000001";
-        btc_check_fmt_non_negative_44, 100_000_001, "{:<11}", "1.00000001 ";
-        btc_check_fmt_non_negative_45, 100_000_001, "{:<011}", "01.00000001";
-        btc_check_fmt_non_negative_46, 100_000_001, "{:<11.9}", "1.000000010";
-        btc_check_fmt_non_negative_47, 100_000_001, "{:<12.9}", "1.000000010 ";
-        btc_check_fmt_non_negative_48, 100_000_001, "{:<12}", "1.00000001  ";
-        btc_check_fmt_non_negative_49, 100_000_001, "{:^11}", "1.00000001 ";
-        btc_check_fmt_non_negative_50, 100_000_001, "{:^11.9}", "1.000000010";
-        btc_check_fmt_non_negative_51, 100_000_001, "{:^12.9}", "1.000000010 ";
-        btc_check_fmt_non_negative_52, 100_000_001, "{:^12}", " 1.00000001 ";
-        btc_check_fmt_non_negative_53, 100_000_001, "{:^12.9}", "1.000000010 ";
-        btc_check_fmt_non_negative_54, 100_000_001, "{:^13.9}", " 1.000000010 ";
+        TPC;
+        tpc_check_fmt_non_negative_0, 0, "{}", "0";
+        tpc_check_fmt_non_negative_1, 0, "{:2}", " 0";
+        tpc_check_fmt_non_negative_2, 0, "{:02}", "00";
+        tpc_check_fmt_non_negative_3, 0, "{:.1}", "0.0";
+        tpc_check_fmt_non_negative_4, 0, "{:4.1}", " 0.0";
+        tpc_check_fmt_non_negative_5, 0, "{:04.1}", "00.0";
+        tpc_check_fmt_non_negative_6, 1, "{}", "0.00000001";
+        tpc_check_fmt_non_negative_7, 1, "{:2}", "0.00000001";
+        tpc_check_fmt_non_negative_8, 1, "{:02}", "0.00000001";
+        tpc_check_fmt_non_negative_9, 1, "{:.1}", "0.00000001";
+        tpc_check_fmt_non_negative_10, 1, "{:11}", " 0.00000001";
+        tpc_check_fmt_non_negative_11, 1, "{:11.1}", " 0.00000001";
+        tpc_check_fmt_non_negative_12, 1, "{:011.1}", "00.00000001";
+        tpc_check_fmt_non_negative_13, 1, "{:.9}", "0.000000010";
+        tpc_check_fmt_non_negative_14, 1, "{:11.9}", "0.000000010";
+        tpc_check_fmt_non_negative_15, 1, "{:011.9}", "0.000000010";
+        tpc_check_fmt_non_negative_16, 1, "{:12.9}", " 0.000000010";
+        tpc_check_fmt_non_negative_17, 1, "{:012.9}", "00.000000010";
+        tpc_check_fmt_non_negative_18, 100_000_000, "{}", "1";
+        tpc_check_fmt_non_negative_19, 100_000_000, "{:2}", " 1";
+        tpc_check_fmt_non_negative_20, 100_000_000, "{:02}", "01";
+        tpc_check_fmt_non_negative_21, 100_000_000, "{:.1}", "1.0";
+        tpc_check_fmt_non_negative_22, 100_000_000, "{:4.1}", " 1.0";
+        tpc_check_fmt_non_negative_23, 100_000_000, "{:04.1}", "01.0";
+        tpc_check_fmt_non_negative_24, 110_000_000, "{}", "1.1";
+        tpc_check_fmt_non_negative_25, 100_000_001, "{}", "1.00000001";
+        tpc_check_fmt_non_negative_26, 100_000_001, "{:1}", "1.00000001";
+        tpc_check_fmt_non_negative_27, 100_000_001, "{:.1}", "1.00000001";
+        tpc_check_fmt_non_negative_28, 100_000_001, "{:10}", "1.00000001";
+        tpc_check_fmt_non_negative_29, 100_000_001, "{:11}", " 1.00000001";
+        tpc_check_fmt_non_negative_30, 100_000_001, "{:011}", "01.00000001";
+        tpc_check_fmt_non_negative_31, 100_000_001, "{:.8}", "1.00000001";
+        tpc_check_fmt_non_negative_32, 100_000_001, "{:.9}", "1.000000010";
+        tpc_check_fmt_non_negative_33, 100_000_001, "{:11.9}", "1.000000010";
+        tpc_check_fmt_non_negative_34, 100_000_001, "{:12.9}", " 1.000000010";
+        tpc_check_fmt_non_negative_35, 100_000_001, "{:012.9}", "01.000000010";
+        tpc_check_fmt_non_negative_36, 100_000_001, "{:+011.8}", "+1.00000001";
+        tpc_check_fmt_non_negative_37, 100_000_001, "{:+12.8}", " +1.00000001";
+        tpc_check_fmt_non_negative_38, 100_000_001, "{:+012.8}", "+01.00000001";
+        tpc_check_fmt_non_negative_39, 100_000_001, "{:+12.9}", "+1.000000010";
+        tpc_check_fmt_non_negative_40, 100_000_001, "{:+012.9}", "+1.000000010";
+        tpc_check_fmt_non_negative_41, 100_000_001, "{:+13.9}", " +1.000000010";
+        tpc_check_fmt_non_negative_42, 100_000_001, "{:+013.9}", "+01.000000010";
+        tpc_check_fmt_non_negative_43, 100_000_001, "{:<10}", "1.00000001";
+        tpc_check_fmt_non_negative_44, 100_000_001, "{:<11}", "1.00000001 ";
+        tpc_check_fmt_non_negative_45, 100_000_001, "{:<011}", "01.00000001";
+        tpc_check_fmt_non_negative_46, 100_000_001, "{:<11.9}", "1.000000010";
+        tpc_check_fmt_non_negative_47, 100_000_001, "{:<12.9}", "1.000000010 ";
+        tpc_check_fmt_non_negative_48, 100_000_001, "{:<12}", "1.00000001  ";
+        tpc_check_fmt_non_negative_49, 100_000_001, "{:^11}", "1.00000001 ";
+        tpc_check_fmt_non_negative_50, 100_000_001, "{:^11.9}", "1.000000010";
+        tpc_check_fmt_non_negative_51, 100_000_001, "{:^12.9}", "1.000000010 ";
+        tpc_check_fmt_non_negative_52, 100_000_001, "{:^12}", " 1.00000001 ";
+        tpc_check_fmt_non_negative_53, 100_000_001, "{:^12.9}", "1.000000010 ";
+        tpc_check_fmt_non_negative_54, 100_000_001, "{:^13.9}", " 1.000000010 ";
     }
 
     check_format_non_negative_show_denom! {
-        Bitcoin, " BTC";
-        btc_check_fmt_non_negative_show_denom_0, 1, "{:14.1}", "0.00000001";
-        btc_check_fmt_non_negative_show_denom_1, 1, "{:14.8}", "0.00000001";
-        btc_check_fmt_non_negative_show_denom_2, 1, "{:15}", " 0.00000001";
-        btc_check_fmt_non_negative_show_denom_3, 1, "{:015}", "00.00000001";
-        btc_check_fmt_non_negative_show_denom_4, 1, "{:.9}", "0.000000010";
-        btc_check_fmt_non_negative_show_denom_5, 1, "{:15.9}", "0.000000010";
-        btc_check_fmt_non_negative_show_denom_6, 1, "{:16.9}", " 0.000000010";
-        btc_check_fmt_non_negative_show_denom_7, 1, "{:016.9}", "00.000000010";
+        TPC, " TPC";
+        tpc_check_fmt_non_negative_show_denom_0, 1, "{:14.1}", "0.00000001";
+        tpc_check_fmt_non_negative_show_denom_1, 1, "{:14.8}", "0.00000001";
+        tpc_check_fmt_non_negative_show_denom_2, 1, "{:15}", " 0.00000001";
+        tpc_check_fmt_non_negative_show_denom_3, 1, "{:015}", "00.00000001";
+        tpc_check_fmt_non_negative_show_denom_4, 1, "{:.9}", "0.000000010";
+        tpc_check_fmt_non_negative_show_denom_5, 1, "{:15.9}", "0.000000010";
+        tpc_check_fmt_non_negative_show_denom_6, 1, "{:16.9}", " 0.000000010";
+        tpc_check_fmt_non_negative_show_denom_7, 1, "{:016.9}", "00.000000010";
     }
 
     check_format_non_negative_show_denom! {
-        Bitcoin, " BTC ";
-        btc_check_fmt_non_negative_show_denom_align_0, 1, "{:<15}", "0.00000001";
-        btc_check_fmt_non_negative_show_denom_align_1, 1, "{:^15}", "0.00000001";
-        btc_check_fmt_non_negative_show_denom_align_2, 1, "{:^16}", " 0.00000001";
+        TPC, " TPC ";
+        tpc_check_fmt_non_negative_show_denom_align_0, 1, "{:<15}", "0.00000001";
+        tpc_check_fmt_non_negative_show_denom_align_1, 1, "{:^15}", "0.00000001";
+        tpc_check_fmt_non_negative_show_denom_align_2, 1, "{:^16}", " 0.00000001";
     }
 
     check_format_non_negative! {
-        MilliSatoshi;
-        msat_check_fmt_non_negative_0, 0, "{}", "0";
-        msat_check_fmt_non_negative_1, 1, "{}", "1000";
-        msat_check_fmt_non_negative_2, 1, "{:5}", " 1000";
-        msat_check_fmt_non_negative_3, 1, "{:05}", "01000";
-        msat_check_fmt_non_negative_4, 1, "{:.1}", "1000.0";
-        msat_check_fmt_non_negative_5, 1, "{:6.1}", "1000.0";
-        msat_check_fmt_non_negative_6, 1, "{:06.1}", "1000.0";
-        msat_check_fmt_non_negative_7, 1, "{:7.1}", " 1000.0";
-        msat_check_fmt_non_negative_8, 1, "{:07.1}", "01000.0";
+        MilliTapyrus;
+        mtap_check_fmt_non_negative_0, 0, "{}", "0";
+        mtap_check_fmt_non_negative_1, 1, "{}", "1000";
+        mtap_check_fmt_non_negative_2, 1, "{:5}", " 1000";
+        mtap_check_fmt_non_negative_3, 1, "{:05}", "01000";
+        mtap_check_fmt_non_negative_4, 1, "{:.1}", "1000.0";
+        mtap_check_fmt_non_negative_5, 1, "{:6.1}", "1000.0";
+        mtap_check_fmt_non_negative_6, 1, "{:06.1}", "1000.0";
+        mtap_check_fmt_non_negative_7, 1, "{:7.1}", " 1000.0";
+        mtap_check_fmt_non_negative_8, 1, "{:07.1}", "01000.0";
     }
 
     #[test]
     fn test_unsigned_signed_conversion() {
         use super::ParseAmountError as E;
-        let sa = SignedAmount::from_sat;
-        let ua = Amount::from_sat;
+        let sa = SignedAmount::from_tap;
+        let ua = Amount::from_tap;
 
         assert_eq!(Amount::MAX.to_signed(), Err(E::TooBig));
         assert_eq!(ua(i64::MAX as u64).to_signed(), Ok(sa(i64::MAX)));
@@ -1995,15 +1987,15 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per tapyrus.
+    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 taps per tapyrus.
     fn from_str() {
         use super::ParseAmountError as E;
 
-        assert_eq!(Amount::from_str("x BTC"), Err(E::InvalidCharacter('x')));
-        assert_eq!(Amount::from_str("xBTC"), Err(E::UnknownDenomination("xBTC".into())));
-        assert_eq!(Amount::from_str("5 BTC BTC"), Err(E::UnknownDenomination("BTC BTC".into())));
-        assert_eq!(Amount::from_str("5BTC BTC"), Err(E::InvalidCharacter('B')));
-        assert_eq!(Amount::from_str("5 5 BTC"), Err(E::UnknownDenomination("5 BTC".into())));
+        assert_eq!(Amount::from_str("x TPC"), Err(E::InvalidCharacter('x')));
+        assert_eq!(Amount::from_str("xTPC"), Err(E::UnknownDenomination("xTPC".into())));
+        assert_eq!(Amount::from_str("5 TPC TPC"), Err(E::UnknownDenomination("TPC TPC".into())));
+        assert_eq!(Amount::from_str("5TPC TPC"), Err(E::InvalidCharacter('T')));
+        assert_eq!(Amount::from_str("5 5 TPC"), Err(E::UnknownDenomination("5 TPC".into())));
 
         #[track_caller]
         fn case(s: &str, expected: Result<Amount, ParseAmountError>) {
@@ -2019,108 +2011,79 @@ mod tests {
 
         case("5 BCH", Err(E::UnknownDenomination("BCH".to_owned())));
 
-        case("-1 BTC", Err(E::Negative));
-        case("-0.0 BTC", Err(E::Negative));
-        case("0.123456789 BTC", Err(E::TooPrecise));
-        scase("-0.1 satoshi", Err(E::TooPrecise));
-        case("0.123456 mBTC", Err(E::TooPrecise));
-        scase("-1.001 bits", Err(E::TooPrecise));
-        scase("-200000000000 BTC", Err(E::TooBig));
-        case("18446744073709551616 sat", Err(E::TooBig));
+        case("-1 TPC", Err(E::Negative));
+        case("-0.0 TPC", Err(E::Negative));
+        case("0.123456789 TPC", Err(E::TooPrecise));
+        scase("-0.1 tapyrus", Err(E::TooPrecise));
+        case("0.123456 mTPC", Err(E::TooPrecise));
+        scase("-200000000000 TPC", Err(E::TooBig));
+        case("18446744073709551616 tap", Err(E::TooBig));
 
-        case(".5 bits", Ok(Amount::from_sat(50)));
-        scase("-.5 bits", Ok(SignedAmount::from_sat(-50)));
-        case("0.00253583 BTC", Ok(Amount::from_sat(253583)));
-        scase("-5 satoshi", Ok(SignedAmount::from_sat(-5)));
-        case("0.10000000 BTC", Ok(Amount::from_sat(100_000_00)));
-        scase("-100 bits", Ok(SignedAmount::from_sat(-10_000)));
+        case("0.00253583 TPC", Ok(Amount::from_tap(253583)));
+        scase("-5 tapyrus", Ok(SignedAmount::from_tap(-5)));
+        case("0.10000000 TPC", Ok(Amount::from_tap(100_000_00)));
     }
 
     #[test]
-    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per tapyrus.
+    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 taps per tapyrus.
     fn to_from_string_in() {
         use super::Denomination as D;
         let ua_str = Amount::from_str_in;
-        let ua_sat = Amount::from_sat;
+        let ua_tap = Amount::from_tap;
         let sa_str = SignedAmount::from_str_in;
-        let sa_sat = SignedAmount::from_sat;
+        let sa_tap = SignedAmount::from_tap;
 
-        assert_eq!("0.5", Amount::from_sat(50).to_string_in(D::Bit));
-        assert_eq!("-0.5", SignedAmount::from_sat(-50).to_string_in(D::Bit));
-        assert_eq!("0.00253583", Amount::from_sat(253583).to_string_in(D::Bitcoin));
-        assert_eq!("-5", SignedAmount::from_sat(-5).to_string_in(D::Satoshi));
-        assert_eq!("0.1", Amount::from_sat(100_000_00).to_string_in(D::Bitcoin));
-        assert_eq!("-100", SignedAmount::from_sat(-10_000).to_string_in(D::Bit));
-        assert_eq!("2535830", Amount::from_sat(253583).to_string_in(D::NanoBitcoin));
-        assert_eq!("-100000", SignedAmount::from_sat(-10_000).to_string_in(D::NanoBitcoin));
-        assert_eq!("2535830000", Amount::from_sat(253583).to_string_in(D::PicoBitcoin));
-        assert_eq!("-100000000", SignedAmount::from_sat(-10_000).to_string_in(D::PicoBitcoin));
+        assert_eq!("0.00253583", Amount::from_tap(253583).to_string_in(D::TPC));
+        assert_eq!("-5", SignedAmount::from_tap(-5).to_string_in(D::Tapyrus));
+        assert_eq!("0.1", Amount::from_tap(100_000_00).to_string_in(D::TPC));
+        assert_eq!("2535830", Amount::from_tap(253583).to_string_in(D::NanoTPC));
+        assert_eq!("-100000", SignedAmount::from_tap(-10_000).to_string_in(D::NanoTPC));
+        assert_eq!("2535830000", Amount::from_tap(253583).to_string_in(D::PicoTPC));
+        assert_eq!("-100000000", SignedAmount::from_tap(-10_000).to_string_in(D::PicoTPC));
 
-        assert_eq!("0.50", format!("{:.2}", Amount::from_sat(50).display_in(D::Bit)));
-        assert_eq!("-0.50", format!("{:.2}", SignedAmount::from_sat(-50).display_in(D::Bit)));
-        assert_eq!(
-            "0.10000000",
-            format!("{:.8}", Amount::from_sat(100_000_00).display_in(D::Bitcoin))
-        );
-        assert_eq!("-100.00", format!("{:.2}", SignedAmount::from_sat(-10_000).display_in(D::Bit)));
+        assert_eq!("0.10000000", format!("{:.8}", Amount::from_tap(100_000_00).display_in(D::TPC)));
 
-        assert_eq!(ua_str(&ua_sat(0).to_string_in(D::Satoshi), D::Satoshi), Ok(ua_sat(0)));
-        assert_eq!(ua_str(&ua_sat(500).to_string_in(D::Bitcoin), D::Bitcoin), Ok(ua_sat(500)));
+        assert_eq!(ua_str(&ua_tap(0).to_string_in(D::Tapyrus), D::Tapyrus), Ok(ua_tap(0)));
+        assert_eq!(ua_str(&ua_tap(500).to_string_in(D::TPC), D::TPC), Ok(ua_tap(500)));
+        assert_eq!(ua_str(&ua_tap(1).to_string_in(D::MicroTPC), D::MicroTPC), Ok(ua_tap(1)));
         assert_eq!(
-            ua_str(&ua_sat(21_000_000).to_string_in(D::Bit), D::Bit),
-            Ok(ua_sat(21_000_000))
+            ua_str(&ua_tap(1_000_000_000_000).to_string_in(D::MilliTPC), D::MilliTPC),
+            Ok(ua_tap(1_000_000_000_000))
         );
         assert_eq!(
-            ua_str(&ua_sat(1).to_string_in(D::MicroBitcoin), D::MicroBitcoin),
-            Ok(ua_sat(1))
-        );
-        assert_eq!(
-            ua_str(&ua_sat(1_000_000_000_000).to_string_in(D::MilliBitcoin), D::MilliBitcoin),
-            Ok(ua_sat(1_000_000_000_000))
-        );
-        assert_eq!(
-            ua_str(&ua_sat(u64::MAX).to_string_in(D::MilliBitcoin), D::MilliBitcoin),
+            ua_str(&ua_tap(u64::MAX).to_string_in(D::MilliTPC), D::MilliTPC),
             Err(ParseAmountError::TooBig)
         );
 
-        assert_eq!(
-            sa_str(&sa_sat(-1).to_string_in(D::MicroBitcoin), D::MicroBitcoin),
-            Ok(sa_sat(-1))
-        );
+        assert_eq!(sa_str(&sa_tap(-1).to_string_in(D::MicroTPC), D::MicroTPC), Ok(sa_tap(-1)));
 
         assert_eq!(
-            sa_str(&sa_sat(i64::MAX).to_string_in(D::Satoshi), D::MicroBitcoin),
+            sa_str(&sa_tap(i64::MAX).to_string_in(D::Tapyrus), D::MicroTPC),
             Err(ParseAmountError::TooBig)
         );
         // Test an overflow bug in `abs()`
         assert_eq!(
-            sa_str(&sa_sat(i64::MIN).to_string_in(D::Satoshi), D::MicroBitcoin),
+            sa_str(&sa_tap(i64::MIN).to_string_in(D::Tapyrus), D::MicroTPC),
             Err(ParseAmountError::TooBig)
         );
 
+        assert_eq!(sa_str(&sa_tap(-1).to_string_in(D::NanoTPC), D::NanoTPC), Ok(sa_tap(-1)));
         assert_eq!(
-            sa_str(&sa_sat(-1).to_string_in(D::NanoBitcoin), D::NanoBitcoin),
-            Ok(sa_sat(-1))
-        );
-        assert_eq!(
-            sa_str(&sa_sat(i64::MAX).to_string_in(D::Satoshi), D::NanoBitcoin),
+            sa_str(&sa_tap(i64::MAX).to_string_in(D::Tapyrus), D::NanoTPC),
             Err(ParseAmountError::TooPrecise)
         );
         assert_eq!(
-            sa_str(&sa_sat(i64::MIN).to_string_in(D::Satoshi), D::NanoBitcoin),
+            sa_str(&sa_tap(i64::MIN).to_string_in(D::Tapyrus), D::NanoTPC),
             Err(ParseAmountError::TooPrecise)
         );
 
+        assert_eq!(sa_str(&sa_tap(-1).to_string_in(D::PicoTPC), D::PicoTPC), Ok(sa_tap(-1)));
         assert_eq!(
-            sa_str(&sa_sat(-1).to_string_in(D::PicoBitcoin), D::PicoBitcoin),
-            Ok(sa_sat(-1))
-        );
-        assert_eq!(
-            sa_str(&sa_sat(i64::MAX).to_string_in(D::Satoshi), D::PicoBitcoin),
+            sa_str(&sa_tap(i64::MAX).to_string_in(D::Tapyrus), D::PicoTPC),
             Err(ParseAmountError::TooPrecise)
         );
         assert_eq!(
-            sa_str(&sa_sat(i64::MIN).to_string_in(D::Satoshi), D::PicoBitcoin),
+            sa_str(&sa_tap(i64::MIN).to_string_in(D::Tapyrus), D::PicoTPC),
             Err(ParseAmountError::TooPrecise)
         );
     }
@@ -2128,41 +2091,40 @@ mod tests {
     #[test]
     fn to_string_with_denomination_from_str_roundtrip() {
         use super::Denomination as D;
-        let amt = Amount::from_sat(42);
+        let amt = Amount::from_tap(42);
         let denom = Amount::to_string_with_denomination;
-        assert_eq!(Amount::from_str(&denom(amt, D::Bitcoin)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(amt, D::MilliBitcoin)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(amt, D::MicroBitcoin)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(amt, D::Bit)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(amt, D::Satoshi)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(amt, D::NanoBitcoin)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(amt, D::MilliSatoshi)), Ok(amt));
-        assert_eq!(Amount::from_str(&denom(amt, D::PicoBitcoin)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::TPC)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::MilliTPC)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::MicroTPC)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::Tapyrus)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::NanoTPC)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::MilliTapyrus)), Ok(amt));
+        assert_eq!(Amount::from_str(&denom(amt, D::PicoTPC)), Ok(amt));
 
         assert_eq!(
-            Amount::from_str("42 satoshi BTC"),
-            Err(ParseAmountError::UnknownDenomination("satoshi BTC".into())),
+            Amount::from_str("42 tapyrus TPC"),
+            Err(ParseAmountError::UnknownDenomination("tapyrus TPC".into())),
         );
         assert_eq!(
-            SignedAmount::from_str("-42 satoshi BTC"),
-            Err(ParseAmountError::UnknownDenomination("satoshi BTC".into())),
+            SignedAmount::from_str("-42 tapyrus TPC"),
+            Err(ParseAmountError::UnknownDenomination("tapyrus TPC".into())),
         );
     }
 
     #[cfg(feature = "serde")]
     #[test]
-    fn serde_as_sat() {
+    fn serde_as_tap() {
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         #[serde(crate = "actual_serde")]
         struct T {
-            #[serde(with = "crate::amount::serde::as_sat")]
+            #[serde(with = "crate::amount::serde::as_tap")]
             pub amt: Amount,
-            #[serde(with = "crate::amount::serde::as_sat")]
+            #[serde(with = "crate::amount::serde::as_tap")]
             pub samt: SignedAmount,
         }
 
         serde_test::assert_tokens(
-            &T { amt: Amount::from_sat(123456789), samt: SignedAmount::from_sat(-123456789) },
+            &T { amt: Amount::from_tap(123456789), samt: SignedAmount::from_tap(-123456789) },
             &[
                 serde_test::Token::Struct { name: "T", len: 2 },
                 serde_test::Token::Str("amt"),
@@ -2176,22 +2138,22 @@ mod tests {
 
     #[cfg(feature = "serde")]
     #[test]
-    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per tapyrus.
-    fn serde_as_btc() {
+    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 taps per tapyrus.
+    fn serde_as_tpc() {
         use serde_json;
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         #[serde(crate = "actual_serde")]
         struct T {
-            #[serde(with = "crate::amount::serde::as_btc")]
+            #[serde(with = "crate::amount::serde::as_tpc")]
             pub amt: Amount,
-            #[serde(with = "crate::amount::serde::as_btc")]
+            #[serde(with = "crate::amount::serde::as_tpc")]
             pub samt: SignedAmount,
         }
 
         let orig = T {
-            amt: Amount::from_sat(21_000_000__000_000_01),
-            samt: SignedAmount::from_sat(-21_000_000__000_000_01),
+            amt: Amount::from_tap(21_000_000__000_000_01),
+            samt: SignedAmount::from_tap(-21_000_000__000_000_01),
         };
 
         let json = "{\"amt\": 21000000.00000001, \
@@ -2212,22 +2174,22 @@ mod tests {
 
     #[cfg(feature = "serde")]
     #[test]
-    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per tapyrus.
-    fn serde_as_btc_opt() {
+    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 taps per tapyrus.
+    fn serde_as_tpc_opt() {
         use serde_json;
 
         #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
         #[serde(crate = "actual_serde")]
         struct T {
-            #[serde(default, with = "crate::amount::serde::as_btc::opt")]
+            #[serde(default, with = "crate::amount::serde::as_tpc::opt")]
             pub amt: Option<Amount>,
-            #[serde(default, with = "crate::amount::serde::as_btc::opt")]
+            #[serde(default, with = "crate::amount::serde::as_tpc::opt")]
             pub samt: Option<SignedAmount>,
         }
 
         let with = T {
-            amt: Some(Amount::from_sat(2_500_000_00)),
-            samt: Some(SignedAmount::from_sat(-2_500_000_00)),
+            amt: Some(Amount::from_tap(2_500_000_00)),
+            samt: Some(SignedAmount::from_tap(-2_500_000_00)),
         };
         let without = T { amt: None, samt: None };
 
@@ -2254,22 +2216,22 @@ mod tests {
 
     #[cfg(feature = "serde")]
     #[test]
-    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 sats per tapyrus.
-    fn serde_as_sat_opt() {
+    #[allow(clippy::inconsistent_digit_grouping)] // Group to show 100,000,000 taps per tapyrus.
+    fn serde_as_tap_opt() {
         use serde_json;
 
         #[derive(Serialize, Deserialize, PartialEq, Debug, Eq)]
         #[serde(crate = "actual_serde")]
         struct T {
-            #[serde(default, with = "crate::amount::serde::as_sat::opt")]
+            #[serde(default, with = "crate::amount::serde::as_tap::opt")]
             pub amt: Option<Amount>,
-            #[serde(default, with = "crate::amount::serde::as_sat::opt")]
+            #[serde(default, with = "crate::amount::serde::as_tap::opt")]
             pub samt: Option<SignedAmount>,
         }
 
         let with = T {
-            amt: Some(Amount::from_sat(2_500_000_00)),
-            samt: Some(SignedAmount::from_sat(-2_500_000_00)),
+            amt: Some(Amount::from_tap(2_500_000_00)),
+            samt: Some(SignedAmount::from_tap(-2_500_000_00)),
         };
         let without = T { amt: None, samt: None };
 
@@ -2296,67 +2258,67 @@ mod tests {
 
     #[test]
     fn sum_amounts() {
-        assert_eq!(Amount::from_sat(0), vec![].into_iter().sum::<Amount>());
-        assert_eq!(SignedAmount::from_sat(0), vec![].into_iter().sum::<SignedAmount>());
+        assert_eq!(Amount::from_tap(0), vec![].into_iter().sum::<Amount>());
+        assert_eq!(SignedAmount::from_tap(0), vec![].into_iter().sum::<SignedAmount>());
 
-        let amounts = vec![Amount::from_sat(42), Amount::from_sat(1337), Amount::from_sat(21)];
+        let amounts = vec![Amount::from_tap(42), Amount::from_tap(1337), Amount::from_tap(21)];
         let sum = amounts.into_iter().sum::<Amount>();
-        assert_eq!(Amount::from_sat(1400), sum);
+        assert_eq!(Amount::from_tap(1400), sum);
 
         let amounts = vec![
-            SignedAmount::from_sat(-42),
-            SignedAmount::from_sat(1337),
-            SignedAmount::from_sat(21),
+            SignedAmount::from_tap(-42),
+            SignedAmount::from_tap(1337),
+            SignedAmount::from_tap(21),
         ];
         let sum = amounts.into_iter().sum::<SignedAmount>();
-        assert_eq!(SignedAmount::from_sat(1316), sum);
+        assert_eq!(SignedAmount::from_tap(1316), sum);
     }
 
     #[test]
     fn checked_sum_amounts() {
-        assert_eq!(Some(Amount::from_sat(0)), vec![].into_iter().checked_sum());
-        assert_eq!(Some(SignedAmount::from_sat(0)), vec![].into_iter().checked_sum());
+        assert_eq!(Some(Amount::from_tap(0)), vec![].into_iter().checked_sum());
+        assert_eq!(Some(SignedAmount::from_tap(0)), vec![].into_iter().checked_sum());
 
-        let amounts = vec![Amount::from_sat(42), Amount::from_sat(1337), Amount::from_sat(21)];
+        let amounts = vec![Amount::from_tap(42), Amount::from_tap(1337), Amount::from_tap(21)];
         let sum = amounts.into_iter().checked_sum();
-        assert_eq!(Some(Amount::from_sat(1400)), sum);
+        assert_eq!(Some(Amount::from_tap(1400)), sum);
 
         let amounts =
-            vec![Amount::from_sat(u64::MAX), Amount::from_sat(1337), Amount::from_sat(21)];
+            vec![Amount::from_tap(u64::MAX), Amount::from_tap(1337), Amount::from_tap(21)];
         let sum = amounts.into_iter().checked_sum();
         assert_eq!(None, sum);
 
         let amounts = vec![
-            SignedAmount::from_sat(i64::MIN),
-            SignedAmount::from_sat(-1),
-            SignedAmount::from_sat(21),
+            SignedAmount::from_tap(i64::MIN),
+            SignedAmount::from_tap(-1),
+            SignedAmount::from_tap(21),
         ];
         let sum = amounts.into_iter().checked_sum();
         assert_eq!(None, sum);
 
         let amounts = vec![
-            SignedAmount::from_sat(i64::MAX),
-            SignedAmount::from_sat(1),
-            SignedAmount::from_sat(21),
+            SignedAmount::from_tap(i64::MAX),
+            SignedAmount::from_tap(1),
+            SignedAmount::from_tap(21),
         ];
         let sum = amounts.into_iter().checked_sum();
         assert_eq!(None, sum);
 
         let amounts = vec![
-            SignedAmount::from_sat(42),
-            SignedAmount::from_sat(3301),
-            SignedAmount::from_sat(21),
+            SignedAmount::from_tap(42),
+            SignedAmount::from_tap(3301),
+            SignedAmount::from_tap(21),
         ];
         let sum = amounts.into_iter().checked_sum();
-        assert_eq!(Some(SignedAmount::from_sat(3364)), sum);
+        assert_eq!(Some(SignedAmount::from_tap(3364)), sum);
     }
 
     #[test]
     fn denomination_string_acceptable_forms() {
         // Non-exhaustive list of valid forms.
         let valid = vec![
-            "BTC", "btc", "mBTC", "mbtc", "uBTC", "ubtc", "SATOSHI", "satoshi", "SATOSHIS",
-            "satoshis", "SAT", "sat", "SATS", "sats", "bit", "bits", "nBTC", "pBTC",
+            "TPC", "tpc", "mTPC", "mtpc", "uTPC", "utpc", "TAPYRUS", "tapyrus", "TAPYRUSES", "tapyruses", "TAP", "tap",
+            "TAPS", "taps", "nTPC", "pTPC",
         ];
         for denom in valid.iter() {
             assert!(Denomination::from_str(denom).is_ok());
@@ -2365,7 +2327,7 @@ mod tests {
 
     #[test]
     fn disallow_confusing_forms() {
-        let confusing = ["Msat", "Msats", "MSAT", "MSATS", "MSat", "MSats", "MBTC", "Mbtc", "PBTC"];
+        let confusing = ["Mtap", "Mtaps", "MTAP", "MTAPS", "MTap", "MTaps", "MTPC", "Mtpc", "PTPC"];
         for denom in confusing.iter() {
             match Denomination::from_str(denom) {
                 Ok(_) => panic!("from_str should error for {}", denom),
@@ -2378,7 +2340,7 @@ mod tests {
     #[test]
     fn disallow_unknown_denomination() {
         // Non-exhaustive list of unknown forms.
-        let unknown = ["NBTC", "UBTC", "ABC", "abc", "cBtC", "Sat", "Sats"];
+        let unknown = ["NTPC", "UTPC", "ABC", "abc", "cTpC", "Tap", "Taps"];
         for denom in unknown.iter() {
             match Denomination::from_str(denom) {
                 Ok(_) => panic!("from_str should error for {}", denom),

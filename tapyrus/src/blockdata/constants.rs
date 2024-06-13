@@ -86,7 +86,7 @@ fn mainnet_genesis_tx() -> Transaction {
         .push_opcode(OP_EQUALVERIFY)
         .push_opcode(OP_CHECKSIG)
         .into_script();
-    ret.output.push(TxOut { value: Amount::from_sat(50 * 100_000_000), script_pubkey: out_script });
+    ret.output.push(TxOut { value: Amount::from_tap(50 * 100_000_000), script_pubkey: out_script });
 
     // end
     ret
@@ -121,7 +121,7 @@ fn testnet_genesis_tx() -> Transaction {
         .push_opcode(OP_EQUALVERIFY)
         .push_opcode(OP_CHECKSIG)
         .into_script();
-    ret.output.push(TxOut { value: Amount::from_sat(50 * 100_000_000), script_pubkey: out_script });
+    ret.output.push(TxOut { value: Amount::from_tap(50 * 100_000_000), script_pubkey: out_script });
 
     // end
     ret
@@ -245,7 +245,7 @@ mod test {
                 "2776a922314a586d6e436a646453394644366252797a4348376457716844667735486f38794c88ac"
             )
         );
-        assert_eq!(gen.output[0].value, Amount::from_str("50 BTC").unwrap());
+        assert_eq!(gen.output[0].value, Amount::from_str("50 TPC").unwrap());
         assert_eq!(gen.lock_time, absolute::LockTime::ZERO);
 
         assert_eq!(

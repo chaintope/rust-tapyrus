@@ -25,18 +25,18 @@ pub const MIN_STANDARD_TX_NONWITNESS_SIZE: u32 = 82;
 /// Maximum number of sigops in a standard tx.
 pub const MAX_STANDARD_TX_SIGOPS_COST: u32 = MAX_BLOCK_SIGOPS_COST as u32 / 5;
 
-/// The minimum incremental *feerate* (despite the name), in sats per virtual kilobyte for RBF.
+/// The minimum incremental *feerate* (despite the name), in taps per virtual kilobyte for RBF.
 pub const DEFAULT_INCREMENTAL_RELAY_FEE: u32 = 1_000;
 
 /// The number of bytes equivalent per signature operation. Affects transaction relay through the
 /// virtual size computation.
 pub const DEFAULT_BYTES_PER_SIGOP: u32 = 20;
 
-/// The minimum feerate, in sats per kilo-virtualbyte, for defining dust. An output is considered
+/// The minimum feerate, in taps per kilo-virtualbyte, for defining dust. An output is considered
 /// dust if spending it under this feerate would cost more in fee.
 pub const DUST_RELAY_TX_FEE: u32 = 3_000;
 
-/// Minimum feerate, in sats per virtual kilobyte, for a transaction to be relayed by most nodes on
+/// Minimum feerate, in taps per virtual kilobyte, for a transaction to be relayed by most nodes on
 /// the network.
 pub const DEFAULT_MIN_RELAY_TX_FEE: u32 = 1_000;
 

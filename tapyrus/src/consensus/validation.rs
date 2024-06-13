@@ -53,7 +53,7 @@ pub fn verify_script_with_flags<F: Into<u32>>(
 ) -> Result<(), BitcoinconsensusError> {
     Ok(bitcoinconsensus::verify_with_flags(
         script.as_bytes(),
-        amount.to_sat(),
+        amount.to_tap(),
         spending_tx,
         index,
         flags.into(),
