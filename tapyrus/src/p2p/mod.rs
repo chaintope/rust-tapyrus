@@ -391,10 +391,10 @@ mod tests {
     #[test]
     fn magic_from_str() {
         let known_network_magic_strs = [
-            ("01fff000", NetworkId::from(1)),
-            ("01fff064", NetworkId::from(101)),
-            ("759a8374", NetworkId::from(1939510133)),
-            ("739a9774", NetworkId::from(1905960821)),
+            ("01fff000", NetworkId::PRODUCTION),
+            ("01fff064", NetworkId::PARADIUM),
+            ("759a8374", NetworkId::TESTNET),
+            ("739a9774", NetworkId::REGTEST),
         ];
 
         for (magic_str, network_id) in &known_network_magic_strs {

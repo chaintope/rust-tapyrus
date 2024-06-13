@@ -327,14 +327,14 @@ mod test {
     }
 
     chain_hash_genesis_block! {
-        mainnet_chain_hash_genesis_block, NetworkId::from(1);
-        testnet_chain_hash_genesis_block, NetworkId::from(1939510133);
+        mainnet_chain_hash_genesis_block, NetworkId::PRODUCTION;
+        testnet_chain_hash_genesis_block, NetworkId::TESTNET;
     }
 
     // Test vector taken from: https://github.com/lightning/bolts/blob/master/00-introduction.md
     #[test]
     fn mainnet_chain_hash_test_vector() {
-        let got = ChainHash::using_genesis_block(NetworkId::from(1)).unwrap().to_string();
+        let got = ChainHash::using_genesis_block(NetworkId::PRODUCTION).unwrap().to_string();
         let want = "9b540bc4b5e2a866e6e13df09d732c956a80891ff81864f4e4b0e88e5029f792";
         assert_eq!(got, want);
     }
