@@ -71,6 +71,8 @@ mod newtypes {
         pub struct BlockHash(sha256d::Hash);
         /// A hash of the block for sigining.
         pub struct BlockSigHash(sha256d::Hash);
+        /// A hash of the xfield for signing
+        pub struct XFieldHash(sha256d::Hash);
 
         /// A hash of the Merkle tree branch or root for transactions
         pub struct TxMerkleNode(sha256d::Hash);
@@ -89,6 +91,7 @@ mod newtypes {
     impl_hashencode!(Wtxid);
     impl_hashencode!(BlockHash);
     impl_hashencode!(BlockSigHash);
+    impl_hashencode!(XFieldHash);
     impl_hashencode!(TxMerkleNode);
     impl_hashencode!(WitnessMerkleNode);
 

@@ -63,6 +63,10 @@ pub enum Error {
     ParseFailed(&'static str),
     /// Unsupported Segwit flag.
     UnsupportedSegwitFlag(u8),
+    /// Invalid Xfield
+    UnknownXField(u8),
+    /// XField was None which is unexpected as a hash
+    XFieldNone,
 }
 
 impl fmt::Display for Error {
@@ -80,6 +84,8 @@ impl fmt::Display for Error {
             ParseFailed(ref s) => write!(f, "parse failed: {}", s),
             UnsupportedSegwitFlag(ref swflag) =>
                 write!(f, "unsupported segwit version: {}", swflag),
+            UnknownXField(ref tp) => write!(f, "Unknown XField. XField type: {}", tp),
+            XFieldNone => write!(f, "XField type None cannot be hashed or signed"),
         }
     }
 }
@@ -96,7 +102,9 @@ impl std::error::Error for Error {
             | InvalidChecksum { .. }
             | NonMinimalVarInt
             | ParseFailed(_)
-            | UnsupportedSegwitFlag(_) => None,
+            | UnsupportedSegwitFlag(_)
+            | UnknownXField(_)
+            | XFieldNone => None ,
         }
     }
 }

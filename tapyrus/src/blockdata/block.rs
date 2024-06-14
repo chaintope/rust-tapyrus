@@ -17,12 +17,12 @@ use hashes::{Hash, HashEngine};
 use super::Weight;
 use crate::blockdata::script;
 use crate::blockdata::transaction::Transaction;
-use crate::consensus::encode::serialize_hex;
+use crate::consensus::encode::{serialize_hex, Error};
 use crate::consensus::{encode, serialize, Decodable, Encodable};
 use crate::crypto::key::PublicKey;
 use crate::crypto::schnorr::Signature;
 pub use crate::hash_types::BlockHash;
-use crate::hash_types::{BlockSigHash, TxMerkleNode, WitnessCommitment, WitnessMerkleNode, Wtxid};
+use crate::hash_types::{BlockSigHash, TxMerkleNode, WitnessCommitment, WitnessMerkleNode, Wtxid, XFieldHash};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::prelude::*;
 use crate::{crypto, io, merkle_tree, VarInt};
@@ -264,6 +264,16 @@ impl XField {
             XField::AggregatePublicKey(_) => 35, // 1 + 1 + 33
             XField::MaxBlockSize(_) => 5, // 1 + 4
             XField::Unknown(_, data) => 1 + VarInt::from(data.len()).size() + data.len(),
+        }
+    }
+
+    /// Return hash of serialized XField for signing
+    pub fn signature_hash(&self) ->Result<XFieldHash, Error>  {
+        match self {
+            XField::None => Err(Error::XFieldNone),
+            XField::AggregatePublicKey(_) => Ok(XFieldHash::hash(&serialize(self))),
+            XField::MaxBlockSize(_) => Ok(XFieldHash::hash(&serialize(self))),
+            XField::Unknown(i, _) => Err(Error::UnknownXField(*i)),
         }
     }
 }
@@ -665,7 +675,7 @@ mod tests {
     use hex::{test_hex_unwrap as hex, FromHex};
 
     use super::*;
-    use crate::consensus::encode::{deserialize, serialize};
+    use crate::consensus::encode::{deserialize, serialize, Error};
     use crate::crypto::key::PublicKey;
     use crate::hash_types::BlockSigHash;
 
@@ -906,9 +916,53 @@ mod tests {
     fn xfield_max_block_size_panic_test() {
         // larger than u32::MAX
         let overflow_value:u64 = (u32::MAX as u64) + 1;
-        let overflow_bytes = Vec::from_hex(&format!("{:016x}", overflow_value)).unwrap();
+        let overflow_bytes = hex!(&format!("{:016x}", overflow_value));
         assert!(deserialize::<u32>(&overflow_bytes).is_err());
         assert!(XField::from_str(&format!("{:016x}", overflow_value)).is_err());
+    }
+
+    #[test]
+    fn xfield_signature_hash_test_aggpubkey() {
+        let xfield = XField::AggregatePublicKey(PublicKey::from_str("02459adb8a8f052be94874aef7d4c3d3ddb71fcdaa869b1d515a92d63cb29c2806").unwrap());
+        assert_eq!(serialize(&xfield), hex!("012102459adb8a8f052be94874aef7d4c3d3ddb71fcdaa869b1d515a92d63cb29c2806"));
+        assert_eq!(xfield.signature_hash().unwrap(), XFieldHash::from_str("5eb6038f90ec3b530ebed8789afd4f3f49af83fa4b00f34238c93ce0327ff9ad").unwrap());
+    }
+
+    #[test]
+    fn xfield_signature_hash_test_maxblocksize() {
+        let xfield = XField::MaxBlockSize(200000);
+        assert_eq!(serialize(&xfield), hex!("02400d0300"));
+        assert_eq!(xfield.signature_hash().unwrap(), XFieldHash::from_str("b2a51fb82acc2125508f323fa9567340c32257997dfd4af4e70788031d5b1915").unwrap());
+    }
+
+    #[test]
+    fn xfield_signature_hash_test_aggpubkey1() {
+        let xfield = XField::AggregatePublicKey(PublicKey::from_str("0376c3265e7d81839c1b2312b95697d47cc5b3ab3369a92a5af52ef1c945792f50").unwrap());
+        assert_eq!(serialize(&xfield), hex!("01210376c3265e7d81839c1b2312b95697d47cc5b3ab3369a92a5af52ef1c945792f50"));
+        assert_eq!(xfield.signature_hash().unwrap(), XFieldHash::from_str("e70d5478d63e19ab2d9aa059340785b810f82cc288e83752e726a0f9817fcc88").unwrap());
+    }
+
+    #[test]
+    fn xfield_signature_hash_test_maxblocksize1() {
+        let xfield = XField::MaxBlockSize(400000);
+        assert_eq!(serialize(&xfield), hex!("02801a0600"));
+        assert_eq!(xfield.signature_hash().unwrap(), XFieldHash::from_str("7b5a43d2dae273d564ec0db616efe75a31725707fc3865124e3477684f5faec0").unwrap());
+    }
+
+    #[test]
+    fn xfield_signature_hash_test_none() {
+        let xfield = XField::None;
+        let result = xfield.signature_hash();
+
+        assert!(matches!(result, Err(Error::XFieldNone)));
+    }
+
+    #[test]
+    fn xfield_signature_hash_test_unknown() {
+        let xfield = XField::Unknown(3, hex!("012345"));
+        let result = xfield.signature_hash();
+
+        assert!(matches!(result, Err(Error::UnknownXField(3))));
     }
 }
 
