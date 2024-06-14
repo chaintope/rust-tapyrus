@@ -20,6 +20,7 @@
 
 use core::fmt;
 use core::str::FromStr;
+use core::num::ParseIntError;
 
 use internals::write_err;
 #[cfg(feature = "serde")]
@@ -59,6 +60,47 @@ impl NetworkId {
 
 impl From<u32> for NetworkId {
     fn from(n: u32) -> Self { NetworkId(n) }
+}
+
+impl FromStr for NetworkId {
+    type Err = ParseIntError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(NetworkId::from(s.parse::<u32>()?))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for NetworkId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_u32(self.0)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> ::serde::Deserialize<'de> for NetworkId {
+    fn deserialize<D: ::serde::Deserializer<'de>>(d: D) -> Result<NetworkId, D::Error> {
+        struct NetworkIdVisitor;
+
+        impl<'de> ::serde::de::Visitor<'de> for NetworkIdVisitor {
+            type Value = NetworkId;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("an integer u32")
+            }
+
+            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+            where
+                E: ::serde::de::Error,
+            {
+                Ok(NetworkId::from(v as u32))
+            }
+        }
+
+        d.deserialize_u32(NetworkIdVisitor)
+    }
 }
 
 /// The cryptocurrency network to act on.
@@ -206,6 +248,8 @@ impl fmt::Display for Network {
 
 #[cfg(test)]
 mod tests {
+    use core::str::FromStr;
+
     use super::{Network, NetworkId};
     use crate::consensus::encode::{deserialize, serialize};
     use crate::p2p::ServiceFlags;
@@ -248,6 +292,11 @@ mod tests {
     }
 
     #[test]
+    fn network_id_from_str_test() {
+        assert_eq!(NetworkId::from_str("1").unwrap(), NetworkId::from(1));
+    }
+
+    #[test]
     fn service_flags_test() {
         let all = [
             ServiceFlags::NETWORK,
@@ -285,6 +334,12 @@ mod tests {
         assert_eq!("ServiceFlags(NETWORK|BLOOM|WITNESS)", flag.to_string());
         let flag = ServiceFlags::WITNESS | 0xf0.into();
         assert_eq!("ServiceFlags(WITNESS|COMPACT_FILTERS|0xb0)", flag.to_string());
+    }
+
+    #[test]
+    #[cfg(feature = "serde")]
+    fn test_network_id_serialize() {
+        serde_round_trip!(NetworkId::from(1));
     }
 
     #[test]
