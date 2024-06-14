@@ -151,7 +151,7 @@ impl Payload {
             Payload::ColoredScriptHash(ref color_id, ref hash) if script.is_cp2sh() =>
                 script.as_bytes()[1..34] == serialize(color_id) &&
                 &script.as_bytes()[37..57] == <ScriptHash as AsRef<[u8; 20]>>::as_ref(hash),
-            Payload::PubkeyHash(_) | Payload::ScriptHash(_) | Payload::ColoredPubkeyHash(_, _) | Payload::ColoredScriptHash(_, _) => false,
+            _ => false,
         }
     }
 
