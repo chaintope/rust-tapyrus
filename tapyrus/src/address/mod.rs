@@ -38,12 +38,16 @@ use secp256k1::XOnlyPublicKey;
 use crate::base58;
 use crate::blockdata::constants::{
     MAX_SCRIPT_ELEMENT_SIZE, PUBKEY_ADDRESS_PREFIX_MAIN, PUBKEY_ADDRESS_PREFIX_TEST,
-    SCRIPT_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_TEST,
+    SCRIPT_ADDRESS_PREFIX_MAIN, SCRIPT_ADDRESS_PREFIX_TEST, COLORED_PUBKEY_ADDRESS_PREFIX_MAIN,
+    COLORED_SCRIPT_ADDRESS_PREFIX_MAIN, COLORED_PUBKEY_ADDRESS_PREFIX_TEST,
+    COLORED_SCRIPT_ADDRESS_PREFIX_TEST,
 };
 use crate::blockdata::script::{self, Script, ScriptBuf, ScriptHash};
+use crate::consensus::{deserialize, serialize};
 use crate::crypto::key::{PubkeyHash, PublicKey};
 use crate::network::Network;
 use crate::prelude::*;
+use crate::script::color_identifier::ColorIdentifier;
 
 /// Error code for the address module.
 pub mod error;
@@ -57,6 +61,10 @@ pub enum AddressType {
     P2pkh,
     /// Pay to script hash.
     P2sh,
+    /// colored-pay-to-pubkey-hash
+    Cp2pkh,
+    /// colored-pay-to-script-hash
+    Cp2sh,
 }
 
 impl fmt::Display for AddressType {
@@ -64,6 +72,8 @@ impl fmt::Display for AddressType {
         f.write_str(match *self {
             AddressType::P2pkh => "p2pkh",
             AddressType::P2sh => "p2sh",
+            AddressType::Cp2pkh => "cp2pkh",
+            AddressType::Cp2sh => "cp2sh",
         })
     }
 }
@@ -74,6 +84,8 @@ impl FromStr for AddressType {
         match s {
             "p2pkh" => Ok(AddressType::P2pkh),
             "p2sh" => Ok(AddressType::P2sh),
+            "cp2pkh" => Ok(AddressType::Cp2pkh),
+            "cp2sh" => Ok(AddressType::Cp2sh),
             _ => Err(UnknownAddressTypeError(s.to_owned())),
         }
     }
@@ -87,6 +99,10 @@ pub enum Payload {
     PubkeyHash(PubkeyHash),
     /// P2SH address.
     ScriptHash(ScriptHash),
+    /// CP2PKH address.
+    ColoredPubkeyHash(ColorIdentifier, PubkeyHash),
+    /// CP2SH address.
+    ColoredScriptHash(ColorIdentifier, ScriptHash),
 }
 
 impl Payload {
@@ -98,6 +114,14 @@ impl Payload {
         } else if script.is_p2sh() {
             let bytes = script.as_bytes()[2..22].try_into().expect("statically 20B long");
             Payload::ScriptHash(ScriptHash::from_byte_array(bytes))
+        } else if script.is_cp2pkh() {
+            let color_id: ColorIdentifier = deserialize(&script.as_bytes()[1..34]).expect("statically 33B long");
+            let pubkey_hash_bytes = script.as_bytes()[38..58].try_into().expect("statically 20B long");
+            Payload::ColoredPubkeyHash(color_id, PubkeyHash::from_byte_array(pubkey_hash_bytes))
+        } else if script.is_cp2sh() {
+            let color_id: ColorIdentifier = deserialize(&script.as_bytes()[1..34]).expect("statically 33B long");
+            let script_hash_bytes = script.as_bytes()[37..57].try_into().expect("statically 20B long");
+            Payload::ColoredScriptHash(color_id, ScriptHash::from_byte_array(script_hash_bytes))
         } else {
             return Err(Error::UnrecognizedScript);
         })
@@ -108,6 +132,8 @@ impl Payload {
         match *self {
             Payload::PubkeyHash(ref hash) => ScriptBuf::new_p2pkh(hash),
             Payload::ScriptHash(ref hash) => ScriptBuf::new_p2sh(hash),
+            Payload::ColoredPubkeyHash(ref color_id, ref hash) => ScriptBuf::new_cp2pkh(color_id, hash),
+            Payload::ColoredScriptHash(ref color_id, ref hash) => ScriptBuf::new_cp2sh(color_id, hash),
         }
     }
 
@@ -119,7 +145,13 @@ impl Payload {
                 &script.as_bytes()[3..23] == <PubkeyHash as AsRef<[u8; 20]>>::as_ref(hash),
             Payload::ScriptHash(ref hash) if script.is_p2sh() =>
                 &script.as_bytes()[2..22] == <ScriptHash as AsRef<[u8; 20]>>::as_ref(hash),
-            Payload::PubkeyHash(_) | Payload::ScriptHash(_) => false,
+            Payload::ColoredPubkeyHash(ref color_id, ref hash) if script.is_cp2pkh() =>
+                script.as_bytes()[1..34] == serialize(color_id) &&
+                &script.as_bytes()[38..58] == <PubkeyHash as AsRef<[u8; 20]>>::as_ref(hash),
+            Payload::ColoredScriptHash(ref color_id, ref hash) if script.is_cp2sh() =>
+                script.as_bytes()[1..34] == serialize(color_id) &&
+                &script.as_bytes()[37..57] == <ScriptHash as AsRef<[u8; 20]>>::as_ref(hash),
+            _ => false,
         }
     }
 
@@ -136,12 +168,30 @@ impl Payload {
         Ok(Payload::ScriptHash(script.script_hash()))
     }
 
+    /// Creates a pay to (compressed) public key hash payload from a public key
+    #[inline]
+    pub fn cp2pkh(color_id: &ColorIdentifier, pk: &PublicKey) -> Payload {
+        Payload::ColoredPubkeyHash(*color_id, pk.pubkey_hash())
+    }
+
+    /// Creates a pay to script hash P2SH address from a script
+    /// This address type was introduced with BIP16 and is the popular type to implement multi-sig these days.
+    #[inline]
+    pub fn cp2sh(color_id: &ColorIdentifier, script: &Script) -> Result<Payload, Error> {
+        if script.len() > MAX_SCRIPT_ELEMENT_SIZE {
+            return Err(Error::ExcessiveScriptSize);
+        }
+        Ok(Payload::ColoredScriptHash(*color_id, script.script_hash()))
+    }
+
     /// Returns a byte slice of the inner program of the payload. If the payload
     /// is a script hash or pubkey hash, a reference to the hash is returned.
     fn inner_prog_as_bytes(&self) -> &[u8] {
         match self {
             Payload::ScriptHash(hash) => hash.as_ref(),
             Payload::PubkeyHash(hash) => hash.as_ref(),
+            Payload::ColoredPubkeyHash(_, hash) => hash.as_ref(),
+            Payload::ColoredScriptHash(_, hash) => hash.as_ref(),
         }
     }
 }
@@ -155,6 +205,10 @@ pub struct AddressEncoding<'a> {
     pub p2pkh_prefix: u8,
     /// base58 version byte for p2sh payloads (e.g. 0x05 for "3..." addresses).
     pub p2sh_prefix: u8,
+    /// base58 versin byte for cp2pkh paylaods (e.g. 0x01 for "c..." addresses).
+    pub cp2pkh_prefix: u8,
+    /// base58 version byte for cp2sh payloads (e.g. 0x06 for "C..." addresses).
+    pub cp2sh_prefix: u8,
     /// The bech32 human-readable part.
     pub hrp: Hrp,
 }
@@ -173,6 +227,20 @@ impl<'a> fmt::Display for AddressEncoding<'a> {
                 let mut prefixed = [0; 21];
                 prefixed[0] = self.p2sh_prefix;
                 prefixed[1..].copy_from_slice(&hash[..]);
+                base58::encode_check_to_fmt(fmt, &prefixed[..])
+            }
+            Payload::ColoredPubkeyHash(color_id, hash) => {
+                let mut prefixed = [0; 54];
+                prefixed[0] = self.cp2pkh_prefix;
+                prefixed[1..34].copy_from_slice(&serialize(color_id)[..]);
+                prefixed[34..].copy_from_slice(&hash[..]);
+                base58::encode_check_to_fmt(fmt, &prefixed[..])
+            }
+            Payload::ColoredScriptHash(color_id, hash) => {
+                let mut prefixed = [0; 54];
+                prefixed[0] = self.cp2sh_prefix;
+                prefixed[1..34].copy_from_slice(&serialize(color_id)[..]);
+                prefixed[34..].copy_from_slice(&hash[..]);
                 base58::encode_check_to_fmt(fmt, &prefixed[..])
             }
         }
@@ -372,6 +440,8 @@ impl<V: NetworkValidation> Address<V> {
         match self.payload() {
             Payload::PubkeyHash(_) => Some(AddressType::P2pkh),
             Payload::ScriptHash(_) => Some(AddressType::P2sh),
+            Payload::ColoredPubkeyHash(_, _) => Some(AddressType::Cp2pkh),
+            Payload::ColoredScriptHash(_, _) => Some(AddressType::Cp2sh),
         }
     }
 
@@ -385,11 +455,20 @@ impl<V: NetworkValidation> Address<V> {
             Network::Prod => SCRIPT_ADDRESS_PREFIX_MAIN,
             Network::Dev => SCRIPT_ADDRESS_PREFIX_TEST,
         };
+        let cp2pkh_prefix = match self.network() {
+            Network::Prod => COLORED_PUBKEY_ADDRESS_PREFIX_MAIN,
+            Network::Dev => COLORED_PUBKEY_ADDRESS_PREFIX_TEST,
+        };
+        let cp2sh_prefix = match self.network() {
+            Network::Prod => COLORED_SCRIPT_ADDRESS_PREFIX_MAIN,
+            Network::Dev => COLORED_SCRIPT_ADDRESS_PREFIX_TEST,
+        };
         let hrp = match self.network() {
             Network::Prod => hrp::BC,
             Network::Dev => hrp::TB,
         };
-        let encoding = AddressEncoding { payload: self.payload(), p2pkh_prefix, p2sh_prefix, hrp };
+        let encoding = AddressEncoding { payload: self.payload(), p2pkh_prefix, p2sh_prefix,
+            cp2pkh_prefix, cp2sh_prefix, hrp };
 
         use fmt::Display;
 
@@ -609,24 +688,41 @@ impl FromStr for Address<NetworkUnchecked> {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         // Base58
-        if s.len() > 50 {
+        if s.len() > 80 {
             return Err(ParseError::Base58(base58::Error::InvalidLength(s.len() * 11 / 15)));
         }
         let data = base58::decode_check(s)?;
-        if data.len() != 21 {
+        if data.len() != 21 && data.len() != 54 {
             return Err(ParseError::Base58(base58::Error::InvalidLength(data.len())));
         }
-
-        let (network, payload) = match data[0] {
-            PUBKEY_ADDRESS_PREFIX_MAIN =>
-                (Network::Prod, Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap())),
-            SCRIPT_ADDRESS_PREFIX_MAIN =>
-                (Network::Prod, Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap())),
-            PUBKEY_ADDRESS_PREFIX_TEST =>
-                (Network::Dev, Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap())),
-            SCRIPT_ADDRESS_PREFIX_TEST =>
-                (Network::Dev, Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap())),
-            x => return Err(ParseError::Base58(base58::Error::InvalidAddressVersion(x))),
+        let (network, payload) = match data.len() {
+            21 => {
+                match data[0] {
+                    PUBKEY_ADDRESS_PREFIX_MAIN =>
+                        (Network::Prod, Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap())),
+                    SCRIPT_ADDRESS_PREFIX_MAIN =>
+                        (Network::Prod, Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap())),
+                    PUBKEY_ADDRESS_PREFIX_TEST =>
+                        (Network::Dev, Payload::PubkeyHash(PubkeyHash::from_slice(&data[1..]).unwrap())),
+                    SCRIPT_ADDRESS_PREFIX_TEST =>
+                        (Network::Dev, Payload::ScriptHash(ScriptHash::from_slice(&data[1..]).unwrap())),
+                    x => return Err(ParseError::Base58(base58::Error::InvalidAddressVersion(x))),
+                }
+            }
+            54 => {
+                match data[0] {
+                    COLORED_PUBKEY_ADDRESS_PREFIX_MAIN =>
+                        (Network::Prod, Payload::ColoredPubkeyHash(deserialize(&data[1..34]).unwrap(), PubkeyHash::from_slice(&data[34..]).unwrap())),
+                    COLORED_SCRIPT_ADDRESS_PREFIX_MAIN =>
+                        (Network::Prod, Payload::ColoredScriptHash(deserialize(&data[1..34]).unwrap(), ScriptHash::from_slice(&data[34..]).unwrap())),
+                    COLORED_PUBKEY_ADDRESS_PREFIX_TEST =>
+                        (Network::Dev, Payload::ColoredPubkeyHash(deserialize(&data[1..34]).unwrap(), PubkeyHash::from_slice(&data[34..]).unwrap())),
+                    COLORED_SCRIPT_ADDRESS_PREFIX_TEST =>
+                        (Network::Dev, Payload::ColoredScriptHash(deserialize(&data[1..34]).unwrap(), ScriptHash::from_slice(&data[34..]).unwrap())),
+                    x => return Err(ParseError::Base58(base58::Error::InvalidAddressVersion(x))),
+                }
+            }
+            _ => return Err(ParseError::Base58(base58::Error::InvalidLength(data.len()))),
         };
 
         Ok(Address::new(network, payload))
@@ -636,6 +732,7 @@ impl FromStr for Address<NetworkUnchecked> {
 #[cfg(test)]
 mod tests {
     use core::str::FromStr;
+    use hex_lit::hex;
 
     use super::*;
     use crate::crypto::key::PublicKey;
@@ -727,6 +824,56 @@ mod tests {
     }
 
     #[test]
+    fn test_cp2pkh_address() {
+        let color_id = "c36db65fd59fd356f6729140571b5bcd6bb3b83492a16e1bf0a3884442fc3c8a0e".parse().unwrap();
+        let addr = Address::new(
+            Prod,
+            Payload::ColoredPubkeyHash(color_id, "162c5ea71c0b23f5b9022ef047c4a86470a5b070".parse().unwrap()),
+        );
+        assert_eq!(
+            addr.script_pubkey().as_bytes(),
+            hex!("21c36db65fd59fd356f6729140571b5bcd6bb3b83492a16e1bf0a3884442fc3c8a0ebc76a914162c5ea71c0b23f5b9022ef047c4a86470a5b07088ac")
+        );
+        assert_eq!(&addr.to_string(), "vxgHyieT46FQMYAvmNM6BsmwNNXMTPk2C6StiVD3Cmy45ge5gftf5f417CehuVWVo5KfBbgtGyLn9j");
+        assert_eq!(addr.address_type(), Some(AddressType::Cp2pkh));
+        roundtrips(&addr);
+    }
+
+    #[test]
+    fn test_cp2pkh_from_key() {
+        let key = "048d5141948c1702e8c95f438815794b87f706a8d4cd2bffad1dc1570971032c9b6042a0431ded2478b5c9cf2d81c124a5e57347a3c63ef0e7716cf54d613ba183".parse().unwrap();
+        let color_id = "c36db65fd59fd356f6729140571b5bcd6bb3b83492a16e1bf0a3884442fc3c8a0e".parse().unwrap();
+        let addr = Address::new(Prod, Payload::cp2pkh(&color_id, &key));
+        assert_eq!(&addr.to_string(), "vxgHyieT46FQMYAvmNM6BsmwNNXMTPk2C6StiVD3Cmy463vKtag2nkNBtGeqUNzBuXWtgUctod91ag");
+        assert_eq!(addr.address_type(), Some(AddressType::Cp2pkh));
+        roundtrips(&addr);
+
+        let key = "03df154ebfcf29d29cc10d5c2565018bce2d9edbab267c31d2caf44a63056cf99f".parse().unwrap();
+        let addr = Address::new(Dev, Payload::cp2pkh(&color_id, &key));
+        assert_eq!(&addr.to_string(), "22VZyRTDaMem4DcgBgRZgbo7PZm45gXSMWzHrYiYE9j1qVUiHVfNFhik8yY4YzpArPc3Hufwe5oeWgmg");
+        assert_eq!(addr.address_type(), Some(AddressType::Cp2pkh));
+        roundtrips(&addr);
+    }
+
+    #[test]
+    fn test_cp2sh_address() {
+        let color_id = "c36db65fd59fd356f6729140571b5bcd6bb3b83492a16e1bf0a3884442fc3c8a0e".parse().unwrap();
+
+        let addr = Address::new(
+            Prod,
+            Payload::ColoredScriptHash(color_id, "162c5ea71c0b23f5b9022ef047c4a86470a5b070".parse().unwrap()),
+        );
+
+        assert_eq!(
+            addr.script_pubkey().as_bytes(),
+            hex!("21c36db65fd59fd356f6729140571b5bcd6bb3b83492a16e1bf0a3884442fc3c8a0ebca914162c5ea71c0b23f5b9022ef047c4a86470a5b07087")
+        );
+        assert_eq!(&addr.to_string(), "4Zxhb33iSoydtcKzWc7hpoRjtJh2W9otwDeqP5PbZHGoq7m3fwysg7ec2TJ2RRuheF8PgQqrGKDjdij");
+        assert_eq!(addr.address_type(), Some(AddressType::Cp2sh));
+        roundtrips(&addr);
+    }
+
+    #[test]
     fn test_address_debug() {
         // This is not really testing output of Debug but the ability and proper functioning
         // of Debug derivation on structs generic in NetworkValidation.
@@ -755,6 +902,8 @@ mod tests {
         let addresses = [
             ("1QJVDzdqb1VpbDK7uDeyVXy9mR27CJiyhY", Some(AddressType::P2pkh)),
             ("33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k", Some(AddressType::P2sh)),
+            ("vorwiRCJRHzkPNpYj8a4MkPvDcYi7X7SH6oghAqFcBdXYDkePfkgZKTu8mRUVP1XkY7LmerMSuSEgT", Some(AddressType::Cp2pkh)),
+            ("4ZotEmkGJBBPEeAe8ZsvnyJMs9w3rowGMJfCB45DmggUJaG54GfwKBV4mxJ7oPmJKuKhAykUzrunSe1", Some(AddressType::Cp2sh)),
         ];
         for (address, expected_type) in &addresses {
             let addr = Address::from_str(address)
@@ -770,6 +919,7 @@ mod tests {
     fn test_json_serialize() {
         use serde_json;
 
+        // P2PKH
         let addr =
             Address::from_str("132F25rTsvBdp9JzLLBHP5mvGY66i1xdiM").unwrap().assume_checked();
         let json = serde_json::to_value(&addr).unwrap();
@@ -784,6 +934,7 @@ mod tests {
             ScriptBuf::from_hex("76a914162c5ea71c0b23f5b9022ef047c4a86470a5b07088ac").unwrap()
         );
 
+        // P2SH
         let addr =
             Address::from_str("33iFwdLuRpW1uK1RTRqsoi8rR4NpDzk66k").unwrap().assume_checked();
         let json = serde_json::to_value(&addr).unwrap();
@@ -796,6 +947,34 @@ mod tests {
         assert_eq!(
             into.script_pubkey(),
             ScriptBuf::from_hex("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087").unwrap()
+        );
+
+        // CP2PKH
+        let addr = Address::from_str("vxgHyieT46FQMYAvmNM6BsmwNNXMTPk2C6StiVD3Cmy45ge5gftf5f417CehuVWVo5KfBbgtGyLn9j").unwrap().assume_checked();
+        let json = serde_json::to_value(&addr).unwrap();
+        assert_eq!(
+            json,
+            serde_json::Value::String("vxgHyieT46FQMYAvmNM6BsmwNNXMTPk2C6StiVD3Cmy45ge5gftf5f417CehuVWVo5KfBbgtGyLn9j".to_owned())
+        );
+        let into: Address = serde_json::from_value::<Address<_>>(json).unwrap().assume_checked();
+        assert_eq!(addr.to_string(), into.to_string());
+        assert_eq!(
+            into.script_pubkey(),
+            ScriptBuf::from_hex("21c36db65fd59fd356f6729140571b5bcd6bb3b83492a16e1bf0a3884442fc3c8a0ebc76a914162c5ea71c0b23f5b9022ef047c4a86470a5b07088ac").unwrap()
+        );
+
+        // CP2SH
+        let addr = Address::from_str("4Zxhb33iSoydtcKzWc7hpoRjtJh2W9otwDeqP5PbZHGoq7m3fwysg7ec2TJ2RRuheF8PgQqrGKDjdij").unwrap().assume_checked();
+        let json = serde_json::to_value(&addr).unwrap();
+        assert_eq!(
+            json,
+            serde_json::Value::String("4Zxhb33iSoydtcKzWc7hpoRjtJh2W9otwDeqP5PbZHGoq7m3fwysg7ec2TJ2RRuheF8PgQqrGKDjdij".to_owned())
+        );
+        let into: Address = serde_json::from_value::<Address<_>>(json).unwrap().assume_checked();
+        assert_eq!(addr.to_string(), into.to_string());
+        assert_eq!(
+            into.script_pubkey(),
+            ScriptBuf::from_hex("21c36db65fd59fd356f6729140571b5bcd6bb3b83492a16e1bf0a3884442fc3c8a0ebca914162c5ea71c0b23f5b9022ef047c4a86470a5b07087").unwrap()
         );
     }
 

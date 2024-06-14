@@ -44,10 +44,19 @@ pub const MAX_BLOCK_SIGOPS_COST: i64 = 80_000;
 pub const PUBKEY_ADDRESS_PREFIX_MAIN: u8 = 0; // 0x00
 /// Mainnet (tapyrus) script address prefix.
 pub const SCRIPT_ADDRESS_PREFIX_MAIN: u8 = 5; // 0x05
+/// Mainnet (tapyrus) colored pubkey address prefix.
+pub const COLORED_PUBKEY_ADDRESS_PREFIX_MAIN: u8 = 1; // 0x01
+/// Mainnet (tapyrus) colored script address prefix.
+pub const COLORED_SCRIPT_ADDRESS_PREFIX_MAIN: u8 = 6; // 0x06
+
 /// Test (tesnet, signet, regtest) pubkey address prefix.
 pub const PUBKEY_ADDRESS_PREFIX_TEST: u8 = 111; // 0x6f
 /// Test (tesnet, signet, regtest) script address prefix.
 pub const SCRIPT_ADDRESS_PREFIX_TEST: u8 = 196; // 0xc4
+/// Test colored pubkey address prefix.
+pub const COLORED_PUBKEY_ADDRESS_PREFIX_TEST: u8 = 112; // 0x70
+/// Test colored script address prefix.
+pub const COLORED_SCRIPT_ADDRESS_PREFIX_TEST: u8 = 197; // 0xc5
 /// The maximum allowed script size.
 pub const MAX_SCRIPT_ELEMENT_SIZE: usize = 520;
 /// How may blocks between halvings.
