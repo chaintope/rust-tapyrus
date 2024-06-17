@@ -392,6 +392,8 @@ fn consensus_error_into_serde<E: serde::de::Error>(error: ConsensusError) -> E {
         ConsensusError::ParseFailed(msg) => E::custom(msg),
         ConsensusError::UnsupportedSegwitFlag(flag) =>
             E::invalid_value(Unexpected::Unsigned(flag.into()), &"segwit version 1 flag"),
+        ConsensusError::UnknownXField(xfield_type) => E::custom(format!("unknown xfield type: {}", xfield_type)),
+        ConsensusError::XFieldNone => E::custom("XField type None cannot be hashed or signed"),
     }
 }
 
