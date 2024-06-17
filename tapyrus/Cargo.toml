@@ -49,8 +49,9 @@ core2 = { version = "0.3.2", default-features = false, features = ["alloc"], opt
 # Do NOT use this as a feature! Use the `serde` feature instead.
 actual-serde = { package = "serde", version = "1.0.103", default-features = false, features = [ "derive", "alloc" ], optional = true }
 
-rug = { version = "=1.18.0", default-features = false, features = ["integer"] }
-gmp-mpfr-sys = { version = "=1.4.0", default-features = false }
+num-bigint = { version = "=0.4.4", default-features = false, features = ["rand"] }
+num-integer ={ version = "0.1", default-features = false }
+num-traits = { version = "0.2", default-features = false }
 
 [dev-dependencies]
 serde_json = "1.0.0"

@@ -6,8 +6,9 @@
 //!
 //!
 
-use rug::integer::Order;
-use rug::Integer;
+use num_bigint::BigUint;
+use num_integer::Integer;
+use num_traits::{One, FromPrimitive, Zero};
 
 /// Prime number for secp256k1 field element.
 pub const P: [u8; 32] = [
@@ -17,42 +18,51 @@ pub const P: [u8; 32] = [
 
 /// Calculate jacobi symbol
 pub fn jacobi(a: &[u8]) -> i8 {
-    let a = Integer::from_digits(a, Order::MsfBe);
-    let p = Integer::from_digits(&P[..], Order::MsfBe);
+    
+    let a = BigUint::from_bytes_be(a);
+    let p = BigUint::from_bytes_be(&P[..]);
     jacobi_inner(&a, &p)
 }
 
-fn jacobi_inner(a: &Integer, n: &Integer) -> i8 {
-    assert!(*n >= 3);
-    let a = Integer::from(a % n);
-    if a == 0 {
+fn jacobi_inner(a: &BigUint, n: &BigUint) -> i8 {
+    let three: BigUint = BigUint::from_u64(3).unwrap();
+    let five: BigUint = BigUint::from_u64(5).unwrap();
+    let seven: BigUint = BigUint::from_u64(7).unwrap();
+
+    assert!(*n >= three);
+    let a = a % n;
+    if a.is_zero() {
         return 0;
     }
-    if a == 1 {
+
+    if a.is_one() {
         return 1;
     }
-
-    let mut a1: Integer = a.clone();
+    let mut a: BigUint = a.clone();
     let mut e = 0;
-    while a1.is_even() {
-        a1 = a1.div_exact_u(2);
+    while a.is_even() {
+        a >>= 1;
         e += 1;
     }
-    let mut s: i8 = if e & 1 == 0 || n.mod_u(8) == 1 || n.mod_u(8) == 7 {
+
+    let n_mod_8 = n % 8u32;
+    let mut s: i8 = if e % 2 == 0 || n_mod_8 == BigUint::one() || n_mod_8 == seven {
         1
-    } else if n.mod_u(8) == 3 || n.mod_u(8) == 5 {
+    } else if n_mod_8 == three || n_mod_8 == five {
         -1
     } else {
         0
     };
-    if n.mod_u(4) == 3 && a1.mod_u(4) == 3 {
+
+    if n % 4u32 == three && &a % 4u32 == three {
         s = -s
     }
 
-    if a1 == 1 {
+    if a.is_one() {
         s
     } else {
-        s * jacobi_inner(&(n % a1.clone()), &a1.clone())
+        let n_mod_a = n % &a;
+        s * jacobi_inner(&n_mod_a, &a)
     }
 }
 
@@ -64,9 +74,9 @@ mod tests {
 
     #[test]
     fn test_jacobi() {
-        assert_eq!(1, jacobi_inner(&Integer::from(1), &Integer::from(3)));
-        assert_eq!(-1, jacobi_inner(&Integer::from(2), &Integer::from(3)));
-        assert_eq!(0, jacobi_inner(&Integer::from(3), &Integer::from(3)));
+        assert_eq!(1, jacobi_inner(&BigUint::from_u64(1).unwrap(), &BigUint::from_u64(3).unwrap()));
+        assert_eq!(-1, jacobi_inner(&BigUint::from_u64(2).unwrap(), &BigUint::from_u64(3).unwrap()));
+        assert_eq!(0, jacobi_inner(&BigUint::from_u64(3).unwrap(), &BigUint::from_u64(3).unwrap()));
 
         let a = <[u8; 32]>::from_hex(
             "388f7b0f632de8140fe337e62a37f3566500a99934c2231b6cb9fd7584b8e672",

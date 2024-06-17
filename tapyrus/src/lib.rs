@@ -85,7 +85,7 @@ pub extern crate secp256k1;
 #[macro_use]
 extern crate actual_serde as serde;
 
-extern crate rug;
+//extern crate rug;
 extern crate core;
 
 #[cfg(test)]
