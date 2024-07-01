@@ -10,6 +10,7 @@ use core::str::FromStr;
 use hashes::Hash;
 use secp256k1::{Secp256k1, Verification};
 
+use super::color_identifier::ColorIdentifier;
 use super::PushBytes;
 use crate::blockdata::opcodes::all::*;
 use crate::blockdata::opcodes::{self, Opcode};
@@ -18,6 +19,7 @@ use crate::blockdata::script::{
     bytes_to_asm_fmt, Builder, Instruction, InstructionIndices, Instructions, ScriptBuf,
     ScriptHash, WScriptHash,
 };
+use crate::consensus::encode::deserialize;
 use crate::consensus::Encodable;
 use crate::key::{PublicKey, UntweakedPublicKey};
 use crate::policy::DUST_RELAY_TX_FEE;
@@ -663,6 +665,15 @@ impl Script {
             ScriptType::Cp2sh
         } else {
             ScriptType::NonStandard
+        }
+    }
+
+    /// Return color_id for cp2pkh or cp2sh script.
+    pub fn color_id(&self) -> Option<ColorIdentifier> {
+        if self.is_colored() {
+            deserialize(&self.as_bytes()[1..34]).ok()
+        } else {
+            None
         }
     }
 }

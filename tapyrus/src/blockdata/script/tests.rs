@@ -1023,3 +1023,16 @@ fn serialize_color_id() {
     assert_eq!(color_id.token_type, TokenTypes::Nft);
     assert_eq!(serialize(&color_id), hex_script);
 }
+
+#[test]
+fn script_to_color_id() {
+    let p2pkh = ScriptBuf::from_hex("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").unwrap();
+    let cp2pkh = ScriptBuf::from_hex("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").unwrap();
+    let cp2sh = ScriptBuf::from_hex("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bca9147620a79e8657d066cff10e21228bf983cf546ac687").unwrap();
+    let non_standard = ScriptBuf::from_hex("00").unwrap();
+
+    assert_eq!(p2pkh.color_id(), None);
+    assert_eq!(cp2pkh.color_id().unwrap(), ColorIdentifier::from_str("c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46").unwrap());
+    assert_eq!(cp2sh.color_id().unwrap(), ColorIdentifier::from_str("c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46").unwrap());
+    assert_eq!(non_standard.color_id(), None);
+}
