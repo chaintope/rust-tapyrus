@@ -967,16 +967,9 @@ impl Transaction {
         count
     }
 
-    /// Returns whether or not to serialize transaction as specified in BIP-144.
+    /// Tapyrus does not support segwit serialization.
     fn use_segwit_serialization(&self) -> bool {
-        for input in &self.input {
-            if !input.witness.is_empty() {
-                return true;
-            }
-        }
-        // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
-        // `Transaction` docs for full explanation).
-        self.input.is_empty()
+        false
     }
 }
 
