@@ -65,8 +65,11 @@ mod newtypes {
         /// See [`hashes::Hash::DISPLAY_BACKWARD`] for more details.
         pub struct Txid(sha256d::Hash); 
 
-        /// A tapyrus witness transaction ID.
+        /// A Bitcoin witness transaction ID.
         pub struct Wtxid(sha256d::Hash);
+        /// A Tapyrus transaction ID with transactions malleability fix.
+        /// see: [Transaction Malleability](https://github.com/chaintope/tapyrus-core/blob/master/doc/tapyrus/fix_transaction_malleability.md)
+        pub struct MalFixTxid(sha256d::Hash);
         /// A tapyrus block hash.
         pub struct BlockHash(sha256d::Hash);
         /// A hash of the block for sigining.
@@ -89,6 +92,7 @@ mod newtypes {
 
     impl_hashencode!(Txid);
     impl_hashencode!(Wtxid);
+    impl_hashencode!(MalFixTxid);
     impl_hashencode!(BlockHash);
     impl_hashencode!(BlockSigHash);
     impl_hashencode!(XFieldHash);

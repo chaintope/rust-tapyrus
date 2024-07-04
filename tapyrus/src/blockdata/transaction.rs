@@ -26,7 +26,7 @@ use crate::blockdata::witness::Witness;
 #[cfg(feature = "bitcoinconsensus")]
 pub use crate::consensus::validation::TxVerifyError;
 use crate::consensus::{encode, Decodable, Encodable};
-use crate::hash_types::{Txid, Wtxid};
+use crate::hash_types::{MalFixTxid, Txid, Wtxid};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::parse::impl_parse_str_from_int_infallible;
 use crate::prelude::*;
@@ -685,7 +685,7 @@ impl Transaction {
 
     /// Computes an "immutable TXID".  The double SHA256 taken from a transaction
     /// after stripping it of all input scripts including their length prefixes.
-    pub fn malfix_txid(&self) -> sha256d::Hash {
+    pub fn malfix_txid(&self) -> MalFixTxid {
         let mut enc = sha256d::Hash::engine();
         self.version.consensus_encode(&mut enc).unwrap();
         VarInt(self.input.len() as u64).consensus_encode(&mut enc).unwrap();
@@ -695,7 +695,7 @@ impl Transaction {
         }
         self.output.consensus_encode(&mut enc).unwrap();
         self.lock_time.consensus_encode(&mut enc).unwrap();
-        sha256d::Hash::from_engine(enc)
+        MalFixTxid::from_engine(enc)
     }
 
     /// Returns the weight of this transaction, as defined by BIP-141.
@@ -1084,6 +1084,14 @@ impl From<Transaction> for Wtxid {
 
 impl From<&Transaction> for Wtxid {
     fn from(tx: &Transaction) -> Wtxid { tx.wtxid() }
+}
+
+impl From<Transaction> for MalFixTxid {
+    fn from(tx: Transaction) -> MalFixTxid { tx.malfix_txid() }
+}
+
+impl From<&Transaction> for MalFixTxid {
+    fn from(tx: &Transaction) -> MalFixTxid { tx.malfix_txid() }
 }
 
 /// Predicts the weight of a to-be-constructed transaction.
