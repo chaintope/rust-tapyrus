@@ -35,11 +35,6 @@ use crate::sighash::{EcdsaSighashType, TapSighashType};
 use crate::string::FromHexStr;
 use crate::{io, Amount, VarInt};
 
-/// The marker MUST be a 1-byte zero value: 0x00. (BIP-141)
-const SEGWIT_MARKER: u8 = 0x00;
-/// The flag MUST be a 1-byte non-zero value. Currently, 0x01 MUST be used. (BIP-141)
-const SEGWIT_FLAG: u8 = 0x01;
-
 /// A reference to a transaction output.
 ///
 /// ### Bitcoin Core References
@@ -230,6 +225,7 @@ impl TxIn {
     /// - the new input added causes the input length `VarInt` to increase its encoding length
     /// - the new input is the first segwit input added - this will add an additional 2WU to the
     ///   transaction weight to take into account the segwit marker
+    #[deprecated(since = "0.5.0", note = "Use `TxIn::legacy_weight` instead")]
     pub fn segwit_weight(&self) -> Weight {
         Weight::from_non_witness_data_size(self.base_size() as u64)
             + Weight::from_witness_data_size(self.witness.size() as u64)
@@ -750,21 +746,11 @@ impl Transaction {
     pub fn total_size(&self) -> usize {
         let mut size: usize = 4; // Serialized length of a u32 for the version number.
 
-        if self.use_segwit_serialization() {
-            size += 2; // 1 byte for the marker and 1 for the flag.
-        }
-
         size += VarInt::from(self.input.len()).size();
         size += self
             .input
             .iter()
-            .map(|input| {
-                if self.use_segwit_serialization() {
-                    input.total_size()
-                } else {
-                    input.base_size()
-                }
-            })
+            .map(|input| { input.base_size() })
             .sum::<usize>();
 
         size += VarInt::from(self.output.len()).size();
@@ -966,18 +952,6 @@ impl Transaction {
         }
         count
     }
-
-    /// Returns whether or not to serialize transaction as specified in BIP-144.
-    fn use_segwit_serialization(&self) -> bool {
-        for input in &self.input {
-            if !input.witness.is_empty() {
-                return true;
-            }
-        }
-        // To avoid serialization ambiguity, no inputs means we use BIP141 serialization (see
-        // `Transaction` docs for full explanation).
-        self.input.is_empty()
-    }
 }
 
 /// The transaction version.
@@ -1076,21 +1050,8 @@ impl Encodable for Transaction {
     fn consensus_encode<W: io::Write + ?Sized>(&self, w: &mut W) -> Result<usize, io::Error> {
         let mut len = 0;
         len += self.version.consensus_encode(w)?;
-
-        // Legacy transaction serialization format only includes inputs and outputs.
-        if !self.use_segwit_serialization() {
-            len += self.input.consensus_encode(w)?;
-            len += self.output.consensus_encode(w)?;
-        } else {
-            // BIP-141 (segwit) transaction serialization also includes marker, flag, and witness data.
-            len += SEGWIT_MARKER.consensus_encode(w)?;
-            len += SEGWIT_FLAG.consensus_encode(w)?;
-            len += self.input.consensus_encode(w)?;
-            len += self.output.consensus_encode(w)?;
-            for input in &self.input {
-                len += input.witness.consensus_encode(w)?;
-            }
-        }
+        len += self.input.consensus_encode(w)?;
+        len += self.output.consensus_encode(w)?;
         len += self.lock_time.consensus_encode(w)?;
         Ok(len)
     }
@@ -1100,42 +1061,12 @@ impl Decodable for Transaction {
     fn consensus_decode_from_finite_reader<R: io::Read + ?Sized>(
         r: &mut R,
     ) -> Result<Self, encode::Error> {
-        let version = Version::consensus_decode_from_finite_reader(r)?;
-        let input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
-        // segwit
-        if input.is_empty() {
-            let segwit_flag = u8::consensus_decode_from_finite_reader(r)?;
-            match segwit_flag {
-                // BIP144 input witnesses
-                1 => {
-                    let mut input = Vec::<TxIn>::consensus_decode_from_finite_reader(r)?;
-                    let output = Vec::<TxOut>::consensus_decode_from_finite_reader(r)?;
-                    for txin in input.iter_mut() {
-                        txin.witness = Decodable::consensus_decode_from_finite_reader(r)?;
-                    }
-                    if !input.is_empty() && input.iter().all(|input| input.witness.is_empty()) {
-                        Err(encode::Error::ParseFailed("witness flag set but no witnesses present"))
-                    } else {
-                        Ok(Transaction {
-                            version,
-                            input,
-                            output,
-                            lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
-                        })
-                    }
-                }
-                // We don't support anything else
-                x => Err(encode::Error::UnsupportedSegwitFlag(x)),
-            }
-        // non-segwit
-        } else {
-            Ok(Transaction {
-                version,
-                input,
-                output: Decodable::consensus_decode_from_finite_reader(r)?,
-                lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
-            })
-        }
+        Ok(Transaction {
+            version: Version::consensus_decode_from_finite_reader(r)?,
+            input: Vec::<TxIn>::consensus_decode_from_finite_reader(r)?,
+            output: Decodable::consensus_decode_from_finite_reader(r)?,
+            lock_time: Decodable::consensus_decode_from_finite_reader(r)?,
+        })
     }
 }
 
