@@ -26,7 +26,7 @@ use crate::internal_macros::impl_bytes_newtype;
 use crate::network::{NetworkId, ParseNetworkError};
 use crate::opcodes::all::*;
 use crate::transaction::{self, OutPoint, Sequence, Transaction, TxIn, TxOut};
-use crate::{script, Txid};
+use crate::{script, MalFixTxid};
 
 #[deprecated(since = "0.31.0", note = "Use Weight::MAX_BLOCK instead")]
 /// The maximum allowed weight for a block, see BIP 141 (network rule).
@@ -80,7 +80,7 @@ fn mainnet_genesis_tx() -> Transaction {
     // Inputs
     let in_script = script::Builder::new().into_script();
     ret.input.push(TxIn {
-        previous_output: OutPoint::new(Txid::all_zeros(), 0),
+        previous_output: OutPoint::new(MalFixTxid::all_zeros(), 0),
         script_sig: in_script,
         sequence: Sequence::MAX,
         witness: Witness::default(),
@@ -115,7 +115,7 @@ fn testnet_genesis_tx() -> Transaction {
     // Inputs
     let in_script = script::Builder::new().into_script();
     ret.input.push(TxIn {
-        previous_output: OutPoint::new(Txid::all_zeros(), 0),
+        previous_output: OutPoint::new(MalFixTxid::all_zeros(), 0),
         script_sig: in_script,
         sequence: Sequence::MAX,
         witness: Witness::default(),
@@ -141,7 +141,7 @@ pub fn mainnet_genesis_block() -> Block {
     // https://explorer.api.tapyrus.chaintope.com/block/92f729508ee8b0e4f46418f81f89806a952c739df03de1e666a8e2b5c40b549b
     let txdata = vec![mainnet_genesis_tx()];
     let hash: sha256d::Hash = txdata[0].txid().into();
-    let im_merkle_root = txdata[0].malfix_txid().into();
+    let im_merkle_root = txdata[0].malfix_txid().to_raw_hash().into();
     let merkle_root = hash.into();
     let public_key =
         PublicKey::from_str("02bb8a7fbba7da4e6a0519296e30211c33c7307ac19aba4e8f56cce2d3da36b751")
@@ -167,7 +167,7 @@ pub fn testnet_genesis_block() -> Block {
     // https://testnet-explorer.tapyrus.dev.chaintope.com/block/038b114875c2f78f5a2fd7d8549a905f38ea5faee6e29a3d79e547151d6bdd8a
     let txdata = vec![testnet_genesis_tx()];
     let hash: sha256d::Hash = txdata[0].txid().into();
-    let im_merkle_root = txdata[0].malfix_txid().into();
+    let im_merkle_root = txdata[0].malfix_txid().to_raw_hash().into();
     let merkle_root = hash.into();
     let public_key =
         PublicKey::from_str("0366262690cbdf648132ce0c088962c6361112582364ede120f3780ab73438fc4b")

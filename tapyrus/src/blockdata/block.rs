@@ -492,7 +492,7 @@ impl Block {
 
     /// Computes the merkle root of transactions using immutable hash
     pub fn immutable_merkle_root(&self) -> Option<TxMerkleNode> {
-        let hashes = self.txdata.iter().map(|obj| obj.malfix_txid());
+        let hashes = self.txdata.iter().map(|obj| obj.malfix_txid().to_raw_hash());
         merkle_tree::calculate_root(hashes).map(|h| h.into())
     }
 

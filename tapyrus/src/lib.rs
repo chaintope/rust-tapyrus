@@ -151,7 +151,7 @@ pub use crate::crypto::key::{
 };
 pub use crate::crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag};
 pub use crate::hash_types::{
-    BlockHash, FilterHash, FilterHeader, TxMerkleNode, Txid, WitnessCommitment, Wtxid,
+    BlockHash, FilterHash, FilterHeader, TxMerkleNode, Txid, WitnessCommitment, Wtxid, MalFixTxid,
 };
 pub use crate::merkle_tree::MerkleBlock;
 pub use crate::network::Network;

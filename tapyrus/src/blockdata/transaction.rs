@@ -43,7 +43,7 @@ use crate::{io, Amount, VarInt};
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub struct OutPoint {
     /// The referenced transaction's txid.
-    pub txid: Txid,
+    pub txid: MalFixTxid,
     /// The index of the referenced output in its transaction's vout.
     pub vout: u32,
 }
@@ -56,7 +56,7 @@ impl OutPoint {
 
     /// Creates a new [`OutPoint`].
     #[inline]
-    pub fn new(txid: Txid, vout: u32) -> OutPoint { OutPoint { txid, vout } }
+    pub fn new(txid: MalFixTxid, vout: u32) -> OutPoint { OutPoint { txid, vout } }
 
     /// Creates a "null" `OutPoint`.
     ///
@@ -84,7 +84,7 @@ impl fmt::Display for OutPoint {
 #[non_exhaustive]
 pub enum ParseOutPointError {
     /// Error in TXID part.
-    Txid(hex::HexToArrayError),
+    MalFixTxid(hex::HexToArrayError),
     /// Error in vout part.
     Vout(crate::error::ParseIntError),
     /// Error in general format.
@@ -100,7 +100,7 @@ impl fmt::Display for ParseOutPointError {
         use ParseOutPointError::*;
 
         match *self {
-            Txid(ref e) => write_err!(f, "error parsing TXID"; e),
+            MalFixTxid(ref e) => write_err!(f, "error parsing TXID"; e),
             Vout(ref e) => write_err!(f, "error parsing vout"; e),
             Format => write!(f, "OutPoint not in <txid>:<vout> format"),
             TooLong => write!(f, "vout should be at most 10 digits"),
@@ -115,7 +115,7 @@ impl std::error::Error for ParseOutPointError {
         use ParseOutPointError::*;
 
         match self {
-            Txid(e) => Some(e),
+            MalFixTxid(e) => Some(e),
             Vout(e) => Some(e),
             Format | TooLong | VoutNotCanonical => None,
         }
@@ -152,7 +152,7 @@ impl core::str::FromStr for OutPoint {
             return Err(ParseOutPointError::Format);
         }
         Ok(OutPoint {
-            txid: s[..colon].parse().map_err(ParseOutPointError::Txid)?,
+            txid: s[..colon].parse().map_err(ParseOutPointError::MalFixTxid)?,
             vout: parse_vout(&s[colon + 1..])?,
         })
     }
@@ -1412,15 +1412,15 @@ mod tests {
         );
         assert_eq!(
             OutPoint::from_str("i don't care:1"),
-            Err(ParseOutPointError::Txid("i don't care".parse::<Txid>().unwrap_err()))
+            Err(ParseOutPointError::MalFixTxid("i don't care".parse::<MalFixTxid>().unwrap_err()))
         );
         assert_eq!(
             OutPoint::from_str(
                 "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X:1"
             ),
-            Err(ParseOutPointError::Txid(
+            Err(ParseOutPointError::MalFixTxid(
                 "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c945X"
-                    .parse::<Txid>()
+                    .parse::<MalFixTxid>()
                     .unwrap_err()
             ))
         );
@@ -1666,9 +1666,9 @@ mod tests {
             .as_slice()).unwrap();
 
         let mut spent = HashMap::new();
-        spent.insert(spent1.txid(), spent1);
-        spent.insert(spent2.txid(), spent2);
-        spent.insert(spent3.txid(), spent3);
+        spent.insert(spent1.malfix_txid(), spent1);
+        spent.insert(spent2.malfix_txid(), spent2);
+        spent.insert(spent3.malfix_txid(), spent3);
         let mut spent2 = spent.clone();
         let mut spent3 = spent.clone();
 
