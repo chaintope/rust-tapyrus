@@ -1010,6 +1010,40 @@ fn add_color_test() {
 }
 
 #[test]
+fn remove_color_test() {
+    let cp2pkh = ScriptBuf::from_hex("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bc76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").expect("cp2pkh");
+    let cp2sh = ScriptBuf::from_hex("21c3ec2fd806701a3f55808cbec3922c38dafaa3070c48c803e9043ee3642c660b46bca9147620a79e8657d066cff10e21228bf983cf546ac687").expect("cp2sh");
+    let p2pkh = ScriptBuf::from_hex("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").expect("p2pkh");
+    let p2sh = ScriptBuf::from_hex("a9147620a79e8657d066cff10e21228bf983cf546ac687").expect("p2sh");
+    let op_return = ScriptBuf::from_hex("6aa9149eb21980dc9d413d8eac27314938b9da920ee53e87").expect("op_return");
+
+    // cp2pkh -> p2pkh
+    let res = cp2pkh.remove_color();
+    assert!(res.is_p2pkh());
+    assert_eq!(res.to_bytes(), hex!("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac"));
+
+    // cp2sh -> p2sh
+    let res = cp2sh.remove_color();
+    assert!(res.is_p2sh());
+    assert_eq!(res.to_bytes(), hex!("a9147620a79e8657d066cff10e21228bf983cf546ac687"));
+
+    // p2pkh -> p2pkh
+    let res = p2pkh.remove_color();
+    assert!(res.is_p2pkh());
+    assert_eq!(res, p2pkh);
+
+    // p2sh -> p2sh
+    let res = p2sh.remove_color();
+    assert!(res.is_p2sh());
+    assert_eq!(res, p2sh);
+
+    // op_return -> op_return
+    let res = op_return.remove_color();
+    assert!(res.is_op_return());
+    assert_eq!(res, op_return);
+}
+
+#[test]
 fn serialize_color_id() {
     let out_point = OutPoint { txid: "0101010101010101010101010101010101010101010101010101010101010101".parse().expect("txid"), vout: 1 };
     let color_id = ColorIdentifier::nft(out_point);

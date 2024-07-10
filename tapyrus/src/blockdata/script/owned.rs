@@ -141,6 +141,16 @@ impl ScriptBuf {
         Ok(ScriptBuf::from_bytes(com))
     }
 
+    /// Returns a p2pkh or p2sh script with the color_id removed from cp2pkh or cp2sh
+    /// if script is not colored script, return itself.
+    pub fn remove_color(&self) -> Self {
+        if !self.is_colored() {
+            return self.clone()
+        }
+
+        ScriptBuf::from_bytes(self.as_bytes()[35..].to_vec())
+    }
+
     /// Generates P2WPKH-type of scriptPubkey.
     #[deprecated(since = "0.31.0", note = "use new_p2wpkh instead")]
     pub fn new_v0_p2wpkh(pubkey_hash: &WPubkeyHash) -> Self { Self::new_p2wpkh(pubkey_hash) }
