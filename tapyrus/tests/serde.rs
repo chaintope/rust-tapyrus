@@ -39,7 +39,7 @@ use tapyrus::sighash::{EcdsaSighashType, TapSighashType};
 use tapyrus::taproot::{self, ControlBlock, LeafVersion, TapTree, TaprootBuilder};
 use tapyrus::{
     ecdsa, transaction, Address, Amount, Block, Network, OutPoint, PrivateKey, PublicKey,
-    ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid,
+    ScriptBuf, Sequence, Transaction, TxIn, TxOut, MalFixTxid,
 };
 
 /// Implicitly does regression test for `BlockHeader` also.
@@ -227,7 +227,7 @@ fn serde_regression_psbt() {
         input: vec![TxIn {
             previous_output: OutPoint {
                 txid: "e567952fb6cc33857f392efa3a46c995a28f69cca4bb1b37e0204dab1ec7a389"
-                    .parse::<Txid>()
+                    .parse::<MalFixTxid>()
                     .unwrap(),
                 vout: 1,
             },

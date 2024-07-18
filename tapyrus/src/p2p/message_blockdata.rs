@@ -9,7 +9,7 @@
 use hashes::{sha256d, Hash as _};
 
 use crate::consensus::encode::{self, Decodable, Encodable};
-use crate::hash_types::{BlockHash, Txid, Wtxid};
+use crate::hash_types::{BlockHash, MalFixTxid, Wtxid};
 use crate::internal_macros::impl_consensus_encoding;
 use crate::prelude::*;
 use crate::{io, p2p};
@@ -20,7 +20,7 @@ pub enum Inventory {
     /// Error --- these inventories can be ignored
     Error,
     /// Transaction
-    Transaction(Txid),
+    Transaction(MalFixTxid),
     /// Block
     Block(BlockHash),
     /// Compact Block
@@ -28,7 +28,7 @@ pub enum Inventory {
     /// Witness Transaction by Wtxid
     WTx(Wtxid),
     /// Witness Transaction
-    WitnessTransaction(Txid),
+    WitnessTransaction(MalFixTxid),
     /// Witness Block
     WitnessBlock(BlockHash),
     /// Unknown inventory type

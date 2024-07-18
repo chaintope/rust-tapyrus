@@ -379,14 +379,14 @@ mod test {
     use crate::crypto::key::PublicKey;
     use crate::crypto::schnorr::Signature;
     use crate::hash_types::TxMerkleNode;
-    use crate::{Amount, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid, Witness};
+    use crate::{Amount, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, MalFixTxid, Witness};
 
     fn dummy_tx(nonce: &[u8]) -> Transaction {
         Transaction {
             version: transaction::Version::ONE,
             lock_time: absolute::LockTime::from_consensus(2),
             input: vec![TxIn {
-                previous_output: OutPoint::new(Txid::hash(nonce), 0),
+                previous_output: OutPoint::new(MalFixTxid::hash(nonce), 0),
                 script_sig: ScriptBuf::new(),
                 sequence: Sequence(1),
                 witness: Witness::new(),
