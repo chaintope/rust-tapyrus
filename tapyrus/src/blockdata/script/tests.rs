@@ -706,6 +706,11 @@ fn defult_dust_value_tests() {
         .into_script();
     assert!(script_p2pkh.is_p2pkh());
     assert_eq!(script_p2pkh.dust_value(), crate::Amount::from_tap(546));
+
+    let color_id = ColorIdentifier::from_str("c14ca2241021165f86cf706351de7e235d7f4b4895fcb4d9155a4e9245f95c2c9a").unwrap();
+    let script_cp2pkh = ScriptBuf::new_cp2pkh(&color_id, &PubkeyHash::from_byte_array([42; 20]));
+    assert!(script_cp2pkh.is_cp2pkh());
+    assert_eq!(script_cp2pkh.dust_value(), crate::Amount::from_tap(1));
 }
 
 #[test]
