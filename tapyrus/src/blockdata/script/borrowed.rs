@@ -457,6 +457,11 @@ impl Script {
     /// Returns the minimum value an output with this script should have in order to be
     /// broadcastable on today's Bitcoin network.
     pub fn dust_value(&self) -> crate::Amount {
+        // If the script is colored, the output does not have a dust limit.
+        if self.is_colored() {
+            return crate::Amount::from_tap(1);
+        }
+
         // This must never be lower than Bitcoin Core's GetDustThreshold() (as of v0.21) as it may
         // otherwise allow users to create transactions which likely can never be broadcast/confirmed.
         let taps = DUST_RELAY_TX_FEE as u64 / 1000 * // The default dust relay fee is 3000 tapyrus/kB (i.e. 3 tap/vByte)
