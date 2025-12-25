@@ -44,15 +44,15 @@
 use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
-use hashes::Hash;
-use hashes::hex::FromHex;
+use crate::hashes::Hash;
+use crate::hashes::hex::FromHex;
 
-use hash_types::{PubkeyHash, ScriptHash};
-use blockdata::opcodes;
-use blockdata::script::{Builder, ColorIdentifier, Script};
-use network::constants::Network;
-use util::base58;
-use util::key;
+use crate::hash_types::{PubkeyHash, ScriptHash};
+use crate::blockdata::opcodes;
+use crate::blockdata::script::{Builder, ColorIdentifier, Script};
+use crate::network::constants::Network;
+use crate::util::base58;
+use crate::util::key;
 
 /// Address error.
 #[derive(Debug, PartialEq)]
@@ -76,7 +76,7 @@ impl fmt::Display for Error {
 
 #[allow(deprecated)]
 impl ::std::error::Error for Error {
-    fn cause(&self) -> Option<&::std::error::Error> {
+    fn cause(&self) -> Option<&dyn ::std::error::Error> {
         match *self {
             Error::Base58(ref e) => Some(e),
             _ => None,
@@ -216,7 +216,7 @@ impl Address {
         pk.write_into(&mut hash_engine);
 
         Address {
-            network: network,
+            network,
             payload: Payload::PubkeyHash(PubkeyHash::from_engine(hash_engine)),
         }
     }
@@ -226,7 +226,7 @@ impl Address {
     #[inline]
     pub fn p2sh(script: &Script, network: Network) -> Address {
         Address {
-            network: network,
+            network,
             payload: Payload::ScriptHash(ScriptHash::hash(&script[..])),
         }
     }
@@ -239,7 +239,7 @@ impl Address {
         pk.write_into(&mut hash_engine);
 
         Address {
-            network: network,
+            network,
             payload: Payload::ColoredPubkeyHash(color_id.clone(), PubkeyHash::from_engine(hash_engine)),
         }
     }
@@ -249,7 +249,7 @@ impl Address {
     #[inline]
     pub fn cp2sh(color_id: &ColorIdentifier, script: &Script, network: Network) -> Address {
         Address {
-            network: network,
+            network,
             payload: Payload::ColoredScriptHash(color_id.clone(), ScriptHash::hash(&script[..])),
         }
     }
@@ -278,7 +278,7 @@ impl Address {
     pub fn from_script(script: &Script, network: Network) -> Option<Address> {
         Some(Address {
             payload: Payload::from_script(script)?,
-            network: network,
+            network,
         })
     }
 
@@ -395,7 +395,7 @@ impl FromStr for Address {
 
 impl ::std::fmt::Debug for Address {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "{}", self.to_string())
+        write!(f, "{}", self)
     }
 }
 
@@ -404,19 +404,19 @@ mod tests {
     use std::str::FromStr;
     use std::string::ToString;
 
-    use hashes::hex::FromHex;
+    use crate::hashes::hex::FromHex;
 
-    use blockdata::script::Script;
-    use network::constants::Network::{Prod, Dev};
-    use util::key::PublicKey;
+    use crate::blockdata::script::Script;
+    use crate::network::constants::Network::{Prod, Dev};
+    use crate::util::key::PublicKey;
 
     use super::*;
 
-    macro_rules! hex (($hex:expr) => (Vec::from_hex($hex).unwrap()));
-    macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
-    macro_rules! hex_script (($hex:expr) => (Script::from(hex!($hex))));
-    macro_rules! hex_pubkeyhash (($hex:expr) => (PubkeyHash::from_hex(&$hex).unwrap()));
-    macro_rules! hex_scripthash (($hex:expr) => (ScriptHash::from_hex(&$hex).unwrap()));
+    macro_rules! hex (($hex:expr_2021) => (Vec::from_hex($hex).unwrap()));
+    macro_rules! hex_key (($hex:expr_2021) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
+    macro_rules! hex_script (($hex:expr_2021) => (Script::from(hex!($hex))));
+    macro_rules! hex_pubkeyhash (($hex:expr_2021) => (PubkeyHash::from_hex(&$hex).unwrap()));
+    macro_rules! hex_scripthash (($hex:expr_2021) => (ScriptHash::from_hex(&$hex).unwrap()));
 
     fn roundtrips(addr: &Address) {
         assert_eq!(

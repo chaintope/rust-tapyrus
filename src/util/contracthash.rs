@@ -21,16 +21,16 @@
 #![cfg_attr(not(test), deprecated)]
 
 use secp256k1::{self, Secp256k1};
-use PrivateKey;
-use PublicKey;
-use hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine};
-use blockdata::{opcodes, script};
+use crate::PrivateKey;
+use crate::PublicKey;
+use crate::hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine};
+use crate::blockdata::{opcodes, script};
 
 use std::{error, fmt};
 
-use hash_types::ScriptHash;
-use network::constants::Network;
-use util::address;
+use crate::hash_types::ScriptHash;
+use crate::network::constants::Network;
+use crate::util::address;
 
 /// Encoding of "pubkey here" in script; from Bitcoin Core `src/script/script.h`
 static PUBKEY: u8 = 0xFE;
@@ -73,7 +73,7 @@ impl fmt::Display for Error {
 
 #[allow(deprecated)]
 impl error::Error for Error {
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::Secp(ref e) => Some(e),
             Error::Script(ref e) => Some(e),
@@ -182,7 +182,7 @@ pub fn compute_tweak(pk: &PublicKey, contract: &[u8]) -> Hmac<sha256::Hash> {
 /// Tweak a secret key using some arbitrary data (calls `compute_tweak` internally)
 pub fn tweak_secret_key<C: secp256k1::Signing>(secp: &Secp256k1<C>, key: &PrivateKey, contract: &[u8]) -> Result<PrivateKey, Error> {
     // Compute public key
-    let pk = PublicKey::from_private_key(secp, &key);
+    let pk = PublicKey::from_private_key(secp, key);
     // Compute tweak
     let hmac_sk = compute_tweak(&pk, contract);
     // Execute the tweak
@@ -202,7 +202,7 @@ pub fn create_address<C: secp256k1::Verification>(secp: &Secp256k1<C>,
     let keys = tweak_keys(secp, keys, contract);
     let script = template.to_script(&keys)?;
     Ok(address::Address {
-        network: network,
+        network,
         payload: address::Payload::ScriptHash(
             ScriptHash::hash(&script[..])
         )
@@ -281,18 +281,18 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
 #[cfg(test)]
 mod tests {
     use secp256k1::Secp256k1;
-    use hashes::hex::FromHex;
+    use crate::hashes::hex::FromHex;
     use secp256k1::rand::thread_rng;
     use std::str::FromStr;
 
-    use blockdata::script::Script;
-    use network::constants::Network;
+    use crate::blockdata::script::Script;
+    use crate::network::constants::Network;
 
     use super::*;
-    use PublicKey;
+    use crate::PublicKey;
 
-    macro_rules! hex (($hex:expr) => (Vec::from_hex($hex).unwrap()));
-    macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
+    macro_rules! hex (($hex:expr_2021) => (Vec::from_hex($hex).unwrap()));
+    macro_rules! hex_key (($hex:expr_2021) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
     macro_rules! alpha_template(() => (Template::from(&hex!("55fefefefefefefe57AE")[..])));
     macro_rules! alpha_keys(() => (
         &[hex_key!("0269992fb441ae56968e5b77d46a3e53b69f136444ae65a94041fc937bdb28d933"),

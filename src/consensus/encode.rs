@@ -29,22 +29,22 @@
 //! big-endian decimals, etc.)
 //!
 
-use std::{fmt, error, io, mem, u32};
+use std::{fmt, error, io, mem};
 use std::borrow::Cow;
 use std::io::{Cursor, Read, Write};
-use hashes::hex::ToHex;
+use crate::hashes::hex::ToHex;
 
-use hashes::{sha256d, Hash};
-use hash_types::{BlockHash, FilterHash, TxMerkleNode};
+use crate::hashes::{sha256d, Hash};
+use crate::hash_types::{BlockHash, FilterHash, TxMerkleNode};
 
-use util::endian;
-use util::psbt;
-use util::key;
-use util::signature::Signature;
+use crate::util::endian;
+use crate::util::psbt;
+use crate::util::key;
+use crate::util::signature::Signature;
 
-use blockdata::transaction::{TxOut, Transaction, TxIn};
-use network::message_blockdata::Inventory;
-use network::address::Address;
+use crate::blockdata::transaction::{TxOut, Transaction, TxIn};
+use crate::network::message_blockdata::Inventory;
+use crate::network::address::Address;
 
 /// Encoding error
 #[derive(Debug)]
@@ -122,7 +122,7 @@ impl fmt::Display for Error {
 
 #[allow(deprecated)]
 impl error::Error for Error {
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::Io(ref e) => Some(e),
             Error::Psbt(ref e) => Some(e),
@@ -145,8 +145,6 @@ impl error::Error for Error {
         "description() is deprecated; use Display"
     }
 }
-
-#[doc(hidden)]
 
 #[doc(hidden)]
 impl From<io::Error> for Error {
@@ -272,7 +270,7 @@ macro_rules! encoder_fn {
 }
 
 macro_rules! decoder_fn {
-    ($name:ident, $val_type:ty, $readfn:ident, $byte_len: expr) => {
+    ($name:ident, $val_type:ty, $readfn:ident, $byte_len: expr_2021) => {
         #[inline]
         fn $name(&mut self) -> Result<$val_type, Error> {
             assert_eq!(::std::mem::size_of::<$val_type>(), $byte_len); // size_of isn't a constfn in 1.22
@@ -402,11 +400,18 @@ impl VarInt {
     #[inline]
     pub fn len(&self) -> usize {
         match self.0 {
-            0...0xFC             => { 1 }
-            0xFD...0xFFFF        => { 3 }
-            0x10000...0xFFFFFFFF => { 5 }
+            0..=0xFC             => { 1 }
+            0xFD..=0xFFFF        => { 3 }
+            0x10000..=0xFFFFFFFF => { 5 }
             _                    => { 9 }
         }
+    }
+
+    /// Returns whether this VarInt is empty. Always returns false since VarInt
+    /// always encodes to at least 1 byte.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        false
     }
 }
 
@@ -414,23 +419,23 @@ impl Encodable for VarInt {
     #[inline]
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, Error> {
         match self.0 {
-            0...0xFC => {
+            0..=0xFC => {
                 (self.0 as u8).consensus_encode(s)?;
                 Ok(1)
             },
-            0xFD...0xFFFF => {
+            0xFD..=0xFFFF => {
                 s.emit_u8(0xFD)?;
                 (self.0 as u16).consensus_encode(s)?;
                 Ok(3)
             },
-            0x10000...0xFFFFFFFF => {
+            0x10000..=0xFFFFFFFF => {
                 s.emit_u8(0xFE)?;
                 (self.0 as u32).consensus_encode(s)?;
                 Ok(5)
             },
             _ => {
                 s.emit_u8(0xFF)?;
-                (self.0 as u64).consensus_encode(s)?;
+                self.0.consensus_encode(s)?;
                 Ok(9)
             },
         }
@@ -494,7 +499,7 @@ impl Encodable for String {
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, Error> {
         let b = self.as_bytes();
         let vi_len = VarInt(b.len() as u64).consensus_encode(&mut s)?;
-        s.emit_slice(&b)?;
+        s.emit_slice(b)?;
         Ok(vi_len + b.len())
     }
 }
@@ -513,7 +518,7 @@ impl Encodable for Cow<'static, str> {
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, Error> {
         let b = self.as_bytes();
         let vi_len = VarInt(b.len() as u64).consensus_encode(&mut s)?;
-        s.emit_slice(&b)?;
+        s.emit_slice(b)?;
         Ok(vi_len + b.len())
     }
 }
@@ -530,7 +535,7 @@ impl Decodable for Cow<'static, str> {
 
 // Arrays
 macro_rules! impl_array {
-    ( $size:expr ) => (
+    ( $size:expr_2021 ) => (
         impl Encodable for [u8; $size] {
             #[inline]
             fn consensus_encode<S: WriteExt>(
@@ -629,7 +634,7 @@ impl_vec!(u64);
 
 fn consensus_encode_with_size<S: io::Write>(data: &[u8], mut s: S) -> Result<usize, Error> {
     let vi_len = VarInt(data.len() as u64).consensus_encode(&mut s)?;
-    s.emit_slice(&data)?;
+    s.emit_slice(data)?;
     Ok(vi_len + data.len())
 }
 
@@ -799,12 +804,12 @@ mod tests {
     use std::mem::discriminant;
     use super::{deserialize, serialize, Error, CheckedData, VarInt};
     use super::{Transaction, BlockHash, FilterHash, TxMerkleNode, TxOut, TxIn};
-    use consensus::{Encodable, deserialize_partial, Decodable};
-    use util::endian::{u64_to_array_le, u32_to_array_le, u16_to_array_le};
+    use crate::consensus::{Encodable, deserialize_partial, Decodable};
+    use crate::util::endian::{u64_to_array_le, u32_to_array_le, u16_to_array_le};
     use secp256k1::rand::{thread_rng, Rng};
-    use network::message_blockdata::Inventory;
-    use network::Address;
-    use util::signature::Signature;
+    use crate::network::message_blockdata::Inventory;
+    use crate::network::Address;
+    use crate::util::signature::Signature;
 
     #[test]
     fn serialize_int_test() {
@@ -1042,13 +1047,13 @@ mod tests {
         macro_rules! round_trip {
             ($($val_type:ty),*) => {
                 $(
-                    let r: $val_type = thread_rng().gen();
+                    let r: $val_type = thread_rng().r#gen();
                     assert_eq!(deserialize::<$val_type>(&serialize(&r)).unwrap(), r);
                 )*
             };
         }
         macro_rules! round_trip_bytes {
-            ($(($val_type:ty, $data:expr)),*) => {
+            ($(($val_type:ty, $data:expr_2021)),*) => {
                 $(
                     thread_rng().fill(&mut $data[..]);
                     assert_eq!(deserialize::<$val_type>(&serialize(&$data)).unwrap()[..], $data[..]);
@@ -1061,7 +1066,7 @@ mod tests {
         for _ in 0..10 {
             round_trip!{bool, i8, u8, i16, u16, i32, u32, i64, u64,
             (bool, i8, u16, i32), (u64, i64, u32, i32, u16, i16), (i8, u8, i16, u16, i32, u32, i64, u64),
-            [u8; 2], [u8; 4], [u8; 8], [u8; 12], [u8; 16], [u8; 32]};
+            [u8; 2], [u8; 4], [u8; 8], [u8; 12], [u8; 16], [u8; 32]}
 
             data.clear();
             data64.clear();
@@ -1070,7 +1075,7 @@ mod tests {
             data64.resize(len, 0u64);
             let mut arr33 = [0u8; 33];
             let mut arr16 = [0u16; 8];
-            round_trip_bytes!{(Vec<u8>, data), ([u8; 33], arr33), ([u16; 8], arr16), (Vec<u64>, data64)};
+            round_trip_bytes!{(Vec<u8>, data), ([u8; 33], arr33), ([u16; 8], arr16), (Vec<u64>, data64)}
 
 
         }

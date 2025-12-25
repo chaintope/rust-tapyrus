@@ -63,14 +63,14 @@
 use std::collections::HashSet;
 use std::io;
 
-use hashes::Hash;
-use hash_types::{Txid, TxMerkleNode};
+use crate::hashes::Hash;
+use crate::hash_types::{Txid, TxMerkleNode};
 
-use blockdata::transaction::Transaction;
-use blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
-use consensus::encode::{self, Decodable, Encodable};
-use util::merkleblock::MerkleBlockError::*;
-use {Block, BlockHeader};
+use crate::blockdata::transaction::Transaction;
+use crate::blockdata::constants::{MAX_BLOCK_WEIGHT, MIN_TRANSACTION_WEIGHT};
+use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::util::merkleblock::MerkleBlockError::*;
+use crate::{Block, BlockHeader};
 
 /// An error when verifying the merkle block
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -117,6 +117,7 @@ pub enum MerkleBlockError {
 ///  - uint256[]  hashes in depth-first order (<= 32*N bytes)
 ///  - varint     number of bytes of flag bits (1-3 bytes)
 ///  - byte[]     flag bits, packed per 8 in a byte, least significant bit first (<= 2*N-1 bits)
+///
 /// The size constraints follow from this.
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct PartialMerkleTree {
@@ -216,7 +217,7 @@ impl PartialMerkleTree {
             self.traverse_and_extract(height, 0, &mut bits_used, &mut hash_used, matches, indexes)?;
         // Verify that all bits were consumed (except for the padding caused by
         // serializing it as a byte sequence)
-        if (bits_used + 7) / 8 != (self.bits.len() as u32 + 7) / 8 {
+        if bits_used.div_ceil(8) != (self.bits.len() as u32).div_ceil(8) {
             return Err(BadFormat("Not all bit were consumed".to_owned()));
         }
         // Verify that all hashes were consumed
@@ -361,7 +362,7 @@ impl Encodable for PartialMerkleTree {
     ) -> Result<usize, encode::Error> {
         let ret = self.num_transactions.consensus_encode(&mut s)?
             + self.hashes.consensus_encode(&mut s)?;
-        let mut bytes: Vec<u8> = vec![0; (self.bits.len() + 7) / 8];
+        let mut bytes: Vec<u8> = vec![0; self.bits.len().div_ceil(8)];
         for p in 0..self.bits.len() {
             bytes[p / 8] |= (self.bits[p] as u8) << (p % 8) as u8;
         }
@@ -453,12 +454,12 @@ impl MerkleBlock {
         match_txids: &HashSet<Txid>,
     ) -> Self {
         let matches: Vec<bool> = block_txids
-            .into_iter()
+            .iter()
             .map(|txid| match_txids.contains(txid))
             .collect();
 
 
-        let pmt = PartialMerkleTree::from_txids(&block_txids, &matches);
+        let pmt = PartialMerkleTree::from_txids(block_txids, &matches);
         MerkleBlock {
             header: header.clone(),
             txn: pmt,
@@ -507,15 +508,15 @@ impl Decodable for MerkleBlock {
 mod tests {
     use std::cmp::min;
 
-    use hashes::Hash;
-    use hashes::hex::{FromHex, ToHex};
-    use hash_types::{Txid, TxMerkleNode};
+    use crate::hashes::Hash;
+    use crate::hashes::hex::{FromHex, ToHex};
+    use crate::hash_types::{Txid, TxMerkleNode};
     use secp256k1::rand::prelude::*;
 
-    use consensus::encode::{deserialize, serialize};
-    use util::hash::bitcoin_merkle_root;
-    use util::merkleblock::{MerkleBlock, PartialMerkleTree};
-    use Block;
+    use crate::consensus::encode::{deserialize, serialize};
+    use crate::util::hash::bitcoin_merkle_root;
+    use crate::util::merkleblock::{MerkleBlock, PartialMerkleTree};
+    use crate::Block;
 
     #[test]
     fn pmt_tests() {
@@ -546,7 +547,7 @@ mod tests {
                     // Generate `att / 2` random bits
                     let rand_bits = match att / 2 {
                         0 => 0,
-                        bits => rng.gen::<u64>() >> (64 - bits),
+                        bits => rng.r#gen::<u64>() >> (64 - bits),
                     };
                     let include = rand_bits == 0;
                     matches[j] = include;
@@ -710,7 +711,7 @@ mod tests {
         /// Flip one bit in one of the hashes - this should break the authentication
         fn damage(&mut self, rng: &mut ThreadRng) {
             let n = rng.gen_range(0, self.hashes.len());
-            let bit = rng.gen::<u8>();
+            let bit = rng.r#gen::<u8>();
             let hashes = &mut self.hashes;
             let mut hash = hashes[n].into_inner();
             hash[(bit >> 3) as usize] ^= 1 << (bit & 7);

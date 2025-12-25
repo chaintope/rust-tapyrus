@@ -14,15 +14,15 @@
 
 use std::collections::BTreeMap;
 
-use blockdata::script::Script;
-use blockdata::transaction::{SigHashType, Transaction, TxOut};
-use consensus::encode;
-use util::bip32::{DerivationPath, Fingerprint};
-use util::key::PublicKey;
-use util::psbt;
-use util::psbt::map::Map;
-use util::psbt::raw;
-use util::psbt::Error;
+use crate::blockdata::script::Script;
+use crate::blockdata::transaction::{SigHashType, Transaction, TxOut};
+use crate::consensus::encode;
+use crate::util::bip32::{DerivationPath, Fingerprint};
+use crate::util::key::PublicKey;
+use crate::util::psbt;
+use crate::util::psbt::map::Map;
+use crate::util::psbt::raw;
+use crate::util::psbt::Error;
 
 /// A key-value map for an input of the corresponding index in the unsigned
 /// transaction.

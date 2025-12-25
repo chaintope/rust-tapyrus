@@ -19,7 +19,7 @@
 //!
 
 macro_rules! construct_uint {
-    ($name:ident, $n_words:expr) => {
+    ($name:ident, $n_words:expr_2021) => {
         /// Little-endian large integer type
         #[repr(C)]
         pub struct $name(pub [u64; $n_words]);
@@ -372,7 +372,7 @@ macro_rules! construct_uint {
 
         impl ::std::fmt::Display for $name {
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                <::std::fmt::Debug>::fmt(self, f)
+                <dyn ::std::fmt::Debug>::fmt(self, f)
             }
         }
 
@@ -436,9 +436,9 @@ impl Uint256 {
 
 #[cfg(test)]
 mod tests {
-    use consensus::{deserialize, serialize};
-    use util::uint::{Uint256, Uint128};
-    use util::BitArray;
+    use crate::consensus::{deserialize, serialize};
+    use crate::util::uint::{Uint256, Uint128};
+    use crate::util::BitArray;
 
     #[test]
     pub fn uint256_bits_test() {

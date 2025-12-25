@@ -567,7 +567,7 @@ impl fmt::Debug for All {
             all::OP_PUSHDATA4 => write!(f, "PUSHDATA4"),
             all::OP_PUSHNUM_NEG1 => write!(f, "PUSHNUM_NEG1"),
             all::OP_RESERVED => write!(f, "RESERVED"),
-            All {code: x} if x >= all::OP_PUSHNUM_1.code && x <= all::OP_PUSHNUM_16.code => write!(f, "PUSHNUM_{}", x - all::OP_PUSHNUM_1.code + 1),
+            All {code: x} if (all::OP_PUSHNUM_1.code..=all::OP_PUSHNUM_16.code).contains(&x) => write!(f, "PUSHNUM_{}", x - all::OP_PUSHNUM_1.code + 1),
             all::OP_NOP => write!(f, "NOP"),
             all::OP_VER => write!(f, "VER"),
             all::OP_IF => write!(f, "IF"),
@@ -650,7 +650,7 @@ impl fmt::Debug for All {
             all::OP_CLTV => write!(f, "CLTV"),
             all::OP_CSV => write!(f, "CSV"),
             all::OP_COLOR => write!(f, "COLOR"),
-            All {code: x} if x >= all::OP_NOP1.code && x <= all::OP_NOP10.code => write!(f, "NOP{}", x - all::OP_NOP1.code + 1),
+            All {code: x} if (all::OP_NOP1.code..=all::OP_NOP10.code).contains(&x) => write!(f, "NOP{}", x - all::OP_NOP1.code + 1),
             All {code: x} => write!(f, "RETURN_{}", x),
         }
     }
@@ -825,7 +825,7 @@ mod tests {
     use super::*;
 
     macro_rules! roundtrip {
-        ($unique:expr, $op:ident) => {
+        ($unique:expr_2021, $op:ident) => {
             assert_eq!(all::$op, All::from(all::$op.into_u8()));
 
             let s1 = format!("{}", all::$op);

@@ -25,7 +25,7 @@ macro_rules! define_slice_to_le {
     }
 }
 macro_rules! define_be_to_array {
-    ($name: ident, $type: ty, $byte_len: expr) => {
+    ($name: ident, $type: ty, $byte_len: expr_2021) => {
         #[inline]
         pub fn $name(val: $type) -> [u8; $byte_len] {
             assert_eq!(::std::mem::size_of::<$type>(), $byte_len); // size_of isn't a constfn in 1.22
@@ -38,7 +38,7 @@ macro_rules! define_be_to_array {
     }
 }
 macro_rules! define_le_to_array {
-    ($name: ident, $type: ty, $byte_len: expr) => {
+    ($name: ident, $type: ty, $byte_len: expr_2021) => {
         #[inline]
         pub fn $name(val: $type) -> [u8; $byte_len] {
             assert_eq!(::std::mem::size_of::<$type>(), $byte_len); // size_of isn't a constfn in 1.22

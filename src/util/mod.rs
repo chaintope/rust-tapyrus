@@ -42,8 +42,8 @@ pub(crate) mod endian;
 
 use std::{error, fmt};
 
-use consensus::encode;
-use network;
+use crate::consensus::encode;
+use crate::network;
 
 /// A trait which allows numbers to act as fixed-size bit arrays
 pub trait BitArray {
@@ -90,7 +90,7 @@ impl fmt::Display for Error {
 
 #[allow(deprecated)]
 impl error::Error for Error {
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::Encode(ref e) => Some(e),
             Error::Network(ref e) => Some(e),

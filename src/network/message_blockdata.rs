@@ -20,11 +20,11 @@
 
 use std::io;
 
-use hashes::sha256d;
+use crate::hashes::sha256d;
 
-use network::constants;
-use consensus::encode::{self, Decodable, Encodable};
-use hash_types::{BlockHash, Txid};
+use crate::network::constants;
+use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::hash_types::{BlockHash, Txid};
 
 /// An inventory item.
 #[derive(PartialEq, Eq, Clone, Debug, Copy, Hash)]
@@ -48,7 +48,7 @@ impl Encodable for Inventory {
         mut s: S,
     ) -> Result<usize, encode::Error> {
         macro_rules! encode_inv {
-            ($code:expr, $item:expr) => {
+            ($code:expr_2021, $item:expr_2021) => {
                 u32::consensus_encode(&$code, &mut s)? +
                 $item.consensus_encode(&mut s)?
             }
@@ -111,8 +111,8 @@ impl GetBlocksMessage {
     pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetBlocksMessage {
         GetBlocksMessage {
             version: constants::PROTOCOL_VERSION,
-            locator_hashes: locator_hashes,
-            stop_hash: stop_hash
+            locator_hashes,
+            stop_hash
         }
     }
 }
@@ -124,8 +124,8 @@ impl GetHeadersMessage {
     pub fn new(locator_hashes: Vec<BlockHash>, stop_hash: BlockHash) -> GetHeadersMessage {
         GetHeadersMessage {
             version: constants::PROTOCOL_VERSION,
-            locator_hashes: locator_hashes,
-            stop_hash: stop_hash
+            locator_hashes,
+            stop_hash
         }
     }
 }
@@ -136,9 +136,9 @@ impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 mod tests {
     use super::{GetHeadersMessage, GetBlocksMessage};
 
-    use hashes::hex::FromHex;
+    use crate::hashes::hex::FromHex;
 
-    use consensus::encode::{deserialize, serialize};
+    use crate::consensus::encode::{deserialize, serialize};
     use std::default::Default;
 
     #[test]

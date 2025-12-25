@@ -12,9 +12,9 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use consensus::encode;
-use util::psbt;
-use util::psbt::raw;
+use crate::consensus::encode;
+use crate::util::psbt;
+use crate::util::psbt::raw;
 
 /// A trait that describes a PSBT key-value map.
 pub trait Map {

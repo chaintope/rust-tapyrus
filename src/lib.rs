@@ -30,10 +30,6 @@
 // Experimental features we need
 #![cfg_attr(all(test, feature = "unstable"), feature(test))]
 
-// Clippy whitelist
-#![cfg_attr(feature = "clippy", allow(needless_range_loop))] // suggests making a big mess of array newtypes
-#![cfg_attr(feature = "clippy", allow(extend_from_slice))]   // `extend_from_slice` only available since 1.6
-
 // Coding conventions
 #![forbid(unsafe_code)]
 #![deny(non_upper_case_globals)]
@@ -81,25 +77,25 @@ pub mod consensus;
 #[allow(unused_imports)]
 pub mod hash_types;
 
-pub use hash_types::*;
-pub use blockdata::block::Block;
-pub use blockdata::block::BlockHeader;
-pub use blockdata::script::Script;
-pub use blockdata::script::ColorIdentifier;
-pub use blockdata::transaction::Transaction;
-pub use blockdata::transaction::TxIn;
-pub use blockdata::transaction::TxOut;
-pub use blockdata::transaction::OutPoint;
-pub use blockdata::transaction::SigHashType;
-pub use consensus::encode::VarInt;
-pub use network::constants::Network;
-pub use util::Error;
-pub use util::address::Address;
-pub use util::address::AddressType;
-pub use util::amount::Amount;
-pub use util::amount::Denomination;
-pub use util::amount::SignedAmount;
-pub use util::key::PrivateKey;
-pub use util::key::PublicKey;
-pub use util::merkleblock::MerkleBlock;
-pub use util::signature::Signature;
+pub use crate::hash_types::*;
+pub use crate::blockdata::block::Block;
+pub use crate::blockdata::block::BlockHeader;
+pub use crate::blockdata::script::Script;
+pub use crate::blockdata::script::ColorIdentifier;
+pub use crate::blockdata::transaction::Transaction;
+pub use crate::blockdata::transaction::TxIn;
+pub use crate::blockdata::transaction::TxOut;
+pub use crate::blockdata::transaction::OutPoint;
+pub use crate::blockdata::transaction::SigHashType;
+pub use crate::consensus::encode::VarInt;
+pub use crate::network::constants::Network;
+pub use crate::util::Error;
+pub use crate::util::address::Address;
+pub use crate::util::address::AddressType;
+pub use crate::util::amount::Amount;
+pub use crate::util::amount::Denomination;
+pub use crate::util::amount::SignedAmount;
+pub use crate::util::key::PrivateKey;
+pub use crate::util::key::PublicKey;
+pub use crate::util::merkleblock::MerkleBlock;
+pub use crate::util::signature::Signature;

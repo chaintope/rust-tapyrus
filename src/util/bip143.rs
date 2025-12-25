@@ -19,11 +19,11 @@
 //! signatures, which are placed in the scriptSig.
 //!
 
-use hashes::{Hash, sha256d};
-use hash_types::SigHash;
-use blockdata::script::Script;
-use blockdata::transaction::{Transaction, TxIn, SigHashType};
-use consensus::encode::Encodable;
+use crate::hashes::{Hash, sha256d};
+use crate::hash_types::SigHash;
+use crate::blockdata::script::Script;
+use crate::blockdata::transaction::{Transaction, TxIn, SigHashType};
+use crate::consensus::encode::Encodable;
 
 use std::ops::{Deref, DerefMut};
 
@@ -76,9 +76,9 @@ impl SighashComponents {
         SighashComponents {
             tx_version: tx.version,
             tx_locktime: tx.lock_time,
-            hash_prevouts: hash_prevouts,
-            hash_sequence: hash_sequence,
-            hash_outputs: hash_outputs,
+            hash_prevouts,
+            hash_sequence,
+            hash_outputs,
         }
     }
 
@@ -122,7 +122,7 @@ impl<R: Deref<Target=Transaction>> SigHashCache<R> {
     /// script_sig and witnesses.
     pub fn new(tx: R) -> Self {
         SigHashCache {
-            tx: tx,
+            tx,
             hash_prevouts: None,
             hash_sequence: None,
             hash_outputs: None,
@@ -248,14 +248,14 @@ impl<R: DerefMut<Target=Transaction>> SigHashCache<R> {
 #[cfg(test)]
 #[allow(deprecated)]
 mod tests {
-    use hash_types::SigHash;
-    use blockdata::script::Script;
-    use blockdata::transaction::Transaction;
-    use consensus::encode::deserialize;
-    use network::constants::Network;
-    use util::address::Address;
-    use util::key::PublicKey;
-    use hashes::hex::FromHex;
+    use crate::hash_types::SigHash;
+    use crate::blockdata::script::Script;
+    use crate::blockdata::transaction::Transaction;
+    use crate::consensus::encode::deserialize;
+    use crate::network::constants::Network;
+    use crate::util::address::Address;
+    use crate::util::key::PublicKey;
+    use crate::hashes::hex::FromHex;
 
     use super::*;
 

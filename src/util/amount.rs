@@ -152,7 +152,7 @@ fn parse_signed_to_tapyrus(
             // into a less precise amount. That is not allowed unless
             // there are no decimals and the last digits are zeroes as
             // many as the difference in precision.
-            let last_n = precision_diff.abs() as usize;
+            let last_n = precision_diff.unsigned_abs() as usize;
             if is_too_precise(s, last_n) {
                 return Err(ParseAmountError::TooPrecise);
             }
@@ -167,7 +167,7 @@ fn parse_signed_to_tapyrus(
     let mut value: u64 = 0; // as tapyruses
     for c in s.chars() {
         match c {
-            '0'...'9' => {
+            '0'..='9' => {
                 // Do `value = 10 * value + digit`, catching overflows.
                 match 10_u64.checked_mul(value) {
                     None => return Err(ParseAmountError::TooBig),
@@ -210,7 +210,7 @@ fn parse_signed_to_tapyrus(
 fn fmt_tapyrus_in(
     tapyrus: u64,
     negative: bool,
-    f: &mut fmt::Write,
+    f: &mut dyn fmt::Write,
     denom: Denomination,
 ) -> fmt::Result {
     if negative {
@@ -226,7 +226,7 @@ fn fmt_tapyrus_in(
         }
         Ordering::Less => {
             // need to inject a comma in the number
-            let nb_decimals = precision.abs() as usize;
+            let nb_decimals = precision.unsigned_abs() as usize;
             let real = format!("{:0width$}", tapyrus, width = nb_decimals);
             if real.len() == nb_decimals {
                 write!(f, "0.{}", &real[real.len() - nb_decimals..])?;
@@ -284,12 +284,12 @@ impl Amount {
 
     /// The maximum value of an [Amount].
     pub fn max_value() -> Amount {
-        Amount(u64::max_value())
+        Amount(u64::MAX)
     }
 
     /// The minimum value of an [Amount].
     pub fn min_value() -> Amount {
-        Amount(u64::min_value())
+        Amount(u64::MIN)
     }
 
     /// Convert from a value expressing tpcs to an [Amount].
@@ -306,7 +306,7 @@ impl Amount {
         if negative {
             return Err(ParseAmountError::Negative);
         }
-        if tapyrus > i64::max_value() as u64 {
+        if tapyrus > i64::MAX as u64 {
             return Err(ParseAmountError::TooBig);
         }
         Ok(Amount::from_tap(tapyrus))
@@ -324,7 +324,7 @@ impl Amount {
             return Err(ParseAmountError::InvalidFormat);
         }
 
-        Ok(Amount::from_str_in(amt_str, denom_str.parse()?)?)
+        Amount::from_str_in(amt_str, denom_str.parse()?)
     }
 
     /// Express this [Amount] as a floating-point value in the given denomination.
@@ -360,7 +360,7 @@ impl Amount {
     /// Format the value of this [Amount] in the given denomination.
     ///
     /// Does not include the denomination.
-    pub fn fmt_value_in(self, f: &mut fmt::Write, denom: Denomination) -> fmt::Result {
+    pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
         fmt_tapyrus_in(self.as_tap(), false, f, denom)
     }
 
@@ -562,12 +562,12 @@ impl SignedAmount {
 
     /// The maximum value of an [SignedAmount].
     pub fn max_value() -> SignedAmount {
-        SignedAmount(i64::max_value())
+        SignedAmount(i64::MAX)
     }
 
     /// The minimum value of an [SignedAmount].
     pub fn min_value() -> SignedAmount {
-        SignedAmount(i64::min_value())
+        SignedAmount(i64::MIN)
     }
 
     /// Convert from a value expressing tpcs to an [SignedAmount].
@@ -581,7 +581,7 @@ impl SignedAmount {
     /// with denomination, use [FromStr].
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<SignedAmount, ParseAmountError> {
         let (negative, tapyrus) = parse_signed_to_tapyrus(s, denom)?;
-        if tapyrus > i64::max_value() as u64 {
+        if tapyrus > i64::MAX as u64 {
             return Err(ParseAmountError::TooBig);
         }
         Ok(match negative {
@@ -602,7 +602,7 @@ impl SignedAmount {
             return Err(ParseAmountError::InvalidFormat);
         }
 
-        Ok(SignedAmount::from_str_in(amt_str, denom_str.parse()?)?)
+        SignedAmount::from_str_in(amt_str, denom_str.parse()?)
     }
 
     /// Express this [SignedAmount] as a floating-point value in the given denomination.
@@ -638,10 +638,10 @@ impl SignedAmount {
     /// Format the value of this [SignedAmount] in the given denomination.
     ///
     /// Does not include the denomination.
-    pub fn fmt_value_in(self, f: &mut fmt::Write, denom: Denomination) -> fmt::Result {
+    pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
         let taps = self.as_tap().checked_abs().map(|a: i64| a as u64).unwrap_or_else(|| {
             // We could also hard code this into `9223372036854775808`
-            u64::max_value() - self.as_tap() as u64 +1
+            u64::MAX - self.as_tap() as u64 +1
         });
         fmt_tapyrus_in(taps, self.is_negative(), f, denom)
     }
@@ -874,7 +874,7 @@ pub mod serde {
     //! ```
 
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
-    use util::amount::{Amount, Denomination, SignedAmount};
+    use crate::util::amount::{Amount, Denomination, SignedAmount};
 
     /// This trait is used only to avoid code duplication and naming collisions
     /// of the different serde serialization crates.
@@ -922,7 +922,7 @@ pub mod serde {
         //! Use with `#[serde(with = "amount::serde::as_tap")]`.
 
         use serde::{Deserializer, Serializer};
-        use util::amount::serde::SerdeAmount;
+        use crate::util::amount::serde::SerdeAmount;
 
         pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
             a.ser_tap(s)
@@ -937,7 +937,7 @@ pub mod serde {
             //! Use with `#[serde(default, with = "amount::serde::as_tap::opt")]`.
 
             use serde::{Deserializer, Serializer};
-            use util::amount::serde::SerdeAmount;
+            use crate::util::amount::serde::SerdeAmount;
 
             pub fn serialize<A: SerdeAmount, S: Serializer>(
                 a: &Option<A>,
@@ -962,7 +962,7 @@ pub mod serde {
         //! Use with `#[serde(with = "amount::serde::as_tpc")]`.
 
         use serde::{Deserializer, Serializer};
-        use util::amount::serde::SerdeAmount;
+        use crate::util::amount::serde::SerdeAmount;
 
         pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
             a.ser_tpc(s)
@@ -977,7 +977,7 @@ pub mod serde {
             //! Use with `#[serde(default, with = "amount::serde::as_tpc::opt")]`.
 
             use serde::{Deserializer, Serializer};
-            use util::amount::serde::SerdeAmount;
+            use crate::util::amount::serde::SerdeAmount;
 
             pub fn serialize<A: SerdeAmount, S: Serializer>(
                 a: &Option<A>,
@@ -1308,9 +1308,9 @@ mod tests {
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         struct T {
-            #[serde(with = "::util::amount::serde::as_tap")]
+            #[serde(with = "crate::util::amount::serde::as_tap")]
             pub amt: Amount,
-            #[serde(with = "::util::amount::serde::as_tap")]
+            #[serde(with = "crate::util::amount::serde::as_tap")]
             pub samt: SignedAmount,
         }
 
@@ -1337,9 +1337,9 @@ mod tests {
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         struct T {
-            #[serde(with = "::util::amount::serde::as_tpc")]
+            #[serde(with = "crate::util::amount::serde::as_tpc")]
             pub amt: Amount,
-            #[serde(with = "::util::amount::serde::as_tpc")]
+            #[serde(with = "crate::util::amount::serde::as_tpc")]
             pub samt: SignedAmount,
         }
 
@@ -1377,9 +1377,9 @@ mod tests {
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         struct T {
-            #[serde(default, with = "::util::amount::serde::as_tpc::opt")]
+            #[serde(default, with = "crate::util::amount::serde::as_tpc::opt")]
             pub amt: Option<Amount>,
-            #[serde(default, with = "::util::amount::serde::as_tpc::opt")]
+            #[serde(default, with = "crate::util::amount::serde::as_tpc::opt")]
             pub samt: Option<SignedAmount>,
         }
 

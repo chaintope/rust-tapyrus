@@ -12,11 +12,11 @@ use std::fmt;
 use std::borrow::Borrow;
 
 use secp256k1::SecretKey;
-use hashes::{sha256, HashEngine, Hash};
+use crate::hashes::{sha256, HashEngine, Hash};
 
-use util::key::{PublicKey, PrivateKey};
-use util::prime::jacobi;
-use util::rfc6979::nonce_rfc6979;
+use crate::util::key::{PublicKey, PrivateKey};
+use crate::util::prime::jacobi;
+use crate::util::rfc6979::nonce_rfc6979;
 
 /// The size of scalar value on secp256k1 curve
 pub const SECP256K1_SCALAR_SIZE: usize = 32;
@@ -63,7 +63,7 @@ impl Signature {
 
         // Compute s = k + ep
         let sigma = {
-            let mut result = e.clone();
+            let mut result = e;
             result.mul_assign(&sk[..])?;
             result.add_assign(&k[..])?;
             result
@@ -93,7 +93,7 @@ impl Signature {
         let r = {
             e.negate_assign();
             let minus_ep = {
-                let mut result = pk.clone();
+                let mut result = *pk;
                 result.mul_assign(&ctx, &e[..])?;
                 result
             };
@@ -108,7 +108,7 @@ impl Signature {
         };
 
         // Check that R.x is what we expect
-        if &r.serialize()[1..33] != self.r_x {
+        if r.serialize()[1..33] != self.r_x {
             return Err(Error::InvalidSignature);
         }
 
@@ -128,7 +128,7 @@ impl Signature {
         engine.input(message);
         let hash = sha256::Hash::from_engine(engine);
 
-        Ok(SecretKey::from_slice(&hash[..])?)
+        SecretKey::from_slice(&hash[..])
     }
 
     fn generate_k(sk: &SecretKey, message: &[u8; 32]) -> SecretKey {
@@ -199,7 +199,7 @@ impl error::Error for Error {
         "description() is deprecated; use Display"
     }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::Secp256k1Error(ref e) => Some(e),
             Error::InvalidSignature => None,
@@ -209,13 +209,13 @@ impl error::Error for Error {
 
 #[cfg(test)]
 mod tests {
-    use hashes::hex::FromHex;
+    use crate::hashes::hex::FromHex;
 
-    use hashes::Hash;
-    use consensus::encode::{deserialize, serialize};
-    use util::signature::Signature;
-    use util::key::PrivateKey;
-    use test_helpers::*;
+    use crate::hashes::Hash;
+    use crate::consensus::encode::{deserialize, serialize};
+    use crate::util::signature::Signature;
+    use crate::util::key::PrivateKey;
+    use crate::test_helpers::*;
 
     #[test]
     fn test_p2p_sign_and_verify() {

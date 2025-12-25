@@ -31,16 +31,16 @@
 use std::default::Default;
 use std::{fmt, io};
 
-use hashes::{self, Hash, sha256d};
-use hashes::hex::FromHex;
+use crate::hashes::{self, Hash, sha256d};
+use crate::hashes::hex::FromHex;
 
-use util::endian;
-use blockdata::constants::WITNESS_SCALE_FACTOR;
-#[cfg(feature="bitcoinconsensus")] use blockdata::script;
-use blockdata::script::Script;
-use consensus::{encode, Decodable, Encodable};
-use hash_types::*;
-use VarInt;
+use crate::util::endian;
+use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
+#[cfg(feature="bitcoinconsensus")] use crate::blockdata::script;
+use crate::blockdata::script::Script;
+use crate::consensus::{encode, Decodable, Encodable};
+use crate::hash_types::*;
+use crate::VarInt;
 
 /// A reference to a transaction output
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
@@ -57,8 +57,8 @@ impl OutPoint {
     #[inline]
     pub fn new(txid: Txid, vout: u32) -> OutPoint {
         OutPoint {
-            txid: txid,
-            vout: vout,
+            txid,
+            vout,
         }
     }
 
@@ -67,7 +67,7 @@ impl OutPoint {
     pub fn null() -> OutPoint {
         OutPoint {
             txid: Default::default(),
-            vout: u32::max_value(),
+            vout: u32::MAX,
         }
     }
 
@@ -123,7 +123,7 @@ impl ::std::error::Error for ParseOutPointError {
         "description() is deprecated; use Display"
     }
 
-    fn cause(&self) -> Option<&::std::error::Error> {
+    fn cause(&self) -> Option<&dyn ::std::error::Error> {
         match *self {
             ParseOutPointError::Txid(ref e) => Some(e),
             ParseOutPointError::Vout(ref e) => Some(e),
@@ -136,12 +136,12 @@ impl ::std::error::Error for ParseOutPointError {
 /// It does not permit leading zeroes or non-digit characters.
 fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
     if s.len() > 1 {
-        let first = s.chars().nth(0).unwrap();
+        let first = s.chars().next().unwrap();
         if first == '0' || first == '+' {
             return Err(ParseOutPointError::VoutNotCanonical);
         }
     }
-    Ok(s.parse().map_err(ParseOutPointError::Vout)?)
+    s.parse().map_err(ParseOutPointError::Vout)
 }
 
 impl ::std::str::FromStr for OutPoint {
@@ -152,7 +152,7 @@ impl ::std::str::FromStr for OutPoint {
             return Err(ParseOutPointError::TooLong);
         }
         let find = s.find(':');
-        if find == None || find != s.rfind(':') {
+        if find.is_none() || find != s.rfind(':') {
             return Err(ParseOutPointError::Format);
         }
         let colon = find.unwrap();
@@ -193,7 +193,7 @@ impl Default for TxIn {
         TxIn {
             previous_output: OutPoint::default(),
             script_sig: Script::new(),
-            sequence: u32::max_value(),
+            sequence: u32::MAX,
             witness: Vec::new(),
         }
     }
@@ -557,9 +557,9 @@ impl Decodable for Transaction {
                         Err(encode::Error::ParseFailed("witness flag set but no witnesses present"))
                     } else {
                         Ok(Transaction {
-                            version: version,
-                            input: input,
-                            output: output,
+                            version,
+                            input,
+                            output,
                             lock_time: Decodable::consensus_decode(d)?,
                         })
                     }
@@ -572,8 +572,8 @@ impl Decodable for Transaction {
         // non-segwit
         } else {
             Ok(Transaction {
-                version: version,
-                input: input,
+                version,
+                input,
                 output: Decodable::consensus_decode(&mut d)?,
                 lock_time: Decodable::consensus_decode(d)?,
             })
@@ -641,15 +641,15 @@ mod tests {
     use super::{OutPoint, ParseOutPointError, Transaction, TxIn};
 
     use std::str::FromStr;
-    use blockdata::constants::WITNESS_SCALE_FACTOR;
-    use blockdata::script::Script;
-    use consensus::encode::serialize;
-    use consensus::encode::deserialize;
+    use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
+    use crate::blockdata::script::Script;
+    use crate::consensus::encode::serialize;
+    use crate::consensus::encode::deserialize;
 
-    use hashes::Hash;
-    use hashes::hex::FromHex;
+    use crate::hashes::Hash;
+    use crate::hashes::hex::FromHex;
 
-    use hash_types::*;
+    use crate::hash_types::*;
 
     #[test]
     fn test_outpoint() {
@@ -702,7 +702,7 @@ mod tests {
 
     #[test]
     fn test_is_coinbase () {
-        use blockdata::block::Block;
+        use crate::blockdata::block::Block;
         let hex_block = Vec::from_hex("010000000000000000000000000000000000000000000000000000000000000000000000c0d6961ad2819f74eb6d085f04f9cceb0a9a6d5c153fd3c39fc47c3ca0bb548f85fbd09a5f7d8ac4c9552e52931ef6672984f64e52ad6d05d1cdb18907da8527db317c5e012103addb2555f37abf8f28f11f498bec7bd1460e7243c1813847c49a7ae326a97d1c40e2d9e39bfb25f5534cf3fa235697e18efa81ce02e161946a73b9b20b3641576a9636f19747447ab8b02a97a9d96ecdaf0aa3a56b93f9e8f81d55252854270617010100000001000000000000000000000000000000000000000000000000000000000000000000000000222103addb2555f37abf8f28f11f498bec7bd1460e7243c1813847c49a7ae326a97d1cffffffff0100f2052a010000001976a914a15f16ea2ba840d178e4c19781abca5f4fb1b4c288ac00000000").unwrap();
         let block: Block = deserialize(&hex_block).unwrap();
         assert! (block.txdata[0].is_coin_base());
@@ -1200,9 +1200,9 @@ mod tests {
     #[test]
     #[cfg(feature="bitcoinconsensus")]
     fn test_transaction_verify () {
-        use hashes::hex::FromHex;
+        use crate::hashes::hex::FromHex;
         use std::collections::HashMap;
-        use blockdata::script;
+        use crate::blockdata::script;
         // a random recent segwit transaction from blockchain using both old and segwit inputs
         let mut spending: Transaction = deserialize(Vec::from_hex("020000000001031cfbc8f54fbfa4a33a30068841371f80dbfe166211242213188428f437445c91000000006a47304402206fbcec8d2d2e740d824d3d36cc345b37d9f65d665a99f5bd5c9e8d42270a03a8022013959632492332200c2908459547bf8dbf97c65ab1a28dec377d6f1d41d3d63e012103d7279dfb90ce17fe139ba60a7c41ddf605b25e1c07a4ddcb9dfef4e7d6710f48feffffff476222484f5e35b3f0e43f65fc76e21d8be7818dd6a989c160b1e5039b7835fc00000000171600140914414d3c94af70ac7e25407b0689e0baa10c77feffffffa83d954a62568bbc99cc644c62eb7383d7c2a2563041a0aeb891a6a4055895570000000017160014795d04cc2d4f31480d9a3710993fbd80d04301dffeffffff06fef72f000000000017a91476fd7035cd26f1a32a5ab979e056713aac25796887a5000f00000000001976a914b8332d502a529571c6af4be66399cd33379071c588ac3fda0500000000001976a914fc1d692f8de10ae33295f090bea5fe49527d975c88ac522e1b00000000001976a914808406b54d1044c429ac54c0e189b0d8061667e088ac6eb68501000000001976a914dfab6085f3a8fb3e6710206a5a959313c5618f4d88acbba20000000000001976a914eb3026552d7e3f3073457d0bee5d4757de48160d88ac0002483045022100bee24b63212939d33d513e767bc79300051f7a0d433c3fcf1e0e3bf03b9eb1d70220588dc45a9ce3a939103b4459ce47500b64e23ab118dfc03c9caa7d6bfc32b9c601210354fd80328da0f9ae6eef2b3a81f74f9a6f66761fadf96f1d1d22b1fd6845876402483045022100e29c7e3a5efc10da6269e5fc20b6a1cb8beb92130cc52c67e46ef40aaa5cac5f0220644dd1b049727d991aece98a105563416e10a5ac4221abac7d16931842d5c322012103960b87412d6e169f30e12106bdf70122aabb9eb61f455518322a18b920a4dfa887d30700")
             .unwrap().as_slice()).unwrap();

@@ -16,9 +16,9 @@
 //! to avoid mixing data of the same hash format (like SHA256d) but of different meaning
 //! (transaction id, block hash etc).
 
-use consensus::encode::{Encodable, Decodable, Error};
-use hashes::{Hash, sha256, sha256d, ripemd160, hash160};
-use hashes::hex::{FromHex, ToHex};
+use crate::consensus::encode::{Encodable, Decodable};
+use crate::hashes::{Hash, sha256, sha256d, hash160};
+use crate::hashes::hex::FromHex;
 
 macro_rules! impl_hashencode {
     ($hashtype:ident) => {

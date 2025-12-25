@@ -56,15 +56,15 @@ use std::fmt::{Display, Formatter};
 use std::io::Cursor;
 use std::cmp::Ordering;
 
-use hashes::{Hash, siphash24};
-use hash_types::{BlockHash, FilterHash};
+use crate::hashes::{Hash, siphash24};
+use crate::hash_types::{BlockHash, FilterHash};
 
-use blockdata::block::Block;
-use blockdata::script::Script;
-use blockdata::transaction::OutPoint;
-use consensus::{Decodable, Encodable};
-use consensus::encode::VarInt;
-use util::endian;
+use crate::blockdata::block::Block;
+use crate::blockdata::script::Script;
+use crate::blockdata::transaction::OutPoint;
+use crate::consensus::{Decodable, Encodable};
+use crate::consensus::encode::VarInt;
+use crate::util::endian;
 
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
 const P: u8 = 19;
@@ -137,13 +137,13 @@ impl BlockFilter {
     }
 
     /// match any query pattern
-    pub fn match_any(&self, block_hash: &BlockHash, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
+    pub fn match_any(&self, block_hash: &BlockHash, query: &mut dyn Iterator<Item=&[u8]>) -> Result<bool, Error> {
         let filter_reader = BlockFilterReader::new(block_hash);
         filter_reader.match_any(&mut Cursor::new(self.content.as_slice()), query)
     }
 
     /// match all query pattern
-    pub fn match_all(&self, block_hash: &BlockHash, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
+    pub fn match_all(&self, block_hash: &BlockHash, query: &mut dyn Iterator<Item=&[u8]>) -> Result<bool, Error> {
         let filter_reader = BlockFilterReader::new(block_hash);
         filter_reader.match_all(&mut Cursor::new(self.content.as_slice()), query)
     }
@@ -157,7 +157,7 @@ pub struct BlockFilterWriter<'a> {
 
 impl<'a> BlockFilterWriter<'a> {
     /// Create a block filter writer
-    pub fn new(writer: &'a mut io::Write, block: &'a Block) -> BlockFilterWriter<'a> {
+    pub fn new(writer: &'a mut dyn io::Write, block: &'a Block) -> BlockFilterWriter<'a> {
         let block_hash_as_int = block.block_hash().into_inner();
         let k0 = endian::slice_to_u64_le(&block_hash_as_int[0..8]);
         let k1 = endian::slice_to_u64_le(&block_hash_as_int[8..16]);
@@ -218,12 +218,12 @@ impl BlockFilterReader {
     }
 
     /// match any query pattern
-    pub fn match_any(&self, reader: &mut io::Read, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
+    pub fn match_any(&self, reader: &mut dyn io::Read, query: &mut dyn Iterator<Item=&[u8]>) -> Result<bool, Error> {
         self.reader.match_any(reader, query)
     }
 
     /// match all query pattern
-    pub fn match_all(&self, reader: &mut io::Read, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
+    pub fn match_all(&self, reader: &mut dyn io::Read, query: &mut dyn Iterator<Item=&[u8]>) -> Result<bool, Error> {
         self.reader.match_all(reader, query)
     }
 }
@@ -242,7 +242,7 @@ impl GCSFilterReader {
     }
 
     /// match any query pattern
-    pub fn match_any(&self, reader: &mut io::Read, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
+    pub fn match_any(&self, reader: &mut dyn io::Read, query: &mut dyn Iterator<Item=&[u8]>) -> Result<bool, Error> {
         let mut decoder = reader;
         let n_elements: VarInt = Decodable::consensus_decode(&mut decoder).unwrap_or(VarInt(0));
         let reader = &mut decoder;
@@ -282,7 +282,7 @@ impl GCSFilterReader {
     }
 
     /// match all query pattern
-    pub fn match_all(&self, reader: &mut io::Read, query: &mut Iterator<Item=&[u8]>) -> Result<bool, Error> {
+    pub fn match_all(&self, reader: &mut dyn io::Read, query: &mut dyn Iterator<Item=&[u8]>) -> Result<bool, Error> {
         let mut decoder = reader;
         let n_elements: VarInt = Decodable::consensus_decode(&mut decoder).unwrap_or(VarInt(0));
         let reader = &mut decoder;
@@ -344,14 +344,14 @@ fn map_to_range(hash: u64, nm: u64) -> u64 {
 /// Colomb-Rice encoded filter writer
 pub struct GCSFilterWriter<'a> {
     filter: GCSFilter,
-    writer: &'a mut io::Write,
+    writer: &'a mut dyn io::Write,
     elements: HashSet<Vec<u8>>,
     m: u64
 }
 
 impl<'a> GCSFilterWriter<'a> {
     /// Create a new GCS writer wrapping a generic writer, with specific seed to siphash
-    pub fn new(writer: &'a mut io::Write, k0: u64, k1: u64, m: u64, p: u8) -> GCSFilterWriter<'a> {
+    pub fn new(writer: &'a mut dyn io::Write, k0: u64, k1: u64, m: u64, p: u8) -> GCSFilterWriter<'a> {
         GCSFilterWriter {
             filter: GCSFilter::new(k0, k1, p),
             writer,
@@ -440,15 +440,15 @@ impl GCSFilter {
 pub struct BitStreamReader<'a> {
     buffer: [u8; 1],
     offset: u8,
-    reader: &'a mut io::Read,
+    reader: &'a mut dyn io::Read,
 }
 
 impl<'a> BitStreamReader<'a> {
     /// Create a new BitStreamReader that reads bitwise from a given reader
-    pub fn new(reader: &'a mut io::Read) -> BitStreamReader {
+    pub fn new(reader: &'a mut dyn io::Read) -> BitStreamReader<'a> {
         BitStreamReader {
             buffer: [0u8],
-            reader: reader,
+            reader,
             offset: 8,
         }
     }
@@ -456,7 +456,7 @@ impl<'a> BitStreamReader<'a> {
     /// Read nbit bits
     pub fn read(&mut self, mut nbits: u8) -> Result<u64, io::Error> {
         if nbits > 64 {
-            return Err(io::Error::new(io::ErrorKind::Other, "can not read more than 64 bits at once"));
+            return Err(io::Error::other("can not read more than 64 bits at once"));
         }
         let mut data = 0u64;
         while nbits > 0 {
@@ -478,15 +478,15 @@ impl<'a> BitStreamReader<'a> {
 pub struct BitStreamWriter<'a> {
     buffer: [u8; 1],
     offset: u8,
-    writer: &'a mut io::Write,
+    writer: &'a mut dyn io::Write,
 }
 
 impl<'a> BitStreamWriter<'a> {
     /// Create a new BitStreamWriter that writes bitwise to a given writer
-    pub fn new(writer: &'a mut io::Write) -> BitStreamWriter {
+    pub fn new(writer: &'a mut dyn io::Write) -> BitStreamWriter<'a> {
         BitStreamWriter {
             buffer: [0u8],
-            writer: writer,
+            writer,
             offset: 0,
         }
     }
@@ -494,7 +494,7 @@ impl<'a> BitStreamWriter<'a> {
     /// Write nbits bits from data
     pub fn write(&mut self, data: u64, mut nbits: u8) -> Result<usize, io::Error> {
         if nbits > 64 {
-            return Err(io::Error::new(io::ErrorKind::Other, "can not write more than 64 bits at once"));
+            return Err(io::Error::other("can not write more than 64 bits at once"));
         }
         let mut wrote = 0;
         while nbits > 0 {
@@ -527,8 +527,8 @@ mod test {
     use std::collections::{HashSet, HashMap};
     use std::io::Cursor;
 
-    use hash_types::BlockHash;
-    use hashes::hex::FromHex;
+    use crate::hash_types::BlockHash;
+    use crate::hashes::hex::FromHex;
 
     use super::*;
 
@@ -536,7 +536,7 @@ mod test {
     extern crate serde_json;
     use self::serde_json::{Value};
 
-    use consensus::encode::deserialize;
+    use crate::consensus::encode::deserialize;
 
     #[test]
     #[ignore]

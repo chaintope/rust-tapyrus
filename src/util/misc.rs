@@ -16,9 +16,9 @@
 //!
 //! Various utility functions
 
-use hashes::{sha256d, Hash, HashEngine};
-use blockdata::opcodes;
-use consensus::{encode, Encodable};
+use crate::hashes::{sha256d, Hash, HashEngine};
+use crate::blockdata::opcodes;
+use crate::consensus::{encode, Encodable};
 
 static MSG_SIGN_PREFIX: &[u8] = b"\x18Bitcoin Signed Message:\n";
 
@@ -70,7 +70,7 @@ pub fn signed_msg_hash(msg: &str) -> sha256d::Hash {
 
 #[cfg(test)]
 mod tests {
-    use hashes::hex::ToHex;
+    use crate::hashes::hex::ToHex;
     use super::script_find_and_remove;
     use super::signed_msg_hash;
 

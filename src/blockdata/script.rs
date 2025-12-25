@@ -30,18 +30,18 @@ use std::str::FromStr;
 
 #[cfg(feature = "serde")] use serde;
 
-use hash_types::{ScriptHash, WScriptHash};
-use blockdata::opcodes;
-use blockdata::transaction::OutPoint;
-use consensus::{deserialize, encode, Decodable, Encodable};
-use consensus::encode::serialize_hex;
-use hashes::hex::FromHex;
-use hashes::{sha256, Hash};
+use crate::hash_types::{ScriptHash, WScriptHash};
+use crate::blockdata::opcodes;
+use crate::blockdata::transaction::OutPoint;
+use crate::consensus::{deserialize, encode, Decodable, Encodable};
+use crate::consensus::encode::serialize_hex;
+use crate::hashes::hex::FromHex;
+use crate::hashes::{sha256, Hash};
 
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
 
-use util::key::PublicKey;
+use crate::util::key::PublicKey;
 
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 /// A Bitcoin script
@@ -308,7 +308,7 @@ impl Script {
     pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
     /// Returns the script data
-    pub fn as_bytes(&self) -> &[u8] { &*self.0 }
+    pub fn as_bytes(&self) -> &[u8] { &self.0 }
 
     /// Returns a copy of the script data
     pub fn to_bytes(&self) -> Vec<u8> { self.0.clone().into_vec() }
@@ -477,7 +477,7 @@ impl Script {
                     }
                 }
                 Instruction::PushBytes(bytes) => {
-                    match PublicKey::from_slice(&bytes) {
+                    match PublicKey::from_slice(bytes) {
                         Ok(key) => { pubkeys.push(key) },
                         _ => { return Err(MultisigError::IsNotMultisig) }
                     }
@@ -510,7 +510,7 @@ impl Script {
     /// it as a slice using `script[..]` or convert it to a vector using `into_bytes()`.
     ///
     /// To force minimal pushes, use [instructions_minimal].
-    pub fn instructions(&self) -> Instructions {
+    pub fn instructions(&self) -> Instructions<'_> {
         Instructions {
             data: &self.0[..],
             enforce_minimal: false,
@@ -519,7 +519,7 @@ impl Script {
 
      /// Iterate over the script in the form of `Instruction`s while enforcing
     /// minimal pushes.
-    pub fn instructions_minimal(&self) -> Instructions {
+    pub fn instructions_minimal(&self) -> Instructions<'_> {
         Instructions {
             data: &self.0[..],
             enforce_minimal: true,
@@ -537,7 +537,7 @@ impl Script {
     }
 
     /// Write the assembly decoding of the script to the formatter.
-    pub fn fmt_asm(&self, f: &mut fmt::Write) -> fmt::Result {
+    pub fn fmt_asm(&self, f: &mut dyn fmt::Write) -> fmt::Result {
         let mut index = 0;
         while index < self.0.len() {
             let opcode = opcodes::All::from(self.0[index]);
@@ -553,7 +553,7 @@ impl Script {
                             break;
                         }
                         match read_uint(&self.0[index..], 1) {
-                            Ok(n) => { index += 1; n as usize }
+                            Ok(n) => { index += 1; n }
                             Err(_) => { f.write_str("<bad length>")?; break; }
                         }
                     }
@@ -563,7 +563,7 @@ impl Script {
                             break;
                         }
                         match read_uint(&self.0[index..], 2) {
-                            Ok(n) => { index += 2; n as usize }
+                            Ok(n) => { index += 2; n }
                             Err(_) => { f.write_str("<bad length>")?; break; }
                         }
                     }
@@ -573,7 +573,7 @@ impl Script {
                             break;
                         }
                         match read_uint(&self.0[index..], 4) {
-                            Ok(n) => { index += 4; n as usize }
+                            Ok(n) => { index += 4; n }
                             Err(_) => { f.write_str("<bad length>")?; break; }
                         }
                     }
@@ -682,12 +682,11 @@ impl<'a> Iterator for Instructions<'a> {
                     self.data = &[];  // Kill iterator so that it does not return an infinite stream of errors
                     return Some(Err(Error::EarlyEndOfScript));
                 }
-                if self.enforce_minimal {
-                    if n == 1 && (self.data[1] == 0x81 || (self.data[1] > 0 && self.data[1] <= 16)) {
+                if self.enforce_minimal
+                    && n == 1 && (self.data[1] == 0x81 || (self.data[1] > 0 && self.data[1] <= 16)) {
                         self.data = &[];
                         return Some(Err(Error::NonMinimalPush));
                     }
-                }
                 let ret = Some(Ok(Instruction::PushBytes(&self.data[1..n+1])));
                 self.data = &self.data[n + 1..];
                 ret
@@ -791,7 +790,7 @@ impl Builder {
     /// dedicated opcodes to push some small integers.
     pub fn push_int(self, data: i64) -> Builder {
         // We can special-case -1, 1-16
-        if data == -1 || (data >= 1 && data <= 16) {
+        if data == -1 || (1..=16).contains(&data) {
             let opcode = opcodes::All::from(
                 (data - 1 + opcodes::OP_TRUE.into_u8() as i64) as u8
             );
@@ -1134,7 +1133,7 @@ impl Decodable for ColorIdentifier {
 
         let payload = sha256::Hash::from_slice(&bytes[1..]).map_err(|_| encode::Error::ParseFailed("invalid payload."))?;
         Ok(ColorIdentifier {
-            token_type: token_type,
+            token_type,
             payload: ColorIdentifierPayload(payload)
         })
     }
@@ -1162,12 +1161,10 @@ pub enum TokenTypes {
 impl TokenTypes {
     /// return true if token type is supported
     pub fn is_valid(token_type: &u8) -> bool {
-        vec![
-            TokenTypes::None,
+        [TokenTypes::None,
             TokenTypes::Reissuable,
             TokenTypes::NonReissuable,
-            TokenTypes::Nft,
-        ].iter().any(|e| e.clone() as u8 == *token_type)
+            TokenTypes::Nft].iter().any(|e| e.clone() as u8 == *token_type)
     }
 }
 
@@ -1178,11 +1175,11 @@ mod test {
     use super::*;
     use super::build_scriptint;
 
-    use consensus::encode::{deserialize, serialize};
-    use blockdata::opcodes;
-    use util::key::PublicKey;
-    use hash_types::Txid;
-    use hashes::hex::FromHex;
+    use crate::consensus::encode::{deserialize, serialize};
+    use crate::blockdata::opcodes;
+    use crate::util::key::PublicKey;
+    use crate::hash_types::Txid;
+    use crate::hashes::hex::FromHex;
 
     #[test]
     fn script() {
