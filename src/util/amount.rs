@@ -874,7 +874,7 @@ pub mod serde {
     //! ```
 
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
-    use util::amount::{Amount, Denomination, SignedAmount};
+    use crate::util::amount::{Amount, Denomination, SignedAmount};
 
     /// This trait is used only to avoid code duplication and naming collisions
     /// of the different serde serialization crates.
@@ -922,7 +922,7 @@ pub mod serde {
         //! Use with `#[serde(with = "amount::serde::as_tap")]`.
 
         use serde::{Deserializer, Serializer};
-        use util::amount::serde::SerdeAmount;
+        use crate::util::amount::serde::SerdeAmount;
 
         pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
             a.ser_tap(s)
@@ -937,7 +937,7 @@ pub mod serde {
             //! Use with `#[serde(default, with = "amount::serde::as_tap::opt")]`.
 
             use serde::{Deserializer, Serializer};
-            use util::amount::serde::SerdeAmount;
+            use crate::util::amount::serde::SerdeAmount;
 
             pub fn serialize<A: SerdeAmount, S: Serializer>(
                 a: &Option<A>,
@@ -962,7 +962,7 @@ pub mod serde {
         //! Use with `#[serde(with = "amount::serde::as_tpc")]`.
 
         use serde::{Deserializer, Serializer};
-        use util::amount::serde::SerdeAmount;
+        use crate::util::amount::serde::SerdeAmount;
 
         pub fn serialize<A: SerdeAmount, S: Serializer>(a: &A, s: S) -> Result<S::Ok, S::Error> {
             a.ser_tpc(s)
@@ -977,7 +977,7 @@ pub mod serde {
             //! Use with `#[serde(default, with = "amount::serde::as_tpc::opt")]`.
 
             use serde::{Deserializer, Serializer};
-            use util::amount::serde::SerdeAmount;
+            use crate::util::amount::serde::SerdeAmount;
 
             pub fn serialize<A: SerdeAmount, S: Serializer>(
                 a: &Option<A>,
@@ -1308,9 +1308,9 @@ mod tests {
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         struct T {
-            #[serde(with = "::util::amount::serde::as_tap")]
+            #[serde(with = "crate::util::amount::serde::as_tap")]
             pub amt: Amount,
-            #[serde(with = "::util::amount::serde::as_tap")]
+            #[serde(with = "crate::util::amount::serde::as_tap")]
             pub samt: SignedAmount,
         }
 
@@ -1337,9 +1337,9 @@ mod tests {
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         struct T {
-            #[serde(with = "::util::amount::serde::as_tpc")]
+            #[serde(with = "crate::util::amount::serde::as_tpc")]
             pub amt: Amount,
-            #[serde(with = "::util::amount::serde::as_tpc")]
+            #[serde(with = "crate::util::amount::serde::as_tpc")]
             pub samt: SignedAmount,
         }
 
@@ -1377,9 +1377,9 @@ mod tests {
 
         #[derive(Serialize, Deserialize, PartialEq, Debug)]
         struct T {
-            #[serde(default, with = "::util::amount::serde::as_tpc::opt")]
+            #[serde(default, with = "crate::util::amount::serde::as_tpc::opt")]
             pub amt: Option<Amount>,
-            #[serde(default, with = "::util::amount::serde::as_tpc::opt")]
+            #[serde(default, with = "crate::util::amount::serde::as_tpc::opt")]
             pub samt: Option<SignedAmount>,
         }
 
