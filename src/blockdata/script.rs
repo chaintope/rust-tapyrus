@@ -30,18 +30,18 @@ use std::str::FromStr;
 
 #[cfg(feature = "serde")] use serde;
 
-use hash_types::{ScriptHash, WScriptHash};
-use blockdata::opcodes;
-use blockdata::transaction::OutPoint;
-use consensus::{deserialize, encode, Decodable, Encodable};
-use consensus::encode::serialize_hex;
-use hashes::hex::FromHex;
-use hashes::{sha256, Hash};
+use crate::hash_types::{ScriptHash, WScriptHash};
+use crate::blockdata::opcodes;
+use crate::blockdata::transaction::OutPoint;
+use crate::consensus::{deserialize, encode, Decodable, Encodable};
+use crate::consensus::encode::serialize_hex;
+use crate::hashes::hex::FromHex;
+use crate::hashes::{sha256, Hash};
 
 #[cfg(feature="bitcoinconsensus")] use bitcoinconsensus;
 #[cfg(feature="bitcoinconsensus")] use std::convert;
 
-use util::key::PublicKey;
+use crate::util::key::PublicKey;
 
 #[derive(Clone, Default, PartialOrd, Ord, PartialEq, Eq, Hash)]
 /// A Bitcoin script
@@ -510,7 +510,7 @@ impl Script {
     /// it as a slice using `script[..]` or convert it to a vector using `into_bytes()`.
     ///
     /// To force minimal pushes, use [instructions_minimal].
-    pub fn instructions(&self) -> Instructions {
+    pub fn instructions(&self) -> Instructions<'_> {
         Instructions {
             data: &self.0[..],
             enforce_minimal: false,
@@ -519,7 +519,7 @@ impl Script {
 
      /// Iterate over the script in the form of `Instruction`s while enforcing
     /// minimal pushes.
-    pub fn instructions_minimal(&self) -> Instructions {
+    pub fn instructions_minimal(&self) -> Instructions<'_> {
         Instructions {
             data: &self.0[..],
             enforce_minimal: true,
@@ -1178,11 +1178,11 @@ mod test {
     use super::*;
     use super::build_scriptint;
 
-    use consensus::encode::{deserialize, serialize};
-    use blockdata::opcodes;
-    use util::key::PublicKey;
-    use hash_types::Txid;
-    use hashes::hex::FromHex;
+    use crate::consensus::encode::{deserialize, serialize};
+    use crate::blockdata::opcodes;
+    use crate::util::key::PublicKey;
+    use crate::hash_types::Txid;
+    use crate::hashes::hex::FromHex;
 
     #[test]
     fn script() {

@@ -16,9 +16,9 @@
 
 use std::{error, fmt, iter, slice, str};
 
-use hashes::{sha256d, Hash};
+use crate::hashes::{sha256d, Hash};
 
-use util::endian;
+use crate::util::endian;
 
 /// An error that might occur during base58 decoding
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -91,12 +91,12 @@ impl<T: Default + Copy> SmallVec<T> {
         }
     }
 
-    pub fn iter(&self) -> iter::Chain<slice::Iter<T>, slice::Iter<T>> {
+    pub fn iter(&self) -> iter::Chain<slice::Iter<'_, T>, slice::Iter<'_, T>> {
         // If len<100 then we just append an empty vec
         self.stack[0..self.len].iter().chain(self.heap.iter())
     }
 
-    pub fn iter_mut(&mut self) -> iter::Chain<slice::IterMut<T>, slice::IterMut<T>> {
+    pub fn iter_mut(&mut self) -> iter::Chain<slice::IterMut<'_, T>, slice::IterMut<'_, T>> {
         // If len<100 then we just append an empty vec
         self.stack[0..self.len]
             .iter_mut()
@@ -362,7 +362,7 @@ pub fn check_encode_slice_to_fmt(fmt: &mut fmt::Formatter, data: &[u8]) -> fmt::
 #[cfg(test)]
 mod tests {
     use super::*;
-    use hashes::hex::FromHex;
+    use crate::hashes::hex::FromHex;
 
     #[test]
     fn test_base58_encode() {

@@ -32,19 +32,19 @@
 use std::{fmt, error, io, mem, u32};
 use std::borrow::Cow;
 use std::io::{Cursor, Read, Write};
-use hashes::hex::ToHex;
+use crate::hashes::hex::ToHex;
 
-use hashes::{sha256d, Hash};
-use hash_types::{BlockHash, FilterHash, TxMerkleNode};
+use crate::hashes::{sha256d, Hash};
+use crate::hash_types::{BlockHash, FilterHash, TxMerkleNode};
 
-use util::endian;
-use util::psbt;
-use util::key;
-use util::signature::Signature;
+use crate::util::endian;
+use crate::util::psbt;
+use crate::util::key;
+use crate::util::signature::Signature;
 
-use blockdata::transaction::{TxOut, Transaction, TxIn};
-use network::message_blockdata::Inventory;
-use network::address::Address;
+use crate::blockdata::transaction::{TxOut, Transaction, TxIn};
+use crate::network::message_blockdata::Inventory;
+use crate::network::address::Address;
 
 /// Encoding error
 #[derive(Debug)]
@@ -799,12 +799,12 @@ mod tests {
     use std::mem::discriminant;
     use super::{deserialize, serialize, Error, CheckedData, VarInt};
     use super::{Transaction, BlockHash, FilterHash, TxMerkleNode, TxOut, TxIn};
-    use consensus::{Encodable, deserialize_partial, Decodable};
-    use util::endian::{u64_to_array_le, u32_to_array_le, u16_to_array_le};
+    use crate::consensus::{Encodable, deserialize_partial, Decodable};
+    use crate::util::endian::{u64_to_array_le, u32_to_array_le, u16_to_array_le};
     use secp256k1::rand::{thread_rng, Rng};
-    use network::message_blockdata::Inventory;
-    use network::Address;
-    use util::signature::Signature;
+    use crate::network::message_blockdata::Inventory;
+    use crate::network::Address;
+    use crate::util::signature::Signature;
 
     #[test]
     fn serialize_int_test() {

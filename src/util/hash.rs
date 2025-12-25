@@ -23,8 +23,8 @@
 use std::cmp::min;
 use std::io;
 
-use hashes::Hash;
-use consensus::encode::Encodable;
+use crate::hashes::Hash;
+use crate::consensus::encode::Encodable;
 
 /// Calculates the merkle root of a list of hashes inline
 /// into the allocated slice.

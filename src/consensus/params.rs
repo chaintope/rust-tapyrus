@@ -22,7 +22,7 @@
 //! This module provides predefined set of parameters for different chains.
 //!
 
-use network::constants::Network;
+use crate::network::constants::Network;
 
 #[derive(Debug, Clone)]
 /// Parameters that influence chain consensus.

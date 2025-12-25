@@ -15,8 +15,8 @@
 use std::error;
 use std::fmt;
 
-use blockdata::transaction::Transaction;
-use util::psbt::raw;
+use crate::blockdata::transaction::Transaction;
+use crate::util::psbt::raw;
 
 /// Ways that a Partially Signed Transaction might fail.
 #[derive(Debug)]

@@ -23,15 +23,15 @@ use std::{io, iter, mem, fmt};
 use std::borrow::Cow;
 use std::io::Cursor;
 
-use blockdata::block;
-use blockdata::transaction;
-use network::address::Address;
-use network::message_network;
-use network::message_blockdata;
-use network::message_filter;
-use consensus::encode::{CheckedData, Decodable, Encodable, VarInt};
-use consensus::{encode, serialize};
-use consensus::encode::MAX_VEC_SIZE;
+use crate::blockdata::block;
+use crate::blockdata::transaction;
+use crate::network::address::Address;
+use crate::network::message_network;
+use crate::network::message_blockdata;
+use crate::network::message_filter;
+use crate::consensus::encode::{CheckedData, Decodable, Encodable, VarInt};
+use crate::consensus::{encode, serialize};
+use crate::consensus::encode::MAX_VEC_SIZE;
 
 /// Serializer for command string
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -337,17 +337,17 @@ impl Decodable for RawNetworkMessage {
 mod test {
     use std::io;
     use super::{RawNetworkMessage, NetworkMessage, CommandString};
-    use network::constants::ServiceFlags;
-    use consensus::encode::{Encodable, deserialize, deserialize_partial, serialize};
-    use hashes::hex::FromHex;
-    use hashes::sha256d::Hash;
-    use hashes::Hash as HashTrait;
-    use network::address::Address;
+    use crate::network::constants::ServiceFlags;
+    use crate::consensus::encode::{Encodable, deserialize, deserialize_partial, serialize};
+    use crate::hashes::hex::FromHex;
+    use crate::hashes::sha256d::Hash;
+    use crate::hashes::Hash as HashTrait;
+    use crate::network::address::Address;
     use super::message_network::{Reject, RejectReason, VersionMessage};
-    use network::message_blockdata::{Inventory, GetBlocksMessage, GetHeadersMessage};
-    use blockdata::block::{Block, BlockHeader};
-    use network::message_filter::{GetCFilters, CFilter, GetCFHeaders, CFHeaders, GetCFCheckpt, CFCheckpt};
-    use blockdata::transaction::Transaction;
+    use crate::network::message_blockdata::{Inventory, GetBlocksMessage, GetHeadersMessage};
+    use crate::blockdata::block::{Block, BlockHeader};
+    use crate::network::message_filter::{GetCFilters, CFilter, GetCFHeaders, CFHeaders, GetCFCheckpt, CFCheckpt};
+    use crate::blockdata::transaction::Transaction;
 
     fn hash(slice: [u8;32]) -> Hash {
         Hash::from_slice(&slice).unwrap()

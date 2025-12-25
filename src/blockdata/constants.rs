@@ -24,7 +24,7 @@
 //! single transaction
 //!
 
-use network::constants::Network;
+use crate::network::constants::Network;
 
 /// The maximum allowable sequence number
 pub const MAX_SEQUENCE: u32 = 0xFFFFFFFF;

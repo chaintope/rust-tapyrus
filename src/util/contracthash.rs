@@ -21,16 +21,16 @@
 #![cfg_attr(not(test), deprecated)]
 
 use secp256k1::{self, Secp256k1};
-use PrivateKey;
-use PublicKey;
-use hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine};
-use blockdata::{opcodes, script};
+use crate::PrivateKey;
+use crate::PublicKey;
+use crate::hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine};
+use crate::blockdata::{opcodes, script};
 
 use std::{error, fmt};
 
-use hash_types::ScriptHash;
-use network::constants::Network;
-use util::address;
+use crate::hash_types::ScriptHash;
+use crate::network::constants::Network;
+use crate::util::address;
 
 /// Encoding of "pubkey here" in script; from Bitcoin Core `src/script/script.h`
 static PUBKEY: u8 = 0xFE;
@@ -281,15 +281,15 @@ pub fn untemplate(script: &script::Script) -> Result<(Template, Vec<PublicKey>),
 #[cfg(test)]
 mod tests {
     use secp256k1::Secp256k1;
-    use hashes::hex::FromHex;
+    use crate::hashes::hex::FromHex;
     use secp256k1::rand::thread_rng;
     use std::str::FromStr;
 
-    use blockdata::script::Script;
-    use network::constants::Network;
+    use crate::blockdata::script::Script;
+    use crate::network::constants::Network;
 
     use super::*;
-    use PublicKey;
+    use crate::PublicKey;
 
     macro_rules! hex (($hex:expr) => (Vec::from_hex($hex).unwrap()));
     macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));

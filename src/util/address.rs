@@ -44,15 +44,15 @@
 use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
-use hashes::Hash;
-use hashes::hex::FromHex;
+use crate::hashes::Hash;
+use crate::hashes::hex::FromHex;
 
-use hash_types::{PubkeyHash, ScriptHash};
-use blockdata::opcodes;
-use blockdata::script::{Builder, ColorIdentifier, Script};
-use network::constants::Network;
-use util::base58;
-use util::key;
+use crate::hash_types::{PubkeyHash, ScriptHash};
+use crate::blockdata::opcodes;
+use crate::blockdata::script::{Builder, ColorIdentifier, Script};
+use crate::network::constants::Network;
+use crate::util::base58;
+use crate::util::key;
 
 /// Address error.
 #[derive(Debug, PartialEq)]
@@ -404,11 +404,11 @@ mod tests {
     use std::str::FromStr;
     use std::string::ToString;
 
-    use hashes::hex::FromHex;
+    use crate::hashes::hex::FromHex;
 
-    use blockdata::script::Script;
-    use network::constants::Network::{Prod, Dev};
-    use util::key::PublicKey;
+    use crate::blockdata::script::Script;
+    use crate::network::constants::Network::{Prod, Dev};
+    use crate::util::key::PublicKey;
 
     use super::*;
 

@@ -16,12 +16,12 @@ use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
 use std::io::{self, Cursor};
 
-use blockdata::transaction::Transaction;
-use consensus::{encode, Decodable, Encodable};
-use util::psbt;
-use util::psbt::map::Map;
-use util::psbt::raw;
-use util::psbt::Error;
+use crate::blockdata::transaction::Transaction;
+use crate::consensus::{encode, Decodable, Encodable};
+use crate::util::psbt;
+use crate::util::psbt::map::Map;
+use crate::util::psbt::raw;
+use crate::util::psbt::Error;
 
 /// A key-value map for global data.
 #[derive(Clone, Debug, PartialEq)]
@@ -159,7 +159,7 @@ impl Decodable for Global {
                         }
                     }
                 }
-                Err(::consensus::encode::Error::Psbt(::util::psbt::Error::NoMorePairs)) => break,
+                Err(crate::consensus::encode::Error::Psbt(crate::util::psbt::Error::NoMorePairs)) => break,
                 Err(e) => return Err(e),
             }
         }

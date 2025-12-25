@@ -27,13 +27,13 @@ use std::default::Default;
 use std::str::FromStr;
 use std::{error, fmt};
 
-use hash_types::XpubIdentifier;
-use hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine};
+use crate::hash_types::XpubIdentifier;
+use crate::hashes::{sha512, Hash, HashEngine, Hmac, HmacEngine};
 use secp256k1::{self, Secp256k1};
 
-use network::constants::Network;
-use util::{base58, endian};
-use util::key::{PublicKey, PrivateKey};
+use crate::network::constants::Network;
+use crate::util::{base58, endian};
+use crate::util::key::{PublicKey, PrivateKey};
 
 /// A chain code
 pub struct ChainCode([u8; 32]);
@@ -318,17 +318,17 @@ impl DerivationPath {
 
     /// Get an [Iterator] over the children of this [DerivationPath]
     /// starting with the given [ChildNumber].
-    pub fn children_from(&self, cn: ChildNumber) -> DerivationPathIterator {
+    pub fn children_from(&self, cn: ChildNumber) -> DerivationPathIterator<'_> {
         DerivationPathIterator::start_from(&self, cn)
     }
 
     /// Get an [Iterator] over the unhardened children of this [DerivationPath].
-    pub fn normal_children(&self) -> DerivationPathIterator {
+    pub fn normal_children(&self) -> DerivationPathIterator<'_> {
         DerivationPathIterator::start_from(&self, ChildNumber::Normal{ index: 0 })
     }
 
     /// Get an [Iterator] over the hardened children of this [DerivationPath].
-    pub fn hardened_children(&self) -> DerivationPathIterator {
+    pub fn hardened_children(&self) -> DerivationPathIterator<'_> {
         DerivationPathIterator::start_from(&self, ChildNumber::Hardened{ index: 0 })
     }
 }
@@ -717,9 +717,9 @@ mod tests {
     use std::string::ToString;
 
     use secp256k1::{self, Secp256k1};
-    use hashes::hex::FromHex;
+    use crate::hashes::hex::FromHex;
 
-    use network::constants::Network::{self, Prod};
+    use crate::network::constants::Network::{self, Prod};
 
     #[test]
     fn test_parse_derivation_path() {

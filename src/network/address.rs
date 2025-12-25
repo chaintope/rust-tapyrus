@@ -22,8 +22,8 @@ use std::io;
 use std::fmt;
 use std::net::{SocketAddr, Ipv6Addr, SocketAddrV4, SocketAddrV6};
 
-use network::constants::ServiceFlags;
-use consensus::encode::{self, Decodable, Encodable};
+use crate::network::constants::ServiceFlags;
+use crate::consensus::encode::{self, Decodable, Encodable};
 
 /// A message which can be sent on the Bitcoin network
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -114,10 +114,10 @@ impl fmt::Debug for Address {
 mod test {
     use std::str::FromStr;
     use super::Address;
-    use network::constants::ServiceFlags;
+    use crate::network::constants::ServiceFlags;
     use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
 
-    use consensus::encode::{deserialize, serialize};
+    use crate::consensus::encode::{deserialize, serialize};
 
     #[test]
     fn serialize_address_test() {

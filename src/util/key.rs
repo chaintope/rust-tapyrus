@@ -25,10 +25,10 @@ use std::fmt::{self, Write};
 use std::{io, ops, error};
 use std::str::FromStr;
 
-use consensus::{encode, Decodable, Encodable};
-use network::constants::Network;
+use crate::consensus::{encode, Decodable, Encodable};
+use crate::network::constants::Network;
 use secp256k1::{self, Secp256k1};
-use util::base58;
+use crate::util::base58;
 
 /// A key-related error.
 #[derive(Debug)]
@@ -395,9 +395,9 @@ mod tests {
     use super::{PrivateKey, PublicKey};
     use secp256k1::Secp256k1;
     use std::str::FromStr;
-    use network::constants::Network::Dev;
-    use network::constants::Network::Prod;
-    use util::address::Address;
+    use crate::network::constants::Network::Dev;
+    use crate::network::constants::Network::Prod;
+    use crate::util::address::Address;
 
     #[test]
     fn test_key_derivation() {
@@ -483,7 +483,7 @@ mod tests {
 
     #[test]
     fn test_encode() {
-        use consensus::encode::{Decodable, Encodable};
+        use crate::consensus::encode::{Decodable, Encodable};
 
         let pk = PublicKey::from_str(
             "032e58afe51f9ed8ad3cc7897f634d881fdbe49a81564629ded8156bebd2ffd1af",

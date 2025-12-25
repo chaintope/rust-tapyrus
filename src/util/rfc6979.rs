@@ -5,8 +5,8 @@
 //! RFC6979
 //!
 
-use hashes::{HmacEngine, HashEngine, Hmac, Hash};
-use hashes::sha256::Hash as SHA256;
+use crate::hashes::{HmacEngine, HashEngine, Hmac, Hash};
+use crate::hashes::sha256::Hash as SHA256;
 use secp256k1::SecretKey;
 
 /// Generate nonce
@@ -100,8 +100,8 @@ impl RFC6979 {
 
 #[cfg(test)]
 mod tests {
-    use test_helpers::{decode_message, decode_sk};
-    use util::rfc6979::nonce_rfc6979;
+    use crate::test_helpers::{decode_message, decode_sk};
+    use crate::util::rfc6979::nonce_rfc6979;
 
     #[test]
     fn test() {

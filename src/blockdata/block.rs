@@ -28,18 +28,18 @@
 use std::io;
 use std::str::FromStr;
 
-use hashes::{Hash, HashEngine};
-use hashes::hex::FromHex;
-use hash_types::{Wtxid, BlockHash, BlockSigHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment, XFieldHash};
-use consensus::{serialize, encode, Decodable, Encodable};
-use consensus::encode::Error;
-use consensus::encode::serialize_hex;
-use blockdata::constants::WITNESS_SCALE_FACTOR;
-use blockdata::transaction::Transaction;
-use util::hash::bitcoin_merkle_root;
-use util::key::PublicKey;
-use util::signature::Signature;
-use VarInt;
+use crate::hashes::{Hash, HashEngine};
+use crate::hashes::hex::FromHex;
+use crate::hash_types::{Wtxid, BlockHash, BlockSigHash, TxMerkleNode, WitnessMerkleNode, WitnessCommitment, XFieldHash};
+use crate::consensus::{serialize, encode, Decodable, Encodable};
+use crate::consensus::encode::Error;
+use crate::consensus::encode::serialize_hex;
+use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
+use crate::blockdata::transaction::Transaction;
+use crate::util::hash::bitcoin_merkle_root;
+use crate::util::key::PublicKey;
+use crate::util::signature::Signature;
+use crate::VarInt;
 
 
 /// A block header, which contains all the block's information except
@@ -399,11 +399,11 @@ impl_consensus_encoding!(
 mod tests {
     use std::str::FromStr;
 
-    use blockdata::block::{Block, XField};
-    use consensus::encode::{deserialize, serialize, Error};
-    use util::key::PublicKey;
-    use hash_types::{BlockSigHash, XFieldHash};
-    use hashes::hex::FromHex;
+    use crate::blockdata::block::{Block, XField};
+    use crate::consensus::encode::{deserialize, serialize, Error};
+    use crate::util::key::PublicKey;
+    use crate::hash_types::{BlockSigHash, XFieldHash};
+    use crate::hashes::hex::FromHex;
 
     #[test]
     fn block_test() {

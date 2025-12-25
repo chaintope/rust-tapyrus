@@ -31,16 +31,16 @@
 use std::default::Default;
 use std::{fmt, io};
 
-use hashes::{self, Hash, sha256d};
-use hashes::hex::FromHex;
+use crate::hashes::{self, Hash, sha256d};
+use crate::hashes::hex::FromHex;
 
-use util::endian;
-use blockdata::constants::WITNESS_SCALE_FACTOR;
+use crate::util::endian;
+use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
 #[cfg(feature="bitcoinconsensus")] use blockdata::script;
-use blockdata::script::Script;
-use consensus::{encode, Decodable, Encodable};
-use hash_types::*;
-use VarInt;
+use crate::blockdata::script::Script;
+use crate::consensus::{encode, Decodable, Encodable};
+use crate::hash_types::*;
+use crate::VarInt;
 
 /// A reference to a transaction output
 #[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
@@ -641,15 +641,15 @@ mod tests {
     use super::{OutPoint, ParseOutPointError, Transaction, TxIn};
 
     use std::str::FromStr;
-    use blockdata::constants::WITNESS_SCALE_FACTOR;
-    use blockdata::script::Script;
-    use consensus::encode::serialize;
-    use consensus::encode::deserialize;
+    use crate::blockdata::constants::WITNESS_SCALE_FACTOR;
+    use crate::blockdata::script::Script;
+    use crate::consensus::encode::serialize;
+    use crate::consensus::encode::deserialize;
 
-    use hashes::Hash;
-    use hashes::hex::FromHex;
+    use crate::hashes::Hash;
+    use crate::hashes::hex::FromHex;
 
-    use hash_types::*;
+    use crate::hash_types::*;
 
     #[test]
     fn test_outpoint() {
@@ -702,7 +702,7 @@ mod tests {
 
     #[test]
     fn test_is_coinbase () {
-        use blockdata::block::Block;
+        use crate::blockdata::block::Block;
         let hex_block = Vec::from_hex("010000000000000000000000000000000000000000000000000000000000000000000000c0d6961ad2819f74eb6d085f04f9cceb0a9a6d5c153fd3c39fc47c3ca0bb548f85fbd09a5f7d8ac4c9552e52931ef6672984f64e52ad6d05d1cdb18907da8527db317c5e012103addb2555f37abf8f28f11f498bec7bd1460e7243c1813847c49a7ae326a97d1c40e2d9e39bfb25f5534cf3fa235697e18efa81ce02e161946a73b9b20b3641576a9636f19747447ab8b02a97a9d96ecdaf0aa3a56b93f9e8f81d55252854270617010100000001000000000000000000000000000000000000000000000000000000000000000000000000222103addb2555f37abf8f28f11f498bec7bd1460e7243c1813847c49a7ae326a97d1cffffffff0100f2052a010000001976a914a15f16ea2ba840d178e4c19781abca5f4fb1b4c288ac00000000").unwrap();
         let block: Block = deserialize(&hex_block).unwrap();
         assert! (block.txdata[0].is_coin_base());

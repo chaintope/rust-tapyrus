@@ -56,15 +56,15 @@ use std::fmt::{Display, Formatter};
 use std::io::Cursor;
 use std::cmp::Ordering;
 
-use hashes::{Hash, siphash24};
-use hash_types::{BlockHash, FilterHash};
+use crate::hashes::{Hash, siphash24};
+use crate::hash_types::{BlockHash, FilterHash};
 
-use blockdata::block::Block;
-use blockdata::script::Script;
-use blockdata::transaction::OutPoint;
-use consensus::{Decodable, Encodable};
-use consensus::encode::VarInt;
-use util::endian;
+use crate::blockdata::block::Block;
+use crate::blockdata::script::Script;
+use crate::blockdata::transaction::OutPoint;
+use crate::consensus::{Decodable, Encodable};
+use crate::consensus::encode::VarInt;
+use crate::util::endian;
 
 /// Golomb encoding parameter as in BIP-158, see also https://gist.github.com/sipa/576d5f09c3b86c3b1b75598d799fc845
 const P: u8 = 19;
@@ -445,7 +445,7 @@ pub struct BitStreamReader<'a> {
 
 impl<'a> BitStreamReader<'a> {
     /// Create a new BitStreamReader that reads bitwise from a given reader
-    pub fn new(reader: &'a mut io::Read) -> BitStreamReader {
+    pub fn new(reader: &'a mut io::Read) -> BitStreamReader<'a> {
         BitStreamReader {
             buffer: [0u8],
             reader: reader,
@@ -483,7 +483,7 @@ pub struct BitStreamWriter<'a> {
 
 impl<'a> BitStreamWriter<'a> {
     /// Create a new BitStreamWriter that writes bitwise to a given writer
-    pub fn new(writer: &'a mut io::Write) -> BitStreamWriter {
+    pub fn new(writer: &'a mut io::Write) -> BitStreamWriter<'a> {
         BitStreamWriter {
             buffer: [0u8],
             writer: writer,
@@ -527,8 +527,8 @@ mod test {
     use std::collections::{HashSet, HashMap};
     use std::io::Cursor;
 
-    use hash_types::BlockHash;
-    use hashes::hex::FromHex;
+    use crate::hash_types::BlockHash;
+    use crate::hashes::hex::FromHex;
 
     use super::*;
 
@@ -536,7 +536,7 @@ mod test {
     extern crate serde_json;
     use self::serde_json::{Value};
 
-    use consensus::encode::deserialize;
+    use crate::consensus::encode::deserialize;
 
     #[test]
     #[ignore]

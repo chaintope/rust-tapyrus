@@ -12,11 +12,11 @@ use std::fmt;
 use std::borrow::Borrow;
 
 use secp256k1::SecretKey;
-use hashes::{sha256, HashEngine, Hash};
+use crate::hashes::{sha256, HashEngine, Hash};
 
-use util::key::{PublicKey, PrivateKey};
-use util::prime::jacobi;
-use util::rfc6979::nonce_rfc6979;
+use crate::util::key::{PublicKey, PrivateKey};
+use crate::util::prime::jacobi;
+use crate::util::rfc6979::nonce_rfc6979;
 
 /// The size of scalar value on secp256k1 curve
 pub const SECP256K1_SCALAR_SIZE: usize = 32;
@@ -209,13 +209,13 @@ impl error::Error for Error {
 
 #[cfg(test)]
 mod tests {
-    use hashes::hex::FromHex;
+    use crate::hashes::hex::FromHex;
 
-    use hashes::Hash;
-    use consensus::encode::{deserialize, serialize};
-    use util::signature::Signature;
-    use util::key::PrivateKey;
-    use test_helpers::*;
+    use crate::hashes::Hash;
+    use crate::consensus::encode::{deserialize, serialize};
+    use crate::util::signature::Signature;
+    use crate::util::key::PrivateKey;
+    use crate::test_helpers::*;
 
     #[test]
     fn test_p2p_sign_and_verify() {

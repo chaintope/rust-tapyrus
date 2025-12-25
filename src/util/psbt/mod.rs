@@ -18,9 +18,9 @@
 //! defined at https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki
 //! except we define PSBTs containing non-standard SigHash types as invalid.
 
-use blockdata::script::Script;
-use blockdata::transaction::Transaction;
-use consensus::{encode, Decodable, Encodable};
+use crate::blockdata::script::Script;
+use crate::blockdata::transaction::Transaction;
+use crate::consensus::{encode, Decodable, Encodable};
 
 use std::io;
 
@@ -159,21 +159,21 @@ impl Decodable for PartiallySignedTransaction {
 
 #[cfg(test)]
 mod tests {
-    use hashes::hex::FromHex;
-    use hash_types::Txid;
+    use crate::hashes::hex::FromHex;
+    use crate::hash_types::Txid;
 
     use std::collections::BTreeMap;
 
     use secp256k1::Secp256k1;
 
-    use blockdata::script::Script;
-    use blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
-    use consensus::encode::{deserialize, serialize, serialize_hex};
-    use network::constants::Network::Prod;
-    use util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
-    use util::key::PublicKey;
-    use util::psbt::map::{Global, Output};
-    use util::psbt::raw;
+    use crate::blockdata::script::Script;
+    use crate::blockdata::transaction::{OutPoint, Transaction, TxIn, TxOut};
+    use crate::consensus::encode::{deserialize, serialize, serialize_hex};
+    use crate::network::constants::Network::Prod;
+    use crate::util::bip32::{ChildNumber, DerivationPath, ExtendedPrivKey, ExtendedPubKey, Fingerprint};
+    use crate::util::key::PublicKey;
+    use crate::util::psbt::map::{Global, Output};
+    use crate::util::psbt::raw;
 
     use super::PartiallySignedTransaction;
 
@@ -308,15 +308,15 @@ mod tests {
     mod bip_vectors {
         use std::collections::BTreeMap;
 
-        use hashes::hex::FromHex;
-        use hash_types::Txid;
+        use crate::hashes::hex::FromHex;
+        use crate::hash_types::Txid;
 
-        use blockdata::script::Script;
-        use blockdata::transaction::{OutPoint, SigHashType, Transaction, TxIn, TxOut};
-        use consensus::encode::serialize_hex;
-        use util::psbt::map::{Global, Input, Map, Output};
-        use util::psbt::raw;
-        use util::psbt::PartiallySignedTransaction;
+        use crate::blockdata::script::Script;
+        use crate::blockdata::transaction::{OutPoint, SigHashType, Transaction, TxIn, TxOut};
+        use crate::consensus::encode::serialize_hex;
+        use crate::util::psbt::map::{Global, Input, Map, Output};
+        use crate::util::psbt::raw;
+        use crate::util::psbt::PartiallySignedTransaction;
 
         #[test]
         fn invalid_vector_1() {

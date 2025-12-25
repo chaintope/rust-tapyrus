@@ -7,8 +7,8 @@
 //!
 
 use secp256k1::SecretKey;
-use util::signature::Signature;
-use consensus::deserialize;
+use crate::util::signature::Signature;
+use crate::consensus::deserialize;
 
 pub fn decode_sk(sk_hex: &str) -> SecretKey {
     let sk = hex::decode(sk_hex).unwrap();

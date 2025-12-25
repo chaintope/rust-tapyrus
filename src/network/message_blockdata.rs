@@ -20,11 +20,11 @@
 
 use std::io;
 
-use hashes::sha256d;
+use crate::hashes::sha256d;
 
-use network::constants;
-use consensus::encode::{self, Decodable, Encodable};
-use hash_types::{BlockHash, Txid};
+use crate::network::constants;
+use crate::consensus::encode::{self, Decodable, Encodable};
+use crate::hash_types::{BlockHash, Txid};
 
 /// An inventory item.
 #[derive(PartialEq, Eq, Clone, Debug, Copy, Hash)]
@@ -136,9 +136,9 @@ impl_consensus_encoding!(GetHeadersMessage, version, locator_hashes, stop_hash);
 mod tests {
     use super::{GetHeadersMessage, GetBlocksMessage};
 
-    use hashes::hex::FromHex;
+    use crate::hashes::hex::FromHex;
 
-    use consensus::encode::{deserialize, serialize};
+    use crate::consensus::encode::{deserialize, serialize};
     use std::default::Default;
 
     #[test]

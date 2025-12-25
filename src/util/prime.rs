@@ -66,7 +66,7 @@ fn jacobi_inner(a: &Integer, n: &Integer) -> i8 {
 
 #[cfg(test)]
 mod tests {
-    use util::prime::{jacobi, jacobi_inner};
+    use crate::util::prime::{jacobi, jacobi_inner};
     use rug::Integer;
 
     #[test]

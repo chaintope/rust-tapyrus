@@ -44,7 +44,7 @@
 use std::{fmt, io, ops};
 use std::str::FromStr;
 
-use consensus::encode::{self, Encodable, Decodable};
+use crate::consensus::encode::{self, Encodable, Decodable};
 
 /// Version of the protocol as appearing in network message headers
 pub const PROTOCOL_VERSION: u32 = 10000;
@@ -317,7 +317,7 @@ impl Decodable for ServiceFlags {
 mod tests {
     use std::str::FromStr;
     use super::{NetworkId, Network, ServiceFlags};
-    use consensus::encode::{deserialize, serialize};
+    use crate::consensus::encode::{deserialize, serialize};
 
     #[test]
     fn serialize_test() {
