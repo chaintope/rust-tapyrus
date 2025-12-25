@@ -28,8 +28,6 @@ use crate::consensus::encode;
 use crate::network::message::CommandString;
 use crate::hashes::sha256d;
 
-/// Some simple messages
-
 /// The `version` message
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct VersionMessage {
@@ -68,13 +66,13 @@ impl VersionMessage {
     ) -> VersionMessage {
         VersionMessage {
             version: constants::PROTOCOL_VERSION,
-            services: services,
-            timestamp: timestamp,
-            receiver: receiver,
-            sender: sender,
-            nonce: nonce,
-            user_agent: user_agent,
-            start_height: start_height,
+            services,
+            timestamp,
+            receiver,
+            sender,
+            nonce,
+            user_agent,
+            start_height,
             relay: false,
         }
     }

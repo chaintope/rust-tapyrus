@@ -42,7 +42,7 @@ pub fn bitcoin_merkle_root_inline<T>(data: &mut [T]) -> T
         return T::from_inner(data[0].into_inner());
     }
     // Recursion
-    for idx in 0..((data.len() + 1) / 2) {
+    for idx in 0..data.len().div_ceil(2) {
         let idx1 = 2 * idx;
         let idx2 = min(idx1 + 1, data.len() - 1);
         let mut encoder = T::engine();
@@ -65,7 +65,7 @@ pub fn bitcoin_merkle_root<T, I>(mut iter: I) -> T
         return Default::default();
     }
     if iter.len() == 1 {
-        return T::from_inner(iter.nth(0).unwrap().into_inner());
+        return T::from_inner(iter.next().unwrap().into_inner());
     }
     // Recursion
     let half_len = iter.len() / 2 + iter.len() % 2;

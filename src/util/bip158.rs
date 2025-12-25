@@ -448,7 +448,7 @@ impl<'a> BitStreamReader<'a> {
     pub fn new(reader: &'a mut dyn io::Read) -> BitStreamReader<'a> {
         BitStreamReader {
             buffer: [0u8],
-            reader: reader,
+            reader,
             offset: 8,
         }
     }
@@ -456,7 +456,7 @@ impl<'a> BitStreamReader<'a> {
     /// Read nbit bits
     pub fn read(&mut self, mut nbits: u8) -> Result<u64, io::Error> {
         if nbits > 64 {
-            return Err(io::Error::new(io::ErrorKind::Other, "can not read more than 64 bits at once"));
+            return Err(io::Error::other("can not read more than 64 bits at once"));
         }
         let mut data = 0u64;
         while nbits > 0 {
@@ -486,7 +486,7 @@ impl<'a> BitStreamWriter<'a> {
     pub fn new(writer: &'a mut dyn io::Write) -> BitStreamWriter<'a> {
         BitStreamWriter {
             buffer: [0u8],
-            writer: writer,
+            writer,
             offset: 0,
         }
     }
@@ -494,7 +494,7 @@ impl<'a> BitStreamWriter<'a> {
     /// Write nbits bits from data
     pub fn write(&mut self, data: u64, mut nbits: u8) -> Result<usize, io::Error> {
         if nbits > 64 {
-            return Err(io::Error::new(io::ErrorKind::Other, "can not write more than 64 bits at once"));
+            return Err(io::Error::other("can not write more than 64 bits at once"));
         }
         let mut wrote = 0;
         while nbits > 0 {

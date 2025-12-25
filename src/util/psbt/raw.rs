@@ -77,8 +77,8 @@ impl Decodable for Key {
         }
 
         Ok(Key {
-            type_value: type_value,
-            key: key,
+            type_value,
+            key,
         })
     }
 }

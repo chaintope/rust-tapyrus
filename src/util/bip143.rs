@@ -76,9 +76,9 @@ impl SighashComponents {
         SighashComponents {
             tx_version: tx.version,
             tx_locktime: tx.lock_time,
-            hash_prevouts: hash_prevouts,
-            hash_sequence: hash_sequence,
-            hash_outputs: hash_outputs,
+            hash_prevouts,
+            hash_sequence,
+            hash_outputs,
         }
     }
 
@@ -122,7 +122,7 @@ impl<R: Deref<Target=Transaction>> SigHashCache<R> {
     /// script_sig and witnesses.
     pub fn new(tx: R) -> Self {
         SigHashCache {
-            tx: tx,
+            tx,
             hash_prevouts: None,
             hash_sequence: None,
             hash_outputs: None,

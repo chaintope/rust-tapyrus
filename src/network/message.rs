@@ -72,7 +72,7 @@ impl Encodable for CommandString {
         if strbytes.len() > 12 {
             return Err(encode::Error::UnrecognizedNetworkCommand(self.0.clone().into_owned()));
         }
-        rawbytes[..strbytes.len()].clone_from_slice(&strbytes[..]);
+        rawbytes[..strbytes.len()].clone_from_slice(strbytes);
         rawbytes.consensus_encode(s)
     }
 }
@@ -327,8 +327,8 @@ impl Decodable for RawNetworkMessage {
             _ => return Err(encode::Error::UnrecognizedNetworkCommand(cmd.into_owned())),
         };
         Ok(RawNetworkMessage {
-            magic: magic,
-            payload: payload
+            magic,
+            payload
         })
     }
 }

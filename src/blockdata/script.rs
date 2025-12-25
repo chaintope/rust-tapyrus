@@ -308,7 +308,7 @@ impl Script {
     pub fn is_empty(&self) -> bool { self.0.is_empty() }
 
     /// Returns the script data
-    pub fn as_bytes(&self) -> &[u8] { &*self.0 }
+    pub fn as_bytes(&self) -> &[u8] { &self.0 }
 
     /// Returns a copy of the script data
     pub fn to_bytes(&self) -> Vec<u8> { self.0.clone().into_vec() }
@@ -477,7 +477,7 @@ impl Script {
                     }
                 }
                 Instruction::PushBytes(bytes) => {
-                    match PublicKey::from_slice(&bytes) {
+                    match PublicKey::from_slice(bytes) {
                         Ok(key) => { pubkeys.push(key) },
                         _ => { return Err(MultisigError::IsNotMultisig) }
                     }
@@ -553,7 +553,7 @@ impl Script {
                             break;
                         }
                         match read_uint(&self.0[index..], 1) {
-                            Ok(n) => { index += 1; n as usize }
+                            Ok(n) => { index += 1; n }
                             Err(_) => { f.write_str("<bad length>")?; break; }
                         }
                     }
@@ -563,7 +563,7 @@ impl Script {
                             break;
                         }
                         match read_uint(&self.0[index..], 2) {
-                            Ok(n) => { index += 2; n as usize }
+                            Ok(n) => { index += 2; n }
                             Err(_) => { f.write_str("<bad length>")?; break; }
                         }
                     }
@@ -573,7 +573,7 @@ impl Script {
                             break;
                         }
                         match read_uint(&self.0[index..], 4) {
-                            Ok(n) => { index += 4; n as usize }
+                            Ok(n) => { index += 4; n }
                             Err(_) => { f.write_str("<bad length>")?; break; }
                         }
                     }
@@ -682,12 +682,11 @@ impl<'a> Iterator for Instructions<'a> {
                     self.data = &[];  // Kill iterator so that it does not return an infinite stream of errors
                     return Some(Err(Error::EarlyEndOfScript));
                 }
-                if self.enforce_minimal {
-                    if n == 1 && (self.data[1] == 0x81 || (self.data[1] > 0 && self.data[1] <= 16)) {
+                if self.enforce_minimal
+                    && n == 1 && (self.data[1] == 0x81 || (self.data[1] > 0 && self.data[1] <= 16)) {
                         self.data = &[];
                         return Some(Err(Error::NonMinimalPush));
                     }
-                }
                 let ret = Some(Ok(Instruction::PushBytes(&self.data[1..n+1])));
                 self.data = &self.data[n + 1..];
                 ret
@@ -791,7 +790,7 @@ impl Builder {
     /// dedicated opcodes to push some small integers.
     pub fn push_int(self, data: i64) -> Builder {
         // We can special-case -1, 1-16
-        if data == -1 || (data >= 1 && data <= 16) {
+        if data == -1 || (1..=16).contains(&data) {
             let opcode = opcodes::All::from(
                 (data - 1 + opcodes::OP_TRUE.into_u8() as i64) as u8
             );
@@ -1134,7 +1133,7 @@ impl Decodable for ColorIdentifier {
 
         let payload = sha256::Hash::from_slice(&bytes[1..]).map_err(|_| encode::Error::ParseFailed("invalid payload."))?;
         Ok(ColorIdentifier {
-            token_type: token_type,
+            token_type,
             payload: ColorIdentifierPayload(payload)
         })
     }
@@ -1162,12 +1161,10 @@ pub enum TokenTypes {
 impl TokenTypes {
     /// return true if token type is supported
     pub fn is_valid(token_type: &u8) -> bool {
-        vec![
-            TokenTypes::None,
+        [TokenTypes::None,
             TokenTypes::Reissuable,
             TokenTypes::NonReissuable,
-            TokenTypes::Nft,
-        ].iter().any(|e| e.clone() as u8 == *token_type)
+            TokenTypes::Nft].iter().any(|e| e.clone() as u8 == *token_type)
     }
 }
 

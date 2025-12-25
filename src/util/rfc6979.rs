@@ -56,7 +56,7 @@ impl RFC6979 {
         let mut hmac = HmacEngine::<SHA256>::new(&rng.k[..]);
         hmac.input(&rng.v[..]);
         hmac.input(&zero[..]);
-        hmac.input(&keydata[..]);
+        hmac.input(keydata);
         rng.k = Hmac::from_engine(hmac).into_inner();
         let mut hmac = HmacEngine::<SHA256>::new(&rng.k[..]);
         hmac.input(&rng.v[..]);
@@ -66,7 +66,7 @@ impl RFC6979 {
         let mut hmac = HmacEngine::<SHA256>::new(&rng.k[..]);
         hmac.input(&rng.v[..]);
         hmac.input(&one[..]);
-        hmac.input(&keydata[..]);
+        hmac.input(keydata);
         rng.k = Hmac::from_engine(hmac).into_inner();
         let mut hmac = HmacEngine::<SHA256>::new(&rng.k[..]);
         hmac.input(&rng.v[..]);
@@ -94,7 +94,7 @@ impl RFC6979 {
 
         self.retry = true;
 
-        self.v.clone()
+        self.v
     }
 }
 

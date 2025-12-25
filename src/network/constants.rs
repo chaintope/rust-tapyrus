@@ -51,7 +51,7 @@ pub const PROTOCOL_VERSION: u32 = 10000;
 /// Bitfield of services provided by this node
 pub const SERVICES: u64 = 0;
 /// User agent as it appears in the version message
-pub const USER_AGENT: &'static str = "tapyrus-rust v0.1";
+pub const USER_AGENT: &str = "tapyrus-rust v0.1";
 
 /// Network ID is identifier of the Tapyrus network
 #[derive(Clone, Debug, PartialEq)]
@@ -262,9 +262,9 @@ impl From<u64> for ServiceFlags {
     }
 }
 
-impl Into<u64> for ServiceFlags {
-    fn into(self) -> u64 {
-        self.0
+impl From<ServiceFlags> for u64 {
+    fn from(val: ServiceFlags) -> Self {
+        val.0
     }
 }
 

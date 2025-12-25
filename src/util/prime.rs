@@ -25,12 +25,12 @@ pub fn jacobi(a: &[u8]) -> i8 {
 }
 
 fn jacobi_inner(a: &Integer, n: &Integer) -> i8 {
-    assert!(*n >= Integer::from(3));
+    assert!(*n >= 3);
     let a = Integer::from(a % n);
-    if a == Integer::from(0) {
+    if a == 0 {
         return 0;
     }
-    if a == Integer::from(1) {
+    if a == 1 {
         return 1;
     }
 
@@ -57,7 +57,7 @@ fn jacobi_inner(a: &Integer, n: &Integer) -> i8 {
         s = -s
     }
 
-    if a1 == Integer::from(1) {
+    if a1 == 1 {
         s
     } else {
         s * jacobi_inner(&(n % a1.clone()), &a1.clone())

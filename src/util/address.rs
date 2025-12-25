@@ -216,7 +216,7 @@ impl Address {
         pk.write_into(&mut hash_engine);
 
         Address {
-            network: network,
+            network,
             payload: Payload::PubkeyHash(PubkeyHash::from_engine(hash_engine)),
         }
     }
@@ -226,7 +226,7 @@ impl Address {
     #[inline]
     pub fn p2sh(script: &Script, network: Network) -> Address {
         Address {
-            network: network,
+            network,
             payload: Payload::ScriptHash(ScriptHash::hash(&script[..])),
         }
     }
@@ -239,7 +239,7 @@ impl Address {
         pk.write_into(&mut hash_engine);
 
         Address {
-            network: network,
+            network,
             payload: Payload::ColoredPubkeyHash(color_id.clone(), PubkeyHash::from_engine(hash_engine)),
         }
     }
@@ -249,7 +249,7 @@ impl Address {
     #[inline]
     pub fn cp2sh(color_id: &ColorIdentifier, script: &Script, network: Network) -> Address {
         Address {
-            network: network,
+            network,
             payload: Payload::ColoredScriptHash(color_id.clone(), ScriptHash::hash(&script[..])),
         }
     }
@@ -278,7 +278,7 @@ impl Address {
     pub fn from_script(script: &Script, network: Network) -> Option<Address> {
         Some(Address {
             payload: Payload::from_script(script)?,
-            network: network,
+            network,
         })
     }
 
@@ -395,7 +395,7 @@ impl FromStr for Address {
 
 impl ::std::fmt::Debug for Address {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "{}", self.to_string())
+        write!(f, "{}", self)
     }
 }
 

@@ -126,7 +126,7 @@ impl Decodable for PartiallySignedTransaction {
         let global: Global = Decodable::consensus_decode(&mut d)?;
 
         let inputs: Vec<Input> = {
-            let inputs_len: usize = (&global.unsigned_tx.input).len();
+            let inputs_len: usize = global.unsigned_tx.input.len();
 
             let mut inputs: Vec<Input> = Vec::with_capacity(inputs_len);
 
@@ -138,7 +138,7 @@ impl Decodable for PartiallySignedTransaction {
         };
 
         let outputs: Vec<Output> = {
-            let outputs_len: usize = (&global.unsigned_tx.output).len();
+            let outputs_len: usize = global.unsigned_tx.output.len();
 
             let mut outputs: Vec<Output> = Vec::with_capacity(outputs_len);
 
@@ -150,9 +150,9 @@ impl Decodable for PartiallySignedTransaction {
         };
 
         Ok(PartiallySignedTransaction {
-            global: global,
-            inputs: inputs,
-            outputs: outputs,
+            global,
+            inputs,
+            outputs,
         })
     }
 }

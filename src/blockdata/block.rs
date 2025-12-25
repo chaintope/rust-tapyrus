@@ -100,7 +100,7 @@ impl BlockHeader {
     /// Tapyrus signer needs to sign this hash. The signature will be added to
     /// the block header as the proof field and submitted to the tapyrus node.
     pub fn signature_hash(&self) -> BlockSigHash {
-        let block = BlockHeaderWithoutProof::from(&self);
+        let block = BlockHeaderWithoutProof::from(self);
         BlockSigHash::hash(&serialize(&block))
     }
 
@@ -172,7 +172,7 @@ impl XField {
 impl FromStr for XField {
     type Err = encode::Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let bytes: Vec<u8> = Vec::from_hex(&s[..]).map_err(|_| encode::Error::ParseFailed("invalid hex string"))?;
+        let bytes: Vec<u8> = Vec::from_hex(s).map_err(|_| encode::Error::ParseFailed("invalid hex string"))?;
         XField::consensus_decode(&bytes[..])
     }
 }

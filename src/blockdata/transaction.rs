@@ -57,8 +57,8 @@ impl OutPoint {
     #[inline]
     pub fn new(txid: Txid, vout: u32) -> OutPoint {
         OutPoint {
-            txid: txid,
-            vout: vout,
+            txid,
+            vout,
         }
     }
 
@@ -67,7 +67,7 @@ impl OutPoint {
     pub fn null() -> OutPoint {
         OutPoint {
             txid: Default::default(),
-            vout: u32::max_value(),
+            vout: u32::MAX,
         }
     }
 
@@ -136,12 +136,12 @@ impl ::std::error::Error for ParseOutPointError {
 /// It does not permit leading zeroes or non-digit characters.
 fn parse_vout(s: &str) -> Result<u32, ParseOutPointError> {
     if s.len() > 1 {
-        let first = s.chars().nth(0).unwrap();
+        let first = s.chars().next().unwrap();
         if first == '0' || first == '+' {
             return Err(ParseOutPointError::VoutNotCanonical);
         }
     }
-    Ok(s.parse().map_err(ParseOutPointError::Vout)?)
+    s.parse().map_err(ParseOutPointError::Vout)
 }
 
 impl ::std::str::FromStr for OutPoint {
@@ -152,7 +152,7 @@ impl ::std::str::FromStr for OutPoint {
             return Err(ParseOutPointError::TooLong);
         }
         let find = s.find(':');
-        if find == None || find != s.rfind(':') {
+        if find.is_none() || find != s.rfind(':') {
             return Err(ParseOutPointError::Format);
         }
         let colon = find.unwrap();
@@ -193,7 +193,7 @@ impl Default for TxIn {
         TxIn {
             previous_output: OutPoint::default(),
             script_sig: Script::new(),
-            sequence: u32::max_value(),
+            sequence: u32::MAX,
             witness: Vec::new(),
         }
     }
@@ -557,9 +557,9 @@ impl Decodable for Transaction {
                         Err(encode::Error::ParseFailed("witness flag set but no witnesses present"))
                     } else {
                         Ok(Transaction {
-                            version: version,
-                            input: input,
-                            output: output,
+                            version,
+                            input,
+                            output,
                             lock_time: Decodable::consensus_decode(d)?,
                         })
                     }
@@ -572,8 +572,8 @@ impl Decodable for Transaction {
         // non-segwit
         } else {
             Ok(Transaction {
-                version: version,
-                input: input,
+                version,
+                input,
                 output: Decodable::consensus_decode(&mut d)?,
                 lock_time: Decodable::consensus_decode(d)?,
             })

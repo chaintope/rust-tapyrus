@@ -152,7 +152,7 @@ fn parse_signed_to_tapyrus(
             // into a less precise amount. That is not allowed unless
             // there are no decimals and the last digits are zeroes as
             // many as the difference in precision.
-            let last_n = precision_diff.abs() as usize;
+            let last_n = precision_diff.unsigned_abs() as usize;
             if is_too_precise(s, last_n) {
                 return Err(ParseAmountError::TooPrecise);
             }
@@ -226,7 +226,7 @@ fn fmt_tapyrus_in(
         }
         Ordering::Less => {
             // need to inject a comma in the number
-            let nb_decimals = precision.abs() as usize;
+            let nb_decimals = precision.unsigned_abs() as usize;
             let real = format!("{:0width$}", tapyrus, width = nb_decimals);
             if real.len() == nb_decimals {
                 write!(f, "0.{}", &real[real.len() - nb_decimals..])?;
@@ -284,12 +284,12 @@ impl Amount {
 
     /// The maximum value of an [Amount].
     pub fn max_value() -> Amount {
-        Amount(u64::max_value())
+        Amount(u64::MAX)
     }
 
     /// The minimum value of an [Amount].
     pub fn min_value() -> Amount {
-        Amount(u64::min_value())
+        Amount(u64::MIN)
     }
 
     /// Convert from a value expressing tpcs to an [Amount].
@@ -306,7 +306,7 @@ impl Amount {
         if negative {
             return Err(ParseAmountError::Negative);
         }
-        if tapyrus > i64::max_value() as u64 {
+        if tapyrus > i64::MAX as u64 {
             return Err(ParseAmountError::TooBig);
         }
         Ok(Amount::from_tap(tapyrus))
@@ -324,7 +324,7 @@ impl Amount {
             return Err(ParseAmountError::InvalidFormat);
         }
 
-        Ok(Amount::from_str_in(amt_str, denom_str.parse()?)?)
+        Amount::from_str_in(amt_str, denom_str.parse()?)
     }
 
     /// Express this [Amount] as a floating-point value in the given denomination.
@@ -562,12 +562,12 @@ impl SignedAmount {
 
     /// The maximum value of an [SignedAmount].
     pub fn max_value() -> SignedAmount {
-        SignedAmount(i64::max_value())
+        SignedAmount(i64::MAX)
     }
 
     /// The minimum value of an [SignedAmount].
     pub fn min_value() -> SignedAmount {
-        SignedAmount(i64::min_value())
+        SignedAmount(i64::MIN)
     }
 
     /// Convert from a value expressing tpcs to an [SignedAmount].
@@ -581,7 +581,7 @@ impl SignedAmount {
     /// with denomination, use [FromStr].
     pub fn from_str_in(s: &str, denom: Denomination) -> Result<SignedAmount, ParseAmountError> {
         let (negative, tapyrus) = parse_signed_to_tapyrus(s, denom)?;
-        if tapyrus > i64::max_value() as u64 {
+        if tapyrus > i64::MAX as u64 {
             return Err(ParseAmountError::TooBig);
         }
         Ok(match negative {
@@ -602,7 +602,7 @@ impl SignedAmount {
             return Err(ParseAmountError::InvalidFormat);
         }
 
-        Ok(SignedAmount::from_str_in(amt_str, denom_str.parse()?)?)
+        SignedAmount::from_str_in(amt_str, denom_str.parse()?)
     }
 
     /// Express this [SignedAmount] as a floating-point value in the given denomination.
@@ -641,7 +641,7 @@ impl SignedAmount {
     pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
         let taps = self.as_tap().checked_abs().map(|a: i64| a as u64).unwrap_or_else(|| {
             // We could also hard code this into `9223372036854775808`
-            u64::max_value() - self.as_tap() as u64 +1
+            u64::MAX - self.as_tap() as u64 +1
         });
         fmt_tapyrus_in(taps, self.is_negative(), f, denom)
     }

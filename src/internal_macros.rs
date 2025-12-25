@@ -137,7 +137,7 @@ macro_rules! impl_array_newtype {
         impl ::std::clone::Clone for $thing {
             #[inline]
             fn clone(&self) -> $thing {
-                $thing::from(&self[..])
+                *self
             }
         }
 

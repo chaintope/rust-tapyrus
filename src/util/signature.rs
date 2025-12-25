@@ -63,7 +63,7 @@ impl Signature {
 
         // Compute s = k + ep
         let sigma = {
-            let mut result = e.clone();
+            let mut result = e;
             result.mul_assign(&sk[..])?;
             result.add_assign(&k[..])?;
             result
@@ -93,7 +93,7 @@ impl Signature {
         let r = {
             e.negate_assign();
             let minus_ep = {
-                let mut result = pk.clone();
+                let mut result = *pk;
                 result.mul_assign(&ctx, &e[..])?;
                 result
             };
@@ -108,7 +108,7 @@ impl Signature {
         };
 
         // Check that R.x is what we expect
-        if &r.serialize()[1..33] != self.r_x {
+        if r.serialize()[1..33] != self.r_x {
             return Err(Error::InvalidSignature);
         }
 
@@ -128,7 +128,7 @@ impl Signature {
         engine.input(message);
         let hash = sha256::Hash::from_engine(engine);
 
-        Ok(SecretKey::from_slice(&hash[..])?)
+        SecretKey::from_slice(&hash[..])
     }
 
     fn generate_k(sk: &SecretKey, message: &[u8; 32]) -> SecretKey {

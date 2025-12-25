@@ -42,14 +42,12 @@ impl_array_newtype_show!(ChainCode);
 impl_bytes_newtype!(ChainCode, 32);
 
 /// A fingerprint
+#[derive(Default)]
 pub struct Fingerprint([u8; 4]);
 impl_array_newtype!(Fingerprint, u8, 4);
 impl_array_newtype_show!(Fingerprint);
 impl_bytes_newtype!(Fingerprint, 4);
 
-impl Default for Fingerprint {
-    fn default() -> Fingerprint { Fingerprint([0; 4]) }
-}
 
 /// Extended private key
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -109,7 +107,7 @@ impl ChildNumber {
     /// [`Normal`]: #variant.Normal
     pub fn from_normal_idx(index: u32) -> Result<Self, Error> {
         if index & (1 << 31) == 0 {
-            Ok(ChildNumber::Normal { index: index })
+            Ok(ChildNumber::Normal { index })
         } else {
             Err(Error::InvalidChildNumber(index))
         }
@@ -121,7 +119,7 @@ impl ChildNumber {
     /// [`Hardened`]: #variant.Hardened
     pub fn from_hardened_idx(index: u32) -> Result<Self, Error> {
         if index & (1 << 31) == 0 {
-            Ok(ChildNumber::Hardened { index: index })
+            Ok(ChildNumber::Hardened { index })
         } else {
             Err(Error::InvalidChildNumber(index))
         }
@@ -185,7 +183,7 @@ impl FromStr for ChildNumber {
     type Err = Error;
 
     fn from_str(inp: &str) -> Result<ChildNumber, Error> {
-        let is_hardened = inp.chars().last().map_or(false, |l| l == '\'' || l == 'h');
+        let is_hardened = inp.chars().last().is_some_and(|l| l == '\'' || l == 'h');
         Ok(if is_hardened {
             ChildNumber::from_hardened_idx(inp[0..inp.len() - 1].parse().map_err(|_| Error::InvalidChildNumberFormat)?)?
         } else {
@@ -225,9 +223,9 @@ impl From<Vec<ChildNumber>> for DerivationPath {
     }
 }
 
-impl Into<Vec<ChildNumber>> for DerivationPath {
-    fn into(self) -> Vec<ChildNumber> {
-        self.0
+impl From<DerivationPath> for Vec<ChildNumber> {
+    fn from(val: DerivationPath) -> Self {
+        val.0
     }
 }
 
@@ -319,17 +317,17 @@ impl DerivationPath {
     /// Get an [Iterator] over the children of this [DerivationPath]
     /// starting with the given [ChildNumber].
     pub fn children_from(&self, cn: ChildNumber) -> DerivationPathIterator<'_> {
-        DerivationPathIterator::start_from(&self, cn)
+        DerivationPathIterator::start_from(self, cn)
     }
 
     /// Get an [Iterator] over the unhardened children of this [DerivationPath].
     pub fn normal_children(&self) -> DerivationPathIterator<'_> {
-        DerivationPathIterator::start_from(&self, ChildNumber::Normal{ index: 0 })
+        DerivationPathIterator::start_from(self, ChildNumber::Normal{ index: 0 })
     }
 
     /// Get an [Iterator] over the hardened children of this [DerivationPath].
     pub fn hardened_children(&self) -> DerivationPathIterator<'_> {
-        DerivationPathIterator::start_from(&self, ChildNumber::Hardened{ index: 0 })
+        DerivationPathIterator::start_from(self, ChildNumber::Hardened{ index: 0 })
     }
 }
 
@@ -443,13 +441,13 @@ impl ExtendedPrivKey {
         let hmac_result: Hmac<sha512::Hash> = Hmac::from_engine(hmac_engine);
 
         Ok(ExtendedPrivKey {
-            network: network,
+            network,
             depth: 0,
             parent_fingerprint: Default::default(),
             child_number: ChildNumber::from_normal_idx(0)?,
             private_key: PrivateKey {
                 compressed: true,
-                network: network,
+                network,
                 key: secp256k1::SecretKey::from_slice(
                     &hmac_result[..32]
                 ).map_err(Error::Ecdsa)?,
@@ -586,7 +584,7 @@ impl ExtendedPubKey {
             parent_fingerprint: self.fingerprint(),
             child_number: i,
             public_key: pk,
-            chain_code: chain_code
+            chain_code
         })
     }
 
@@ -610,7 +608,7 @@ impl fmt::Display for ExtendedPrivKey {
             Network::Prod => [0x04, 0x88, 0xAD, 0xE4],
             Network::Dev => [0x04, 0x35, 0x83, 0x94],
         }[..]);
-        ret[4] = self.depth as u8;
+        ret[4] = self.depth;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
         ret[9..13].copy_from_slice(&endian::u32_to_array_be(u32::from(self.child_number)));
         ret[13..45].copy_from_slice(&self.chain_code[..]);
@@ -638,18 +636,18 @@ impl FromStr for ExtendedPrivKey {
         } else if data[0..4] == [0x04u8, 0x35, 0x83, 0x94] {
             Network::Dev
         } else {
-            return Err(base58::Error::InvalidVersion((&data[0..4]).to_vec()));
+            return Err(base58::Error::InvalidVersion(data[0..4].to_vec()));
         };
 
         Ok(ExtendedPrivKey {
-            network: network,
+            network,
             depth: data[4],
             parent_fingerprint: Fingerprint::from(&data[5..9]),
-            child_number: child_number,
+            child_number,
             chain_code: ChainCode::from(&data[13..45]),
             private_key: PrivateKey {
                 compressed: true,
-                network: network,
+                network,
                 key: secp256k1::SecretKey::from_slice(
                     &data[46..78]
                 ).map_err(|e|
@@ -667,7 +665,7 @@ impl fmt::Display for ExtendedPubKey {
             Network::Prod => [0x04u8, 0x88, 0xB2, 0x1E],
             Network::Dev => [0x04u8, 0x35, 0x87, 0xCF],
         }[..]);
-        ret[4] = self.depth as u8;
+        ret[4] = self.depth;
         ret[5..9].copy_from_slice(&self.parent_fingerprint[..]);
         ret[9..13].copy_from_slice(&endian::u32_to_array_be(u32::from(self.child_number)));
         ret[13..45].copy_from_slice(&self.chain_code[..]);
@@ -695,11 +693,11 @@ impl FromStr for ExtendedPubKey {
             } else if data[0..4] == [0x04u8, 0x35, 0x87, 0xCF] {
                 Network::Dev
             } else {
-                return Err(base58::Error::InvalidVersion((&data[0..4]).to_vec()));
+                return Err(base58::Error::InvalidVersion(data[0..4].to_vec()));
             },
             depth: data[4],
             parent_fingerprint: Fingerprint::from(&data[5..9]),
-            child_number: child_number,
+            child_number,
             chain_code: ChainCode::from(&data[13..45]),
             public_key: PublicKey::from_slice(
                              &data[45..78]).map_err(|e|

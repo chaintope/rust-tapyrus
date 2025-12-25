@@ -29,7 +29,7 @@
 //! big-endian decimals, etc.)
 //!
 
-use std::{fmt, error, io, mem, u32};
+use std::{fmt, error, io, mem};
 use std::borrow::Cow;
 use std::io::{Cursor, Read, Write};
 use crate::hashes::hex::ToHex;
@@ -145,8 +145,6 @@ impl error::Error for Error {
         "description() is deprecated; use Display"
     }
 }
-
-#[doc(hidden)]
 
 #[doc(hidden)]
 impl From<io::Error> for Error {
@@ -408,6 +406,13 @@ impl VarInt {
             _                    => { 9 }
         }
     }
+
+    /// Returns whether this VarInt is empty. Always returns false since VarInt
+    /// always encodes to at least 1 byte.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        false
+    }
 }
 
 impl Encodable for VarInt {
@@ -430,7 +435,7 @@ impl Encodable for VarInt {
             },
             _ => {
                 s.emit_u8(0xFF)?;
-                (self.0 as u64).consensus_encode(s)?;
+                self.0.consensus_encode(s)?;
                 Ok(9)
             },
         }
@@ -494,7 +499,7 @@ impl Encodable for String {
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, Error> {
         let b = self.as_bytes();
         let vi_len = VarInt(b.len() as u64).consensus_encode(&mut s)?;
-        s.emit_slice(&b)?;
+        s.emit_slice(b)?;
         Ok(vi_len + b.len())
     }
 }
@@ -513,7 +518,7 @@ impl Encodable for Cow<'static, str> {
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, Error> {
         let b = self.as_bytes();
         let vi_len = VarInt(b.len() as u64).consensus_encode(&mut s)?;
-        s.emit_slice(&b)?;
+        s.emit_slice(b)?;
         Ok(vi_len + b.len())
     }
 }
@@ -629,7 +634,7 @@ impl_vec!(u64);
 
 fn consensus_encode_with_size<S: io::Write>(data: &[u8], mut s: S) -> Result<usize, Error> {
     let vi_len = VarInt(data.len() as u64).consensus_encode(&mut s)?;
-    s.emit_slice(&data)?;
+    s.emit_slice(data)?;
     Ok(vi_len + data.len())
 }
 

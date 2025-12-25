@@ -45,7 +45,7 @@ impl Address {
             SocketAddr::V4(addr) => (addr.ip().to_ipv6_mapped().segments(), addr.port()),
             SocketAddr::V6(addr) => (addr.ip().segments(), addr.port())
         };
-        Address { address: address, port: port, services: services }
+        Address { address, port, services }
     }
 
     /// extract socket address from an address message
