@@ -131,12 +131,15 @@ impl Template {
     /// will represent the number of signatures that are required for the script
     /// to pass.
     pub fn first_push_as_number(&self) -> Option<usize> {
-        if !self.0.is_empty()
-            && let TemplateElement::Op(op) = self.0[0]
-                && let opcodes::Class::PushNum(n) = op.classify()
-                    && n >= 0 {
+        if !self.0.is_empty() {
+            if let TemplateElement::Op(op) = self.0[0] {
+                if let opcodes::Class::PushNum(n) = op.classify() {
+                    if n >= 0 {
                         return Some(n as usize);
                     }
+                }
+            }
+        }
         None
     }
 }
