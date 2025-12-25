@@ -1066,7 +1066,7 @@ mod tests {
         for _ in 0..10 {
             round_trip!{bool, i8, u8, i16, u16, i32, u32, i64, u64,
             (bool, i8, u16, i32), (u64, i64, u32, i32, u16, i16), (i8, u8, i16, u16, i32, u32, i64, u64),
-            [u8; 2], [u8; 4], [u8; 8], [u8; 12], [u8; 16], [u8; 32]};
+            [u8; 2], [u8; 4], [u8; 8], [u8; 12], [u8; 16], [u8; 32]}
 
             data.clear();
             data64.clear();
@@ -1075,7 +1075,7 @@ mod tests {
             data64.resize(len, 0u64);
             let mut arr33 = [0u8; 33];
             let mut arr16 = [0u16; 8];
-            round_trip_bytes!{(Vec<u8>, data), ([u8; 33], arr33), ([u16; 8], arr16), (Vec<u64>, data64)};
+            round_trip_bytes!{(Vec<u8>, data), ([u8; 33], arr33), ([u16; 8], arr16), (Vec<u64>, data64)}
 
 
         }
