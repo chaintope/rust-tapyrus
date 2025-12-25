@@ -199,7 +199,7 @@ impl error::Error for Error {
         "description() is deprecated; use Display"
     }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::Secp256k1Error(ref e) => Some(e),
             Error::InvalidSignature => None,

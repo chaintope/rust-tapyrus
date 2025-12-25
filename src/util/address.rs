@@ -76,7 +76,7 @@ impl fmt::Display for Error {
 
 #[allow(deprecated)]
 impl ::std::error::Error for Error {
-    fn cause(&self) -> Option<&::std::error::Error> {
+    fn cause(&self) -> Option<&dyn ::std::error::Error> {
         match *self {
             Error::Base58(ref e) => Some(e),
             _ => None,
@@ -412,11 +412,11 @@ mod tests {
 
     use super::*;
 
-    macro_rules! hex (($hex:expr) => (Vec::from_hex($hex).unwrap()));
-    macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
-    macro_rules! hex_script (($hex:expr) => (Script::from(hex!($hex))));
-    macro_rules! hex_pubkeyhash (($hex:expr) => (PubkeyHash::from_hex(&$hex).unwrap()));
-    macro_rules! hex_scripthash (($hex:expr) => (ScriptHash::from_hex(&$hex).unwrap()));
+    macro_rules! hex (($hex:expr_2021) => (Vec::from_hex($hex).unwrap()));
+    macro_rules! hex_key (($hex:expr_2021) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
+    macro_rules! hex_script (($hex:expr_2021) => (Script::from(hex!($hex))));
+    macro_rules! hex_pubkeyhash (($hex:expr_2021) => (PubkeyHash::from_hex(&$hex).unwrap()));
+    macro_rules! hex_scripthash (($hex:expr_2021) => (ScriptHash::from_hex(&$hex).unwrap()));
 
     fn roundtrips(addr: &Address) {
         assert_eq!(

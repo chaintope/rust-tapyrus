@@ -34,7 +34,7 @@ fn main() {
         payload: version_message,
     };
 
-    if let Ok(mut stream) = TcpStream::connect(address) {
+    match TcpStream::connect(address) { Ok(mut stream) => {
         // Send the message
         let _ = stream.write_all(encode::serialize(&first_message).as_slice());
         println!("Sent version message");
@@ -68,9 +68,9 @@ fn main() {
             }
         }
         let _ = stream.shutdown(Shutdown::Both);
-    } else {
+    } _ => {
         eprintln!("Failed to open connection");
-    }
+    }}
 }
 
 fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
@@ -93,7 +93,7 @@ fn build_version_message(address: SocketAddr) -> message::NetworkMessage {
     let addr_from = address::Address::new(&my_address, constants::ServiceFlags::NONE);
 
     // "Node random nonce, randomly generated every time a version packet is sent. This nonce is used to detect connections to self."
-    let nonce: u64 = secp256k1::rand::thread_rng().gen();
+    let nonce: u64 = secp256k1::rand::thread_rng().r#gen();
 
     // "User Agent (0x00 if string is 0 bytes long)"
     let user_agent = String::from("rust-example");

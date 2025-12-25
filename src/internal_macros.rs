@@ -45,7 +45,7 @@ macro_rules! impl_consensus_encoding {
 
 /// Implements standard array methods for a given wrapper type
 macro_rules! impl_array_newtype {
-    ($thing:ident, $ty:ty, $len:expr) => {
+    ($thing:ident, $ty:ty, $len:expr_2021) => {
         impl $thing {
             #[inline]
             /// Converts the object to a raw pointer
@@ -134,7 +134,6 @@ macro_rules! impl_array_newtype {
             }
         }
 
-        #[cfg_attr(feature = "clippy", allow(expl_impl_clone_on_copy))] // we don't define the `struct`, we have to explicitly impl
         impl ::std::clone::Clone for $thing {
             #[inline]
             fn clone(&self) -> $thing {
@@ -227,13 +226,13 @@ macro_rules! display_from_debug {
 }
 
 #[cfg(test)]
-macro_rules! hex_script (($s:expr) => ($crate::blockdata::script::Script::from(<Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap())));
+macro_rules! hex_script (($s:expr_2021) => ($crate::blockdata::script::Script::from(<Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap())));
 
 #[cfg(test)]
-macro_rules! hex_hash (($h:ident, $s:expr) => ($h::from_slice(&<Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()).unwrap()));
+macro_rules! hex_hash (($h:ident, $s:expr_2021) => ($h::from_slice(&<Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()).unwrap()));
 
 macro_rules! serde_string_impl {
-    ($name:ident, $expecting:expr) => {
+    ($name:ident, $expecting:expr_2021) => {
         #[cfg(feature = "serde")]
         impl<'de> $crate::serde::Deserialize<'de> for $name {
             fn deserialize<D>(deserializer: D) -> Result<$name, D::Error>
@@ -292,7 +291,7 @@ macro_rules! serde_string_impl {
 /// A combination macro where the human-readable serialization is done like
 /// serde_string_impl and the non-human-readable impl is done as a struct.
 macro_rules! serde_struct_human_string_impl {
-    ($name:ident, $expecting:expr, $($fe:ident),*) => (
+    ($name:ident, $expecting:expr_2021, $($fe:ident),*) => (
         #[cfg(feature = "serde")]
         impl<'de> $crate::serde::Deserialize<'de> for $name {
             fn deserialize<D>(deserializer: D) -> Result<$name, D::Error>
@@ -481,7 +480,7 @@ macro_rules! serde_struct_human_string_impl {
 /// - std::str::FromStr
 /// - hashes::hex::FromHex
 macro_rules! impl_bytes_newtype {
-    ($t:ident, $len:expr) => (
+    ($t:ident, $len:expr_2021) => (
 
         impl ::std::fmt::LowerHex for $t {
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
@@ -603,7 +602,7 @@ macro_rules! user_enum {
         $(#[$attr:meta])*
         pub enum $name:ident {
             $(#[$doc:meta]
-              $elem:ident <-> $txt:expr),*
+              $elem:ident <-> $txt:expr_2021),*
         }
     ) => (
         $(#[$attr])*

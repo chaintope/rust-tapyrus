@@ -48,7 +48,7 @@ impl Encodable for Inventory {
         mut s: S,
     ) -> Result<usize, encode::Error> {
         macro_rules! encode_inv {
-            ($code:expr, $item:expr) => {
+            ($code:expr_2021, $item:expr_2021) => {
                 u32::consensus_encode(&$code, &mut s)? +
                 $item.consensus_encode(&mut s)?
             }

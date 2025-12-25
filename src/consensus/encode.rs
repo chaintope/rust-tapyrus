@@ -122,7 +122,7 @@ impl fmt::Display for Error {
 
 #[allow(deprecated)]
 impl error::Error for Error {
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::Io(ref e) => Some(e),
             Error::Psbt(ref e) => Some(e),
@@ -272,7 +272,7 @@ macro_rules! encoder_fn {
 }
 
 macro_rules! decoder_fn {
-    ($name:ident, $val_type:ty, $readfn:ident, $byte_len: expr) => {
+    ($name:ident, $val_type:ty, $readfn:ident, $byte_len: expr_2021) => {
         #[inline]
         fn $name(&mut self) -> Result<$val_type, Error> {
             assert_eq!(::std::mem::size_of::<$val_type>(), $byte_len); // size_of isn't a constfn in 1.22
@@ -402,9 +402,9 @@ impl VarInt {
     #[inline]
     pub fn len(&self) -> usize {
         match self.0 {
-            0...0xFC             => { 1 }
-            0xFD...0xFFFF        => { 3 }
-            0x10000...0xFFFFFFFF => { 5 }
+            0..=0xFC             => { 1 }
+            0xFD..=0xFFFF        => { 3 }
+            0x10000..=0xFFFFFFFF => { 5 }
             _                    => { 9 }
         }
     }
@@ -414,16 +414,16 @@ impl Encodable for VarInt {
     #[inline]
     fn consensus_encode<S: io::Write>(&self, mut s: S) -> Result<usize, Error> {
         match self.0 {
-            0...0xFC => {
+            0..=0xFC => {
                 (self.0 as u8).consensus_encode(s)?;
                 Ok(1)
             },
-            0xFD...0xFFFF => {
+            0xFD..=0xFFFF => {
                 s.emit_u8(0xFD)?;
                 (self.0 as u16).consensus_encode(s)?;
                 Ok(3)
             },
-            0x10000...0xFFFFFFFF => {
+            0x10000..=0xFFFFFFFF => {
                 s.emit_u8(0xFE)?;
                 (self.0 as u32).consensus_encode(s)?;
                 Ok(5)
@@ -530,7 +530,7 @@ impl Decodable for Cow<'static, str> {
 
 // Arrays
 macro_rules! impl_array {
-    ( $size:expr ) => (
+    ( $size:expr_2021 ) => (
         impl Encodable for [u8; $size] {
             #[inline]
             fn consensus_encode<S: WriteExt>(
@@ -1042,13 +1042,13 @@ mod tests {
         macro_rules! round_trip {
             ($($val_type:ty),*) => {
                 $(
-                    let r: $val_type = thread_rng().gen();
+                    let r: $val_type = thread_rng().r#gen();
                     assert_eq!(deserialize::<$val_type>(&serialize(&r)).unwrap(), r);
                 )*
             };
         }
         macro_rules! round_trip_bytes {
-            ($(($val_type:ty, $data:expr)),*) => {
+            ($(($val_type:ty, $data:expr_2021)),*) => {
                 $(
                     thread_rng().fill(&mut $data[..]);
                     assert_eq!(deserialize::<$val_type>(&serialize(&$data)).unwrap()[..], $data[..]);

@@ -825,7 +825,7 @@ mod tests {
     use super::*;
 
     macro_rules! roundtrip {
-        ($unique:expr, $op:ident) => {
+        ($unique:expr_2021, $op:ident) => {
             assert_eq!(all::$op, All::from(all::$op.into_u8()));
 
             let s1 = format!("{}", all::$op);

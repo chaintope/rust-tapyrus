@@ -14,7 +14,7 @@
 
 #[allow(unused_macros)]
 macro_rules! hex_psbt {
-    ($s:expr) => { $crate::consensus::deserialize(&<Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()) };
+    ($s:expr_2021) => { $crate::consensus::deserialize(&<Vec<u8> as $crate::hashes::hex::FromHex>::from_hex($s).unwrap()) };
 }
 
 macro_rules! merge {
@@ -132,7 +132,7 @@ macro_rules! impl_psbt_insert_pair {
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 macro_rules! impl_psbt_get_pair {
-    ($rv:ident.push($slf:ident.$unkeyed_name:ident as <$unkeyed_typeval:expr, _>|<$unkeyed_value_type:ty>)) => {
+    ($rv:ident.push($slf:ident.$unkeyed_name:ident as <$unkeyed_typeval:expr_2021, _>|<$unkeyed_value_type:ty>)) => {
         if let Some(ref $unkeyed_name) = $slf.$unkeyed_name {
             $rv.push($crate::util::psbt::raw::Pair {
                 key: $crate::util::psbt::raw::Key {
@@ -143,7 +143,7 @@ macro_rules! impl_psbt_get_pair {
             });
         }
     };
-    ($rv:ident.push($slf:ident.$keyed_name:ident as <$keyed_typeval:expr, $keyed_key_type:ty>|<$keyed_value_type:ty>)) => {
+    ($rv:ident.push($slf:ident.$keyed_name:ident as <$keyed_typeval:expr_2021, $keyed_key_type:ty>|<$keyed_value_type:ty>)) => {
         for (key, val) in &$slf.$keyed_name {
             $rv.push($crate::util::psbt::raw::Pair {
                 key: $crate::util::psbt::raw::Key {

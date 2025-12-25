@@ -167,7 +167,7 @@ fn parse_signed_to_tapyrus(
     let mut value: u64 = 0; // as tapyruses
     for c in s.chars() {
         match c {
-            '0'...'9' => {
+            '0'..='9' => {
                 // Do `value = 10 * value + digit`, catching overflows.
                 match 10_u64.checked_mul(value) {
                     None => return Err(ParseAmountError::TooBig),
@@ -210,7 +210,7 @@ fn parse_signed_to_tapyrus(
 fn fmt_tapyrus_in(
     tapyrus: u64,
     negative: bool,
-    f: &mut fmt::Write,
+    f: &mut dyn fmt::Write,
     denom: Denomination,
 ) -> fmt::Result {
     if negative {
@@ -360,7 +360,7 @@ impl Amount {
     /// Format the value of this [Amount] in the given denomination.
     ///
     /// Does not include the denomination.
-    pub fn fmt_value_in(self, f: &mut fmt::Write, denom: Denomination) -> fmt::Result {
+    pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
         fmt_tapyrus_in(self.as_tap(), false, f, denom)
     }
 
@@ -638,7 +638,7 @@ impl SignedAmount {
     /// Format the value of this [SignedAmount] in the given denomination.
     ///
     /// Does not include the denomination.
-    pub fn fmt_value_in(self, f: &mut fmt::Write, denom: Denomination) -> fmt::Result {
+    pub fn fmt_value_in(self, f: &mut dyn fmt::Write, denom: Denomination) -> fmt::Result {
         let taps = self.as_tap().checked_abs().map(|a: i64| a as u64).unwrap_or_else(|| {
             // We could also hard code this into `9223372036854775808`
             u64::max_value() - self.as_tap() as u64 +1

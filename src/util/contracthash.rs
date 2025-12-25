@@ -73,7 +73,7 @@ impl fmt::Display for Error {
 
 #[allow(deprecated)]
 impl error::Error for Error {
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::Secp(ref e) => Some(e),
             Error::Script(ref e) => Some(e),
@@ -291,8 +291,8 @@ mod tests {
     use super::*;
     use crate::PublicKey;
 
-    macro_rules! hex (($hex:expr) => (Vec::from_hex($hex).unwrap()));
-    macro_rules! hex_key (($hex:expr) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
+    macro_rules! hex (($hex:expr_2021) => (Vec::from_hex($hex).unwrap()));
+    macro_rules! hex_key (($hex:expr_2021) => (PublicKey::from_slice(&hex!($hex)).unwrap()));
     macro_rules! alpha_template(() => (Template::from(&hex!("55fefefefefefefe57AE")[..])));
     macro_rules! alpha_keys(() => (
         &[hex_key!("0269992fb441ae56968e5b77d46a3e53b69f136444ae65a94041fc937bdb28d933"),
