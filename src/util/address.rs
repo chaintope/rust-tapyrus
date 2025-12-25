@@ -366,22 +366,24 @@ impl FromStr for Address {
                 }
             }
             54 => {
+                let color_id = ColorIdentifier::from_slice(&data[1..34])
+                    .map_err(|_| Error::Base58(base58::Error::InvalidLength(data.len())))?;
                 match data[0] {
                     1 => (
                         Network::Prod,
-                        Payload::ColoredPubkeyHash(ColorIdentifier::from_slice(&data[1..34]).unwrap(), PubkeyHash::from_slice(&data[34..]).unwrap()),
+                        Payload::ColoredPubkeyHash(color_id, PubkeyHash::from_slice(&data[34..]).unwrap()),
                     ),
                     6 => (
                         Network::Prod,
-                        Payload::ColoredScriptHash(ColorIdentifier::from_slice(&data[1..34]).unwrap(), ScriptHash::from_slice(&data[34..]).unwrap()),
+                        Payload::ColoredScriptHash(color_id, ScriptHash::from_slice(&data[34..]).unwrap()),
                     ),
                     112 => (
                         Network::Dev,
-                        Payload::ColoredPubkeyHash(ColorIdentifier::from_slice(&data[1..34]).unwrap(), PubkeyHash::from_slice(&data[34..]).unwrap()),
+                        Payload::ColoredPubkeyHash(color_id, PubkeyHash::from_slice(&data[34..]).unwrap()),
                     ),
                     197 => (
                         Network::Dev,
-                        Payload::ColoredScriptHash(ColorIdentifier::from_slice(&data[1..34]).unwrap(), ScriptHash::from_slice(&data[34..]).unwrap()),
+                        Payload::ColoredScriptHash(color_id, ScriptHash::from_slice(&data[34..]).unwrap()),
                     ),
                     x => return Err(Error::Base58(base58::Error::InvalidVersion(vec![x]))),
                 }
@@ -633,4 +635,5 @@ mod tests {
             hex_script!("21c36db65fd59fd356f6729140571b5bcd6bb3b83492a16e1bf0a3884442fc3c8a0ebca914162c5ea71c0b23f5b9022ef047c4a86470a5b07087")
         );
     }
+
 }
