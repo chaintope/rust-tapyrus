@@ -149,6 +149,7 @@ pub use crate::crypto::ecdsa;
 pub use crate::crypto::key::{
     self, PrivateKey, PubkeyHash, PublicKey, WPubkeyHash, XOnlyPublicKey,
 };
+pub use crate::crypto::schnorr;
 pub use crate::crypto::sighash::{self, LegacySighash, SegwitV0Sighash, TapSighash, TapSighashTag};
 pub use crate::hash_types::{
     BlockHash, FilterHash, FilterHeader, TxMerkleNode, Txid, WitnessCommitment, Wtxid, MalFixTxid,
